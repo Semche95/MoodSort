@@ -35,6 +35,8 @@ export class CanvasController {
     deckDragState: DeckDragState
     cardDimensions: Dimensions
     deckDimensions: Dimensions
+    private _lastTitleBarClickTime: number = 0
+    private _lastTitleBarClickDeck: Deck | null = null
 
     // Helpers to reduce duplication
     private toStageCoords(clientX: number, clientY: number): { x: number, y: number } {
@@ -139,8 +141,40 @@ export class CanvasController {
         // No action needed
     }
 
+    private renameDeckFromEvent(event: FederatedPointerEvent): void {
+        const hitArea: Container = event.currentTarget as Container
+        const deck: Deck = hitArea.parent?.parent as Deck
+        if (!deck) {
+            return
+        }
+        // Cancel any active deck drag so the deck stays in place
+        this.deckDragState.dragDeckTarget = null
+        if (typeof this.app.stage.off === 'function') {
+            this.app.stage.off('pointermove', this.handleDeckDragMove)
+            this.app.stage.off('pointerup', this.handleDeckDragEnd)
+            this.app.stage.off('pointerupoutside', this.handleDeckDragEnd)
+        }
+        const newName: string | null = window.prompt('Nom du tas (laissez vide pour effacer) :', deck.name || '')
+        if (newName === null) {
+            return
+        }
+        deck.name = newName || ''
+        deck.updateBorder(false, this.deckDimensions.width, this.deckDimensions.height, this.handleTitleBarClick)
+    }
+
     handleTitleBarClick: (event: FederatedPointerEvent) => void = (event: FederatedPointerEvent) => {
         event.stopPropagation()
+        const now: number = Date.now()
+        const hitArea: Container = event.currentTarget as Container
+        const deck: Deck = hitArea.parent?.parent as Deck
+        if (deck && this._lastTitleBarClickDeck === deck && now - this._lastTitleBarClickTime < 400) {
+            this._lastTitleBarClickTime = 0
+            this._lastTitleBarClickDeck = null
+            this.renameDeckFromEvent(event)
+            return
+        }
+        this._lastTitleBarClickTime = now
+        this._lastTitleBarClickDeck = deck
         onDeckDragStart(event, this.deckDragState, this.app.stage, this.handleDeckDragMove, this.handleDeckDragEnd)
     }
 
@@ -176,7 +210,6 @@ export class CanvasController {
             CORNER_RADIUS,
             BORDER_WIDTH,
             this.handleTitleBarClick,
-            0,
         )
         deck.setBackground(deckBackground)
         this.app.stage.addChild(deck)
@@ -185,7 +218,6 @@ export class CanvasController {
 
     adjustDeckSizes: (initialDeck: Deck) => void = (initialDeck: Deck) => {
         this.deckDimensions = DeckController.calculateDimensions(this.cardDimensions.width, this.cardDimensions.height)
-        const cardCount: number = Math.max(0, initialDeck.children.length - 1)
         initialDeck.redrawBackground(
             this.deckDimensions.width,
             this.deckDimensions.height,
@@ -194,7 +226,6 @@ export class CanvasController {
             CORNER_RADIUS,
             BORDER_WIDTH,
             this.handleTitleBarClick,
-            cardCount,
         )
         initialDeck.x = DECK_MARGIN
         initialDeck.y = DECK_MARGIN
@@ -216,6 +247,7 @@ export class CanvasController {
             }
             deck.x = savedDeck.x
             deck.y = savedDeck.y
+            deck.name = savedDeck.name ?? ''
             for (const img of savedDeck.cards) {
                 if (!available.has(img)) {
                     continue
@@ -393,5 +425,10 @@ export class CanvasController {
         document.addEventListener('deckviewer:end', this.handleViewerEnd)
         document.addEventListener('deckviewer:closed', this.handleViewerClosed)
         document.addEventListener('deckviewer:drop', this.handleViewerDrop)
+        document.addEventListener('deckviewer:rename', this.handleViewerRename)
+    }
+
+    handleViewerRename: () => void = () => {
+        saveState(this.decks)
     }
 }

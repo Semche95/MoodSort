@@ -49,55 +49,108 @@ body {
     to { transform: rotate(360deg); }
 }
 
-/* Deck viewer overlay */
-.deck-viewer-overlay {
+/* ===== Shared modal system ===== */
+
+.modal-overlay {
     position: fixed;
     inset: 0;
-    background: transparent; /* no gray/dim background */
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 9998;
+    z-index: 9999;
+}
+.modal-overlay--dimmed {
+    background: rgba(0,0,0,0.5);
 }
 
-.deck-viewer-modal {
+.modal-dialog {
     background: #1e1e1e;
     color: #fff;
-    max-height: 85vh;
     border-radius: 8px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     display: flex;
     flex-direction: column;
-    gap: 0;
-    padding: 0;
+    max-height: 85vh;
 }
 
-.deck-viewer-header {
+.modal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 12px;
+    padding: 10px 16px;
     border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.modal-title {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.modal-close-btn {
+    background: #6c757d;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 28px;
+    cursor: pointer;
+    padding: 4px 18px;
+    line-height: 1;
+}
+.modal-close-btn:hover {
+    background: #5c636a;
+}
+
+.modal-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Primary blue button */
+.btn-primary {
+    background: #0d6efd;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+.btn-primary:hover {
+    background: #0b5ed7;
+}
+
+/* ===== Deck viewer specific ===== */
+
+.deck-viewer-overlay {
+    background: transparent;
+    z-index: 9998;
+}
+
+.deck-viewer-header {
     cursor: move;
     user-select: none;
 }
 
-.deck-viewer-title {
-    font-weight: 600;
+.deck-viewer-title-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
-.deck-viewer-close {
-    align-self: flex-end;
-    background: transparent;
-    color: #fff;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
+.deck-viewer-title {
+    font-weight: 600;
+    font-size: inherit;
+}
+
+.deck-viewer-rename {
+    font-size: 28px;
+    padding: 8px 20px;
+    line-height: 1;
 }
 
 /* Grid layout for cards */
 .deck-viewer-grid {
-    /* Ensure exactly five cards per row with equal spacing */
     --deck-gap: 12px;
     --cell-w: 180px;
     display: grid;
@@ -134,4 +187,55 @@ body {
     z-index: 10000;
     border-radius: 4px;
     box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+}
+
+/* ===== Share specific ===== */
+
+.share-button {
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9997;
+    font-size: 18px;
+    padding: 10px 28px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.share-modal {
+    width: 540px;
+    max-width: 90vw;
+}
+
+.share-input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.share-link-input {
+    flex: 1;
+    background: #2a2a2a;
+    color: #fff;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: monospace;
+}
+.share-link-input:focus {
+    outline: none;
+    border-color: #0d6efd;
+}
+
+.share-copy-btn {
+    font-size: 14px;
+    padding: 10px 20px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.share-hint {
+    font-size: 13px;
+    color: #aaa;
+    line-height: 1.4;
 }

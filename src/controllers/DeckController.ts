@@ -109,23 +109,23 @@ export class DeckController {
     }
 
     /**
-     * Adds a card count text inside the title bar if count > 0.
+     * Adds a deck name text inside the title bar if set.
      */
-    static addCardCountText(graphics: Graphics, width: number, titleBarHeight: number, cardCount: number): void {
-        if (cardCount <= 0) {
+    static addDeckNameText(graphics: Graphics, _width: number, titleBarHeight: number, name: string): void {
+        if (!name) {
             return
         }
-        const cardCountText: Text = new Text({
-            text: cardCount.toString(),
+        const nameText: Text = new Text({
+            text: name,
             style: {
                 fill: 0xFFFFFF,
-                fontSize: 16,
-                fontWeight: 'bold',
+                fontSize: 14,
+                fontWeight: 'normal',
             },
         })
-        cardCountText.x = width - cardCountText.width - 10
-        cardCountText.y = (titleBarHeight - cardCountText.height) / 2
-        graphics.addChild(cardCountText)
+        nameText.x = 10
+        nameText.y = (titleBarHeight - nameText.height) / 2
+        graphics.addChild(nameText)
     }
 
     /**

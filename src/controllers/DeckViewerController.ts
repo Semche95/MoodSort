@@ -1,10 +1,11 @@
 import { Card } from '../types/card.types'
+import type { Deck } from '../models/Deck'
 import { DeckViewerDropDetail, DeckViewerHoverDetail } from '../types/viewer.types'
+import { showOverlay, removeOverlay, createCloseButton } from '../utils/ui'
 
 const OVERLAY_ID: string = 'deck-viewer-overlay'
 const GRID_ID: string = 'deck-viewer-grid'
 const MODAL_ID: string = 'deck-viewer-modal'
-const HEADER_ID: string = 'deck-viewer-header'
 
 const DROP_EVENT_NAME: string = 'deckviewer:drop'
 const HOVER_EVENT_NAME: string = 'deckviewer:hover'
@@ -25,36 +26,36 @@ interface ModalDragState { isDown: boolean, offsetX: number, offsetY: number }
 
 export class DeckViewerController {
     private cards: Card[]
+    private deck: Deck | null
+    private _titleEl: HTMLDivElement | null
 
     constructor() {
         this.cards = []
+        this.deck = null
+        this._titleEl = null
     }
 
-    open(cards: Card[]): void {
+    open(cards: Card[], deck: Deck): void {
         if (cards.length === 0) {
             return
         }
         this.cards = cards
+        this.deck = deck
         this.ensureOverlay()
         this.render()
     }
 
     close(): void {
-        const overlay: HTMLElement | null = document.getElementById(OVERLAY_ID)
-        if (overlay && overlay.parentElement) {
-            overlay.parentElement.removeChild(overlay)
-        }
-        // Notify listeners that the viewer closed
+        removeOverlay(OVERLAY_ID)
         document.dispatchEvent(new CustomEvent('deckviewer:closed'))
-        // Clear state
         this.cards = []
+        this.deck = null
     }
 
     onResize(): void {
         if (!this.hasOverlay()) {
             return
         }
-        // Re-render to recompute grid cell width, etc.
         this.render()
     }
 
@@ -65,6 +66,21 @@ export class DeckViewerController {
     }
 
     // ===== private helpers =====
+
+    private renameDeck(): void {
+        if (!this.deck) {
+            return
+        }
+        const newName: string | null = window.prompt('Nouveau nom du tas (laissez vide pour effacer) :', this.deck.name || '')
+        if (newName === null) {
+            return
+        }
+        this.deck.name = newName || ''
+        if (this._titleEl) {
+            this._titleEl.textContent = this.deck.name || ''
+        }
+        document.dispatchEvent(new CustomEvent('deckviewer:rename'))
+    }
 
     private hasOverlay(): boolean {
         return !!document.getElementById(OVERLAY_ID)
@@ -140,7 +156,7 @@ export class DeckViewerController {
 
     private isInsideViewerAt(clientX: number, clientY: number): boolean {
         const el: HTMLElement | null = document.elementFromPoint(clientX, clientY) as HTMLElement | null
-        return !!el && !!el.closest('.deck-viewer-modal')
+        return !!el && !!el.closest('.modal-dialog')
     }
 
     private handleMouseUp(e: MouseEvent, ctx: DragContext): void {
@@ -235,7 +251,6 @@ export class DeckViewerController {
             const img: HTMLImageElement = this.createGridItem(c, i)
             this.attachDragBridge(img, c)
             gridEl.appendChild(img)
-            // Re-center modal when each image loads, to account for layout growth
             const recenter: () => void = (): void => {
                 const modal: HTMLDivElement | null = document.getElementById(MODAL_ID) as HTMLDivElement | null
                 if (modal) {
@@ -243,7 +258,6 @@ export class DeckViewerController {
                 }
             }
             img.addEventListener('load', recenter)
-            // If the image was loaded from cache, load may not fire; re-center immediately
             if (img.complete) {
                 recenter()
             }
@@ -298,42 +312,40 @@ export class DeckViewerController {
     }
 
     private ensureOverlay(): void {
-        let overlay: HTMLElement | null = document.getElementById(OVERLAY_ID)
-        if (overlay) {
-            return
-        }
-
-        overlay = document.createElement('div')
-        overlay.id = OVERLAY_ID
-        overlay.className = 'deck-viewer-overlay'
-
-        const onOverlayBackdropClick: (e: MouseEvent) => void = (e: MouseEvent): void => {
-            const target: HTMLElement | null = e.target as HTMLElement | null
-            const current: HTMLElement | null = e.currentTarget as HTMLElement | null
-            if (current && target === current) {
-                this.close()
-            }
-        }
-        overlay.addEventListener('click', onOverlayBackdropClick)
+        const overlay: HTMLDivElement = showOverlay(OVERLAY_ID, () => this.close())
+        overlay.className = 'modal-overlay deck-viewer-overlay'
 
         const modal: HTMLDivElement = document.createElement('div')
-        modal.className = 'deck-viewer-modal'
+        modal.className = 'modal-dialog'
         modal.id = MODAL_ID
 
         const header: HTMLDivElement = document.createElement('div')
-        header.id = HEADER_ID
-        header.className = 'deck-viewer-header'
+        header.className = 'modal-header deck-viewer-header'
+        const titleGroup: HTMLDivElement = document.createElement('div')
+        titleGroup.className = 'deck-viewer-title-group'
         const title: HTMLDivElement = document.createElement('div')
-        title.textContent = 'Deck Viewer'
+        title.textContent = this.deck?.name || ''
         title.className = 'deck-viewer-title'
-        const closeBtn: HTMLButtonElement = document.createElement('button')
-        closeBtn.className = 'deck-viewer-close'
-        closeBtn.textContent = '×'
-        closeBtn.addEventListener('click', (e: MouseEvent) => {
+        title.style.cursor = 'pointer'
+        this._titleEl = title
+        title.addEventListener('dblclick', (e: MouseEvent) => {
             e.stopPropagation()
-            this.close()
+            this.renameDeck()
         })
-        header.appendChild(title)
+        const renameBtn: HTMLButtonElement = document.createElement('button')
+        renameBtn.className = 'btn-primary deck-viewer-rename'
+        renameBtn.textContent = '✎'
+        renameBtn.title = 'Renommer le tas'
+        renameBtn.addEventListener('click', (e: MouseEvent) => {
+            e.stopPropagation()
+            this.renameDeck()
+        })
+        titleGroup.appendChild(title)
+        titleGroup.appendChild(renameBtn)
+
+        const closeBtn: HTMLButtonElement = createCloseButton(() => this.close())
+
+        header.appendChild(titleGroup)
         header.appendChild(closeBtn)
 
         const grid: HTMLDivElement = document.createElement('div')
@@ -349,8 +361,6 @@ export class DeckViewerController {
         modal.style.zIndex = '10001'
         this.centerModal(modal)
         this.makeModalDraggable(modal, header)
-
-        document.body.appendChild(overlay)
     }
 
     private render(): void {

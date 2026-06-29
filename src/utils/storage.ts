@@ -8,6 +8,7 @@ export interface SavedDeck {
     x: number
     y: number
     cards: string[]
+    name?: string
 }
 
 export interface SavedState {
@@ -35,6 +36,7 @@ export function saveState(decks: Deck[]): void {
                 x: deck.x ?? 0,
                 y: deck.y ?? 0,
                 cards,
+                ...(deck.name ? { name: deck.name } : {}),
             }
         }),
     }

@@ -1,6 +1,7 @@
 import './style.css'
 import { createLoadingOverlay, setupCanvas } from './utils/canvas'
 import { DeckViewerController } from './controllers/DeckViewerController'
+import { ShareController } from './controllers/ShareController'
 import type { DeckViewerOpenDetail } from './types/viewer.types'
 
 (async (): Promise<void> => {
@@ -14,6 +15,9 @@ import type { DeckViewerOpenDetail } from './types/viewer.types'
     }))
 
     const { onCanvasResize }: { onCanvasResize: () => void } = await setupCanvas(images)
+
+    const shareController: ShareController = new ShareController()
+    shareController.createShareButton()
 
     const deckViewer: DeckViewerController = new DeckViewerController()
 
@@ -34,7 +38,7 @@ import type { DeckViewerOpenDetail } from './types/viewer.types'
         if (!detail) {
             return
         }
-        deckViewer.open(detail.cards)
+        deckViewer.open(detail.cards, detail.deck)
     }
     document.addEventListener('deckviewer:requestOpen', onDeckViewerRequestOpen)
 })()

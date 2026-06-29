@@ -332,7 +332,7 @@ export function onCardDragEnd(
                 // Notify that the viewer is opening for this deck
                 const openEvt: CustomEvent = new CustomEvent('deckviewer:opened', { detail: { deck } })
                 document.dispatchEvent(openEvt)
-                const reqEvt: CustomEvent = new CustomEvent('deckviewer:requestOpen', { detail: { cards: cardsInDeck, index: initialIndex } })
+                const reqEvt: CustomEvent = new CustomEvent('deckviewer:requestOpen', { detail: { cards: cardsInDeck, index: initialIndex, deck } })
                 document.dispatchEvent(reqEvt)
             }
         }

@@ -23,14 +23,14 @@ export function createLoadingOverlay(): HTMLDivElement {
 /**
  * Sets up the canvas with the provided images
  * @param images - Array of image paths to load
- * @returns Promise that resolves with small handlers bound to the controller
+ * @returns Promise that resolves with the controller and a resize handler
  * @throws Error if no images are provided
  */
-export async function setupCanvas(images: string[]): Promise<{ onCanvasResize: () => void }> {
+export async function setupCanvas(images: string[]): Promise<{ controller: CanvasController, onCanvasResize: () => void }> {
     const controller: CanvasController = new CanvasController()
     await controller.init(images)
     const onCanvasResize: () => void = (): void => {
         controller.handleResize()
     }
-    return { onCanvasResize }
+    return { controller, onCanvasResize }
 }

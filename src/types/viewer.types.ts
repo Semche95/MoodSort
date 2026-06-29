@@ -1,4 +1,5 @@
 import { Card } from './card.types'
+import type { Deck } from '../models/Deck'
 
 export interface DeckViewerDropDetail {
     card: Card
@@ -9,6 +10,7 @@ export interface DeckViewerDropDetail {
 export interface DeckViewerOpenDetail {
     cards: Card[]
     index: number
+    deck: Deck
 }
 
 export interface DeckViewerHoverDetail {

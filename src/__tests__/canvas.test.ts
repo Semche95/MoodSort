@@ -34,6 +34,8 @@ vi.mock('pixi.js', () => {
             x: number = 0
             y: number = 0
             background: unknown = null
+            on(): this { return this }
+            off(): this { return this }
 
             addChild(child: unknown): unknown {
                 this.children.push(child);
