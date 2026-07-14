@@ -30,6 +30,9 @@ vi.mock('pixi.js', () => {
             children: unknown[] = []
             x: number = 0
             y: number = 0
+            width: number = 200
+            height: number = 300
+            scale: { set(v: number): void } = { set: vi.fn() }
             on(): this { return this }
             off(): this { return this }
             addChild(child: unknown): unknown {
@@ -68,8 +71,19 @@ vi.mock('pixi.js', () => {
             on(): this { return this }
             tint: number = 0xFFFFFF
             imageUrl: string = ''
+            innerSprite: unknown = null
             getGlobalPosition: () => { x: number, y: number } = vi.fn().mockReturnValue({ x: 0, y: 0 })
             position: { set(x: number, y: number): void } = { set: vi.fn() }
+        },
+        Graphics: class MockGraphics {
+            roundRect(): this { return this }
+            fill(): this { return this }
+            filters: unknown[] = []
+            x: number = 0
+            y: number = 0
+        },
+        BlurFilter: class MockBlurFilter {
+            constructor(_options?: Record<string, unknown>) {}
         },
         FederatedPointerEvent: class MockFederatedPointerEvent {
             constructor(type: string, options: Record<string, unknown>) {

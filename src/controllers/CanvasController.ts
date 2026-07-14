@@ -42,16 +42,7 @@ export class CanvasController {
             this.cards.push(card)
 
             const savedPos: Position | undefined = saved[images[i]]
-            if (savedPos) {
-                card.x = savedPos.x
-                card.y = savedPos.y
-            } else {
-                const centerX: number = (this.app.screen.width - card.width) / 2
-                const centerY: number = (this.app.screen.height - card.height) / 2
-                card.x = centerX
-                card.y = centerY
-            }
-
+            this.placeCard(card, savedPos)
             this.app.stage.addChild(card)
         }
 
@@ -103,12 +94,52 @@ export class CanvasController {
 
     resetPositions(): void {
         this.positionStore.clear()
+
+        const duration: number = 20
+        let elapsed: number = 0
+        const starts: Array<{ card: Card; fromX: number; fromY: number; toX: number; toY: number }> = []
+
         for (const card of this.cards) {
             this.applyScale(card)
             const centerX: number = (this.app.screen.width - card.width) / 2
             const centerY: number = (this.app.screen.height - card.height) / 2
-            card.x = centerX
-            card.y = centerY
+            const jitter: number = 25
+            starts.push({
+                card,
+                fromX: card.x,
+                fromY: card.y,
+                toX: centerX + (Math.random() * 2 - 1) * jitter,
+                toY: centerY + (Math.random() * 2 - 1) * jitter,
+            })
+        }
+
+        const tick: () => void = (): void => {
+            elapsed++
+            for (const s of starts) {
+                const t: number = Math.min(elapsed / duration, 1)
+                const ease: number = 1 - Math.pow(1 - t, 3)
+                s.card.x = s.fromX + (s.toX - s.fromX) * ease
+                s.card.y = s.fromY + (s.toY - s.fromY) * ease
+            }
+            if (elapsed >= duration) {
+                this.app.ticker.remove(tick)
+                this.savePositions()
+            }
+        }
+
+        this.app.ticker.add(tick)
+    }
+
+    private placeCard(card: Card, savedPos?: Position): void {
+        if (savedPos) {
+            card.x = savedPos.x
+            card.y = savedPos.y
+        } else {
+            const centerX: number = (this.app.screen.width - card.width) / 2
+            const centerY: number = (this.app.screen.height - card.height) / 2
+            const jitter: number = 25
+            card.x = centerX + (Math.random() * 2 - 1) * jitter
+            card.y = centerY + (Math.random() * 2 - 1) * jitter
         }
     }
 

@@ -11,6 +11,16 @@ vi.mock('pixi.js', () => {
             children: unknown[] = []
             x: number = 0
             y: number = 0
+            width: number = 100
+            height: number = 150
+            alpha: number = 1
+            position: Record<string, unknown> = {
+                set: vi.fn(),
+            }
+            scale: { set(v: number): void } = { set: vi.fn() }
+            getGlobalPosition(): Record<string, number> {
+                return { x: this.x, y: this.y }
+            }
             addChild(child: unknown): unknown {
                 this.children.push(child);
                 (child as Record<string, unknown>).parent = this
@@ -90,8 +100,9 @@ describe('DragController', () => {
 
         controller = new DragController()
 
-        mockCard = new Sprite() as Card
+        mockCard = new Container() as Card
         mockCard.imageUrl = 'test.png'
+        mockCard.innerSprite = new Sprite()
         mockCard.x = 50
         mockCard.y = 60
         mockCard.width = 100

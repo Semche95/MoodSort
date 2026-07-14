@@ -1,4 +1,4 @@
-import { Assets, Sprite, Texture, FederatedPointerEvent } from 'pixi.js'
+import { Assets, BlurFilter, Container, Graphics, Sprite, Texture, FederatedPointerEvent } from 'pixi.js'
 import { Card } from '../types/card.types'
 import { Position } from '../types/position.types'
 
@@ -43,13 +43,26 @@ export async function createCard(
 ): Promise<Card> {
     const texture: Texture = await Assets.load(image)
 
-    const card: Card = new Sprite(texture) as Card
+    const card: Card = new Container() as Card
     card.imageUrl = image
+
+    const shadow: Graphics = new Graphics()
+    shadow.roundRect(0, 0, texture.width, texture.height, 8)
+    shadow.fill({ color: 0x000000, alpha: 0.25 })
+    shadow.filters = [new BlurFilter({ strength: 4 })]
+    shadow.x = 4
+    shadow.y = 4
+    card.addChild(shadow)
+
+    const sprite: Sprite = new Sprite(texture)
+    card.addChild(sprite)
+    card.innerSprite = sprite
+
     card.eventMode = 'static'
     card.cursor = 'move'
     card.on('pointerdown', onDragStart, card)
-    card.on('pointerover', (): void => { card.tint = 0xFFEEDD })
-    card.on('pointerout', (): void => { card.tint = 0xFFFFFF })
+    card.on('pointerover', (): void => { sprite.tint = 0xFFEEDD })
+    card.on('pointerout', (): void => { sprite.tint = 0xFFFFFF })
 
     return card
 }

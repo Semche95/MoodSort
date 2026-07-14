@@ -1,5 +1,5 @@
 import './style.css'
-import { createLoadingOverlay, setupCanvas, initOnboarding, initToolbar } from './utils/canvas'
+import { createLoadingOverlay, createHeader, setupCanvas, initOnboarding, initToolbar } from './utils/canvas'
 import { CanvasController } from './controllers/CanvasController'
 import { OnboardingStore } from './services/OnboardingStore'
 
@@ -18,6 +18,8 @@ import { OnboardingStore } from './services/OnboardingStore'
     if (overlay.parentElement) {
         overlay.parentElement.removeChild(overlay)
     }
+
+    createHeader()
 
     const onboardingStore: OnboardingStore = new OnboardingStore()
     initOnboarding(onboardingStore)

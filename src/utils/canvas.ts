@@ -36,6 +36,23 @@ export async function setupCanvas(images: string[]): Promise<{ controller: Canva
     return { controller }
 }
 
+export function createHeader(): void {
+    const header: HTMLDivElement = document.createElement('div')
+    header.className = 'app-header'
+
+    const logo: HTMLSpanElement = document.createElement('span')
+    logo.className = 'app-header-logo'
+    logo.textContent = '🎭'
+
+    const title: HTMLSpanElement = document.createElement('span')
+    title.className = 'app-header-title'
+    title.textContent = 'MoodSort'
+
+    header.appendChild(logo)
+    header.appendChild(title)
+    document.body.appendChild(header)
+}
+
 export function initOnboarding(store: OnboardingStore): void {
     const showOnboarding: () => void = (): void => {
         const existing: Element | null = document.querySelector('.onboarding-overlay')
