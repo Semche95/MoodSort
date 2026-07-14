@@ -62,7 +62,3 @@ Thumbs.db
 # Misc
 .cache
 .temp
-
-# Temporarily ignored card files
-src/cards/*
-!src/cards/.gitkeep

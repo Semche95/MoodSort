@@ -1,44 +1,25 @@
 import './style.css'
-import { createLoadingOverlay, setupCanvas } from './utils/canvas'
-import { DeckViewerController } from './controllers/DeckViewerController'
-import { ShareController } from './controllers/ShareController'
-import type { DeckViewerOpenDetail } from './types/viewer.types'
+import { createLoadingOverlay, setupCanvas, initOnboarding, initToolbar } from './utils/canvas'
+import { CanvasController } from './controllers/CanvasController'
+import { OnboardingStore } from './services/OnboardingStore'
 
 (async (): Promise<void> => {
     const overlay: HTMLDivElement = createLoadingOverlay()
     document.body.appendChild(overlay)
 
-    const images: string[] = Object.values(import.meta.glob<string>('./cards/*.png', {
+    const images: string[] = Object.values(import.meta.glob<string>('./cards/*.webp', {
         query: '?url',
         import: 'default',
         eager: true,
-    }))
+    })).reverse()
 
-    const { onCanvasResize }: { onCanvasResize: () => void } = await setupCanvas(images)
+    const { controller }: { controller: CanvasController } = await setupCanvas(images)
 
-    const shareController: ShareController = new ShareController()
-    shareController.createShareButton()
-
-    const deckViewer: DeckViewerController = new DeckViewerController()
-
-    // Remove loading overlay once everything is ready and displayed
     if (overlay.parentElement) {
         overlay.parentElement.removeChild(overlay)
     }
 
-    // Global event listeners must be centralized and registered inside this async block per project guidelines
-    window.addEventListener('resize', () => deckViewer.onResize())
-    window.addEventListener('resize', onCanvasResize)
-    window.addEventListener('keydown', (e: KeyboardEvent) => deckViewer.onKeydown(e))
-
-    // Bridge: when drag.ts requests to open the viewer, forward to controller
-    function onDeckViewerRequestOpen(evt: Event): void {
-        const e: CustomEvent<DeckViewerOpenDetail> = evt as CustomEvent<DeckViewerOpenDetail>
-        const detail: DeckViewerOpenDetail = e.detail
-        if (!detail) {
-            return
-        }
-        deckViewer.open(detail.cards, detail.deck)
-    }
-    document.addEventListener('deckviewer:requestOpen', onDeckViewerRequestOpen)
+    const onboardingStore: OnboardingStore = new OnboardingStore()
+    initOnboarding(onboardingStore)
+    initToolbar(controller, onboardingStore)
 })()

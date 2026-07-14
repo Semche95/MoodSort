@@ -49,193 +49,248 @@ body {
     to { transform: rotate(360deg); }
 }
 
-/* ===== Shared modal system ===== */
-
-.modal-overlay {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-}
-.modal-overlay--dimmed {
-    background: rgba(0,0,0,0.5);
-}
-
-.modal-dialog {
-    background: #1e1e1e;
-    color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    display: flex;
-    flex-direction: column;
-    max-height: 85vh;
-}
-
-.modal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 16px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-
-.modal-title {
-    font-size: 20px;
-    font-weight: 700;
-}
-
-.modal-close-btn {
-    background: #6c757d;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    font-size: 28px;
-    cursor: pointer;
-    padding: 4px 18px;
-    line-height: 1;
-}
-.modal-close-btn:hover {
-    background: #5c636a;
-}
-
-.modal-body {
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-/* Primary blue button */
-.btn-primary {
-    background: #0d6efd;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-}
-.btn-primary:hover {
-    background: #0b5ed7;
-}
-
-/* ===== Deck viewer specific ===== */
-
-.deck-viewer-overlay {
-    background: transparent;
-    z-index: 9998;
-}
-
-.deck-viewer-header {
-    cursor: move;
-    user-select: none;
-}
-
-.deck-viewer-title-group {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.deck-viewer-title {
-    font-weight: 600;
-    font-size: inherit;
-}
-
-.deck-viewer-rename {
-    font-size: 28px;
-    padding: 8px 20px;
-    line-height: 1;
-}
-
-/* Grid layout for cards */
-.deck-viewer-grid {
-    --deck-gap: 12px;
-    --cell-w: 180px;
-    display: grid;
-    grid-template-columns: repeat(5, var(--cell-w));
-    gap: var(--deck-gap);
-    padding: var(--deck-gap);
-    width: max-content;
-    max-width: 90vw;
-    max-height: 85vh;
-    overflow: auto;
-    box-sizing: border-box;
-}
-
-.deck-viewer-grid-item {
-    width: 100%;
-    height: auto;
-    object-fit: contain;
-    background: transparent;
-    border-radius: 4px;
-    cursor: grab;
-    display: block;
-}
-
-/* Drag ghost preview while dragging from the viewer */
-.deck-viewer-drag-ghost {
+/* Onboarding overlay */
+.onboarding-overlay {
     position: fixed;
     left: 0;
     top: 0;
-    width: 140px;
-    height: auto;
-    object-fit: contain;
-    pointer-events: none;
-    opacity: 0.9;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.75);
     z-index: 10000;
-    border-radius: 4px;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
 }
 
-/* ===== Share specific ===== */
+.onboarding-card {
+    background: #fff;
+    color: #222;
+    border-radius: 16px;
+    padding: 40px 48px;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
 
-.share-button {
+.onboarding-card h1 {
+    font-size: 1.5rem;
+    margin-bottom: 16px;
+}
+
+.onboarding-card h2 {
+    font-size: 1.1rem;
+    margin-top: 20px;
+    margin-bottom: 8px;
+}
+
+.onboarding-card p {
+    line-height: 1.6;
+    margin-bottom: 8px;
+}
+
+.onboarding-card ul {
+    padding-left: 20px;
+    margin-bottom: 8px;
+}
+
+.onboarding-card li {
+    line-height: 1.6;
+    margin-bottom: 4px;
+}
+
+.onboarding-dismiss {
+    display: block;
+    margin-top: 24px;
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: #333;
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.onboarding-dismiss:hover {
+    background: #555;
+}
+
+/* Toolbar buttons */
+.toolbar {
     position: fixed;
-    top: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 9997;
-    font-size: 18px;
-    padding: 10px 28px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-}
-
-.share-modal {
-    width: 540px;
-    max-width: 90vw;
-}
-
-.share-input-group {
+    top: 16px;
+    right: 16px;
     display: flex;
     gap: 8px;
+    z-index: 9998;
 }
 
-.share-link-input {
-    flex: 1;
-    background: #2a2a2a;
-    color: #fff;
-    border: 1px solid #444;
-    border-radius: 4px;
-    padding: 10px 12px;
-    font-size: 14px;
-    font-family: monospace;
-}
-.share-link-input:focus {
-    outline: none;
-    border-color: #0d6efd;
-}
-
-.share-copy-btn {
-    font-size: 14px;
-    padding: 10px 20px;
-    border-radius: 4px;
-    white-space: nowrap;
+.help-button,
+.settings-button {
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    color: #333;
+    font-size: 1.4rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.share-hint {
-    font-size: 13px;
-    color: #aaa;
+.settings-button {
+    font-size: 1.6rem;
+}
+
+.help-button:hover,
+.settings-button:hover {
+    background: #fff;
+}
+
+/* Settings modal */
+.settings-overlay {
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
+}
+
+.settings-modal {
+    background: #fff;
+    color: #222;
+    border-radius: 16px;
+    padding: 0;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+.settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 0;
+}
+
+.settings-header h1 {
+    font-size: 1.3rem;
+}
+
+.settings-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+    padding: 0 4px;
+}
+
+.settings-close:hover {
+    color: #000;
+}
+
+.settings-body {
+    padding: 16px 24px 24px;
+}
+
+.settings-section {
+    margin-bottom: 20px;
+}
+
+.settings-section:last-child {
+    margin-bottom: 0;
+}
+
+.settings-section h2 {
+    font-size: 1rem;
+    margin-bottom: 4px;
+}
+
+.settings-section p {
+    font-size: 0.9rem;
+    color: #555;
+    margin-bottom: 10px;
     line-height: 1.4;
+}
+
+.settings-reset-positions,
+.settings-show-onboarding {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #f5f5f5;
+    color: #222;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.settings-reset-positions:hover,
+.settings-show-onboarding:hover {
+    background: #eaeaea;
+}
+
+/* Confirmation dialog inside modal */
+.settings-confirm {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 12px;
+}
+
+.settings-confirm p {
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: #222;
+}
+
+.settings-confirm-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.settings-confirm-cancel,
+.settings-confirm-ok {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.settings-confirm-cancel {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.settings-confirm-cancel:hover {
+    background: #d0d0d0;
+}
+
+.settings-confirm-ok {
+    background: #c0392b;
+    color: #fff;
+}
+
+.settings-confirm-ok:hover {
+    background: #a93226;
 }

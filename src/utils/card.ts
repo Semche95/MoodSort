@@ -1,6 +1,5 @@
 import { Assets, Sprite, Texture, FederatedPointerEvent } from 'pixi.js'
 import { Card } from '../types/card.types'
-import { Deck } from '../models/Deck'
 import { Position } from '../types/position.types'
 
 /**
@@ -14,16 +13,13 @@ import { Position } from '../types/position.types'
  * @returns The constrained position (in global coordinates)
  */
 export function constrainPosition(
-    x: number, 
-    y: number, 
-    width: number, 
-    height: number, 
-    appWidth: number, 
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    appWidth: number,
     appHeight: number,
 ): Position {
-    // Use absolute window coordinates to constrain the position
-    // Ensure objects stay fully visible within the viewport
-    // Objects can't be even partially off-screen
     const minX: number = 0
     const minY: number = 0
     const maxX: number = appWidth - width
@@ -36,25 +32,15 @@ export function constrainPosition(
 }
 
 /**
- * Adds a card to the canvas
+ * Creates a card sprite from an image
  * @param image - Path to the image to load
- * @param deck - The deck to add the card to
  * @param onDragStart - The function to call when the card is dragged
- * @param deckWidth - The width of the deck
- * @param deckHeight - The height of the deck
- * @param decks - Array of all decks
- * @param onTitleBarClick - The function to call when the title bar is clicked
- * @returns Promise that resolves with the card dimensions when the card is added
+ * @returns Promise that resolves with the created card
  */
-export async function addCard(
-    image: string, 
-    deck: Deck, 
+export async function createCard(
+    image: string,
     onDragStart: (event: FederatedPointerEvent) => void,
-    deckWidth: number,
-    deckHeight: number,
-    decks: Deck[],
-    onTitleBarClick: ((event: FederatedPointerEvent) => void) | null = null,
-): Promise<{ width: number, height: number }> {
+): Promise<Card> {
     const texture: Texture = await Assets.load(image)
 
     const card: Card = new Sprite(texture) as Card
@@ -62,20 +48,8 @@ export async function addCard(
     card.eventMode = 'static'
     card.cursor = 'move'
     card.on('pointerdown', onDragStart, card)
+    card.on('pointerover', (): void => { card.tint = 0xFFEEDD })
+    card.on('pointerout', (): void => { card.tint = 0xFFFFFF })
 
-    // Add the card to the deck
-    deck.addChild(card)
-
-    // Center the card within the deck
-    deck.centerCard(card, deckWidth, deckHeight)
-
-    // Update the deck background with the new card count
-    if (decks.includes(deck)) {
-        deck.updateBorder(false, deckWidth, deckHeight, onTitleBarClick)
-    }
-
-    return {
-        width: card.width,
-        height: card.height,
-    }
+    return card
 }
