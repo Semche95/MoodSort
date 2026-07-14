@@ -1,5 +1,5 @@
 import { CardState } from '../types/card.types'
-import { IStore } from './Store'
+import { IStore, Store } from './Store'
 
 const STORAGE_KEY: string = 'moodsort-card-state'
 
@@ -12,7 +12,7 @@ const DEFAULTS: CardState = { positions: {}, order: [], onboardingDismissed: fal
 export class CardStateService {
     private store: IStore
 
-    constructor(store: IStore) {
+    constructor(store: IStore = new Store()) {
         this.store = store
     }
 
