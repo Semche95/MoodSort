@@ -1,10 +1,14 @@
-import { Application } from 'pixi.js'
+import { Application, FederatedPointerEvent } from 'pixi.js'
 import { AnimationTarget, Card, CardState } from '../types/card.types'
+import { Position } from '../types/position.types'
 import { CardManager } from './CardManager'
-import { DragController } from './DragController'
 import { DragHandler } from './DragHandler'
+import { DragController } from './DragController'
 import { PositionPersistence } from './PositionPersistence'
+import { StackOverlay } from './StackOverlay'
+import { StackDragManager } from './StackDragManager'
 import { CardStateService } from '../services/CardStateService'
+import { computeStacks, findStackAtPoint } from '../utils/stack'
 
 /**
  * Orchestrates PixiJS app, cards, drag interactions, and persistence.
@@ -15,6 +19,9 @@ export class CanvasController {
     private cardManager: CardManager
     private dragHandler: DragHandler
     private positionPersistence: PositionPersistence
+    private overlay: StackOverlay
+    private stackDragManager: StackDragManager
+    private stacks: Card[][]
 
     constructor(store: CardStateService) {
         this.app = new Application()
@@ -23,7 +30,16 @@ export class CanvasController {
         this.cardManager = new CardManager(this.app)
         this.dragHandler = new DragHandler(new DragController(), this.app, (): void => {
             this.positionPersistence.saveFromStage(this.app.stage)
+            this.stacks = computeStacks(this.cards)
         })
+        this.overlay = new StackOverlay(this.app)
+        this.stackDragManager = new StackDragManager(
+            this.app,
+            this.overlay,
+            (): Card[][] => this.stacks,
+        )
+        this.stacks = []
+        this.overlay.initHandle(this.handleDragHandlePointerDown)
     }
 
     async init(images: string[]): Promise<void> {
@@ -46,10 +62,64 @@ export class CanvasController {
         })
 
         this.cards = await this.cardManager.loadCards(ordered, saved.positions, this.dragHandler.handleDragStart)
+        this.stacks = computeStacks(this.cards)
 
+        this.overlay.addToStage()
         this.dragHandler.wireStageHandlers()
+        this.app.stage.on('pointermove', this.handlePointerMove)
+        this.app.stage.on('pointerout', this.handlePointerOut)
+        this.app.stage.on('pointerup', this.handleStackDragEnd)
+        this.app.stage.on('pointerupoutside', this.handleStackDragEnd)
         window.addEventListener('resize', this.handleResize)
         document.body.appendChild(this.app.canvas)
+    }
+
+    private handlePointerMove: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void => {
+        if (this.dragHandler.isDragging) {
+            this.overlay.hide()
+            return
+        }
+        if (this.stackDragManager.isDragging) {
+            return
+        }
+        const point: Position = { x: e.global.x, y: e.global.y }
+        const stack: Card[] | null = findStackAtPoint(this.stacks, point)
+        if (stack) {
+            this.overlay.showHighlight(stack)
+            return
+        }
+        this.overlay.hide()
+    }
+
+    private handlePointerOut: () => void = (): void => {
+        if (!this.stackDragManager.isDragging) {
+            this.overlay.hide()
+        }
+    }
+
+    private handleDragHandlePointerDown: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void => {
+        if (this.dragHandler.isDragging) {
+            return
+        }
+        const point: Position = { x: e.global.x, y: e.global.y }
+        const stack: Card[] | null = findStackAtPoint(this.stacks, point)
+        if (!stack) {
+            return
+        }
+        this.stackDragManager.startDrag(
+            stack,
+            stack,
+            point,
+        )
+    }
+
+    private handleStackDragEnd: () => void = (): void => {
+        if (!this.stackDragManager.isDragging) {
+            return
+        }
+        this.stackDragManager.end()
+        this.positionPersistence.saveFromStage(this.app.stage)
+        this.stacks = computeStacks(this.cards)
     }
 
     resetPositions(): void {
@@ -71,6 +141,7 @@ export class CanvasController {
             if (elapsed >= duration) {
                 this.app.ticker.remove(tick)
                 this.positionPersistence.saveFromStage(this.app.stage)
+                this.stacks = computeStacks(this.cards)
             }
         }
         this.app.ticker.add(tick)

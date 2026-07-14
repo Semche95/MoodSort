@@ -2,6 +2,47 @@ import { Assets, BlurFilter, Container, Graphics, Sprite, Texture, FederatedPoin
 import { Card } from '../types/card.types'
 import { Position } from '../types/position.types'
 
+function cardsOverlap(a: Card, b: Card): boolean {
+    return (
+        a.x < b.x + b.width &&
+        a.x + a.width > b.x &&
+        a.y < b.y + b.height &&
+        a.y + a.height > b.y
+    )
+}
+
+export function findStack(card: Card, allCards: Card[]): Card[] {
+    const stack: Card[] = []
+    const visited: Set<Card> = new Set()
+    const queue: Card[] = [card]
+    while (queue.length > 0) {
+        const current: Card = queue.shift()!
+        if (visited.has(current)) continue
+        visited.add(current)
+        stack.push(current)
+        for (const other of allCards) {
+            if (!visited.has(other) && cardsOverlap(current, other)) {
+                queue.push(other)
+            }
+        }
+    }
+    return stack
+}
+
+export function computeBoundingBox(cards: Card[]): { x: number; y: number; width: number; height: number } {
+    let minX: number = Infinity
+    let minY: number = Infinity
+    let maxX: number = -Infinity
+    let maxY: number = -Infinity
+    for (const card of cards) {
+        minX = Math.min(minX, card.x)
+        minY = Math.min(minY, card.y)
+        maxX = Math.max(maxX, card.x + card.width)
+        maxY = Math.max(maxY, card.y + card.height)
+    }
+    return { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
+}
+
 /**
  * Constrains a position to keep it within the viewport using absolute window coordinates
  * @param x - The proposed x position (in global coordinates)

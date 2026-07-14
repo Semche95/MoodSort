@@ -3,7 +3,7 @@ import { DragController } from './DragController'
 
 /**
  * Wires DragController to PixiJS stage events.
- * Owns the drag callback chain: start → move → end.
+ * Owns the drag callback chain: start -> move -> end.
  */
 export class DragHandler {
     private dragController: DragController
@@ -14,6 +14,10 @@ export class DragHandler {
         this.dragController = dragController
         this.app = app
         this.onDragEnd = onDragEnd
+    }
+
+    get isDragging(): boolean {
+        return this.dragController.dragState.dragTarget !== null
     }
 
     handleDragStart: (event: FederatedPointerEvent) => void = (event: FederatedPointerEvent) => {

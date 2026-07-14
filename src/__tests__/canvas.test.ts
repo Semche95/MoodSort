@@ -9,9 +9,11 @@ vi.mock('pixi.js', () => {
     const mockApp: Record<string, unknown> = {
         stage: {
             addChild: vi.fn(),
+            addChildAt: vi.fn(),
             removeChild: vi.fn(),
             children: [],
             on: vi.fn(),
+            off: vi.fn(),
             eventMode: 'none',
             hitArea: null,
         },
@@ -78,8 +80,16 @@ vi.mock('pixi.js', () => {
             position: { set(x: number, y: number): void } = { set: vi.fn() }
         },
         Graphics: class MockGraphics {
+            parent: unknown = null
+            eventMode: string = 'none'
+            cursor: string = 'default'
             roundRect(): this { return this }
+            rect(): this { return this }
             fill(): this { return this }
+            stroke(): this { return this }
+            clear(): this { return this }
+            on(): this { return this }
+            off(): this { return this }
             filters: unknown[] = []
             x: number = 0
             y: number = 0
