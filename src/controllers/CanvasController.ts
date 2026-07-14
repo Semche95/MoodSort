@@ -1,25 +1,29 @@
-import { Application, FederatedPointerEvent } from 'pixi.js'
-import { Card } from '../types/card.types'
-import { Position } from '../types/position.types'
-import { constrainPosition, createCard } from '../utils/card'
-import { CARD_REFERENCE_WIDTH } from '../utils/constants'
+import { Application } from 'pixi.js'
+import { AnimationTarget, Card, CardState } from '../types/card.types'
+import { CardManager } from './CardManager'
 import { DragController } from './DragController'
-import { IPositionStore } from '../services/PositionStore'
+import { DragHandler } from './DragHandler'
+import { PositionPersistence } from './PositionPersistence'
+import { CardStateService } from '../services/CardStateService'
 
 /**
- * CanvasController manages the PixiJS app, card loading, and wires DragController + PositionStore.
+ * Orchestrates PixiJS app, cards, drag interactions, and persistence.
  */
 export class CanvasController {
-    app: Application
-    cards: Card[]
-    dragController: DragController
-    private positionStore: IPositionStore
+    private app: Application
+    private cards: Card[]
+    private cardManager: CardManager
+    private dragHandler: DragHandler
+    private positionPersistence: PositionPersistence
 
-    constructor(positionStore: IPositionStore) {
+    constructor(store: CardStateService) {
         this.app = new Application()
         this.cards = []
-        this.dragController = new DragController()
-        this.positionStore = positionStore
+        this.positionPersistence = new PositionPersistence(store)
+        this.cardManager = new CardManager(this.app)
+        this.dragHandler = new DragHandler(new DragController(), this.app, (): void => {
+            this.positionPersistence.saveFromStage(this.app.stage)
+        })
     }
 
     async init(images: string[]): Promise<void> {
@@ -31,132 +35,52 @@ export class CanvasController {
             antialias: true,
             backgroundColor: '#a9a9a9',
         })
+        this.app.renderer.resize(window.innerWidth, window.innerHeight)
 
-        this.resizeCanvas()
+        const saved: CardState = this.positionPersistence.load()
+        const ordered: string[] = this.cardManager.resolveOrder(images, saved)
+        this.positionPersistence.save({
+            positions: saved.positions,
+            order: ordered,
+            onboardingDismissed: saved.onboardingDismissed,
+        })
 
-        const saved: Record<string, Position> = this.positionStore.load()
+        this.cards = await this.cardManager.loadCards(ordered, saved.positions, this.dragHandler.handleDragStart)
 
-        for (let i: number = 0; i < images.length; i++) {
-            const card: Card = await createCard(images[i], this.handleCardDragStart)
-            this.applyScale(card)
-            this.cards.push(card)
-
-            const savedPos: Position | undefined = saved[images[i]]
-            this.placeCard(card, savedPos)
-            this.app.stage.addChild(card)
-        }
-
-        this.wireStageHandlers()
+        this.dragHandler.wireStageHandlers()
         window.addEventListener('resize', this.handleResize)
         document.body.appendChild(this.app.canvas)
     }
 
-    handleCardDragStart: (event: FederatedPointerEvent) => void = (event: FederatedPointerEvent) => {
-        this.dragController.handleDragStart(event, this.app.stage, this.handleCardDragMove)
-    }
-
-    handleCardDragMove: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent) => {
-        if (e.buttons === 0 && this.dragController.dragState.dragTarget) {
-            this.handleCardDragEnd()
-            return
-        }
-        this.dragController.handleDragMove(
-            e,
-            this.app.screen.width,
-            this.app.screen.height,
-        )
-    }
-
-    handleCardDragEnd: () => void = () => {
-        this.dragController.handleDragEnd(
-            this.app.stage,
-            this.handleCardDragMove,
-            this.app.screen.width,
-            this.app.screen.height,
-        )
-        this.savePositions()
-    }
-
-    wireStageHandlers(): void {
-        this.app.stage.eventMode = 'static'
-        this.app.stage.hitArea = this.app.screen
-        this.app.stage.on('pointerup', this.handleCardDragEnd)
-        this.app.stage.on('pointerupoutside', this.handleCardDragEnd)
-    }
-
-    private savePositions(): void {
-        const positions: Record<string, Position> = {}
-        for (const card of this.cards) {
-            positions[card.imageUrl] = { x: card.x, y: card.y }
-        }
-        this.positionStore.save(positions)
-    }
-
     resetPositions(): void {
-        this.positionStore.clear()
+        this.positionPersistence.clear()
+        const targets: AnimationTarget[] = this.cardManager.shuffleAndBuildTargets(this.cards)
+        this.animateToCenter(targets, 20)
+    }
 
-        const duration: number = 20
+    private animateToCenter(targets: AnimationTarget[], duration: number): void {
         let elapsed: number = 0
-        const starts: Array<{ card: Card; fromX: number; fromY: number; toX: number; toY: number }> = []
-
-        for (const card of this.cards) {
-            this.applyScale(card)
-            const centerX: number = (this.app.screen.width - card.width) / 2
-            const centerY: number = (this.app.screen.height - card.height) / 2
-            const jitter: number = 25
-            starts.push({
-                card,
-                fromX: card.x,
-                fromY: card.y,
-                toX: centerX + (Math.random() * 2 - 1) * jitter,
-                toY: centerY + (Math.random() * 2 - 1) * jitter,
-            })
-        }
-
         const tick: () => void = (): void => {
             elapsed++
-            for (const s of starts) {
-                const t: number = Math.min(elapsed / duration, 1)
-                const ease: number = 1 - Math.pow(1 - t, 3)
-                s.card.x = s.fromX + (s.toX - s.fromX) * ease
-                s.card.y = s.fromY + (s.toY - s.fromY) * ease
+            for (const t of targets) {
+                const progress: number = Math.min(elapsed / duration, 1)
+                const ease: number = 1 - Math.pow(1 - progress, 3)
+                t.card.x = t.fromX + (t.toX - t.fromX) * ease
+                t.card.y = t.fromY + (t.toY - t.fromY) * ease
             }
             if (elapsed >= duration) {
                 this.app.ticker.remove(tick)
-                this.savePositions()
+                this.positionPersistence.saveFromStage(this.app.stage)
             }
         }
-
         this.app.ticker.add(tick)
     }
 
-    private placeCard(card: Card, savedPos?: Position): void {
-        if (savedPos) {
-            card.x = savedPos.x
-            card.y = savedPos.y
-        } else {
-            const centerX: number = (this.app.screen.width - card.width) / 2
-            const centerY: number = (this.app.screen.height - card.height) / 2
-            const jitter: number = 25
-            card.x = centerX + (Math.random() * 2 - 1) * jitter
-            card.y = centerY + (Math.random() * 2 - 1) * jitter
-        }
-    }
-
-    private applyScale(card: Card): void {
-        const cardScale: number = this.app.screen.width / CARD_REFERENCE_WIDTH
-        card.scale.set(cardScale)
-    }
-
-    private resizeCanvas(): void {
-        this.app.renderer.resize(window.innerWidth, window.innerHeight)
-    }
-
-    handleResize: () => void = (): void => {
+    private handleResize: () => void = (): void => {
         const oldWidth: number = this.app.screen.width
         const oldHeight: number = this.app.screen.height
 
-        this.resizeCanvas()
+        this.app.renderer.resize(window.innerWidth, window.innerHeight)
 
         const newWidth: number = this.app.screen.width
         const newHeight: number = this.app.screen.height
@@ -164,23 +88,9 @@ export class CanvasController {
         const ratioY: number = newHeight / oldHeight
 
         for (const card of this.cards) {
-            this.applyScale(card)
-
-            card.x = card.x * ratioX
-            card.y = card.y * ratioY
-
-            const constrained: Position = constrainPosition(
-                card.x,
-                card.y,
-                card.width,
-                card.height,
-                newWidth,
-                newHeight,
-            )
-            card.x = constrained.x
-            card.y = constrained.y
+            this.cardManager.repositionForResize(card, ratioX, ratioY, newWidth, newHeight)
         }
 
-        this.savePositions()
+        this.positionPersistence.saveFromStage(this.app.stage)
     }
 }

@@ -1,6 +1,6 @@
 import { CanvasController } from '../controllers/CanvasController'
-import { OnboardingStore } from '../services/OnboardingStore'
-import { PositionStore } from '../services/PositionStore'
+import { POSITIONS_KEY, ORDER_KEY, ONBOARDING_KEY } from '../types/card.types'
+import { CardStateService } from '../services/CardStateService'
 import { createOnboarding, createHelpButton } from '../ui/onboarding'
 import { createSettingsButton, createSettingsModal } from '../ui/settings'
 
@@ -27,11 +27,12 @@ export function createLoadingOverlay(): HTMLDivElement {
 /**
  * Sets up the canvas with the provided images
  * @param images - Array of image paths to load
+ * @param store - Shared store instance
  * @returns Promise that resolves with the controller
  * @throws Error if no images are provided
  */
-export async function setupCanvas(images: string[]): Promise<{ controller: CanvasController }> {
-    const controller: CanvasController = new CanvasController(new PositionStore())
+export async function setupCanvas(images: string[], store: CardStateService): Promise<{ controller: CanvasController }> {
+    const controller: CanvasController = new CanvasController(store)
     await controller.init(images)
     return { controller }
 }
@@ -53,23 +54,35 @@ export function createHeader(): void {
     document.body.appendChild(header)
 }
 
-export function initOnboarding(store: OnboardingStore): void {
+export function isOnboardingDismissed(store: CardStateService): boolean {
+    return store.load(ONBOARDING_KEY)
+}
+
+export function dismissOnboarding(store: CardStateService): void {
+    store.save({
+        positions: store.load(POSITIONS_KEY),
+        order: store.load(ORDER_KEY),
+        onboardingDismissed: true,
+    })
+}
+
+export function initOnboarding(store: CardStateService): void {
     const showOnboarding: () => void = (): void => {
         const existing: Element | null = document.querySelector('.onboarding-overlay')
         if (existing) return
-        document.body.appendChild(createOnboarding(store))
+        document.body.appendChild(createOnboarding((): void => { dismissOnboarding(store) }))
     }
 
-    if (!store.isDismissed()) {
+    if (!isOnboardingDismissed(store)) {
         showOnboarding()
     }
 }
 
-export function initToolbar(controller: CanvasController, onboardingStore: OnboardingStore): void {
+export function initToolbar(controller: CanvasController, store: CardStateService): void {
     const showOnboarding: () => void = (): void => {
         const existing: Element | null = document.querySelector('.onboarding-overlay')
         if (existing) return
-        document.body.appendChild(createOnboarding(onboardingStore))
+        document.body.appendChild(createOnboarding((): void => { dismissOnboarding(store) }))
     }
 
     const openSettings: () => void = (): void => {

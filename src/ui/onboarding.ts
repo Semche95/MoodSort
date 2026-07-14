@@ -1,6 +1,4 @@
-import { IOnboardingStore } from '../services/OnboardingStore'
-
-export function createOnboarding(store: IOnboardingStore): HTMLDivElement {
+export function createOnboarding(onDismiss: () => void): HTMLDivElement {
     const overlay: HTMLDivElement = document.createElement('div')
     overlay.className = 'onboarding-overlay'
 
@@ -30,7 +28,7 @@ export function createOnboarding(store: IOnboardingStore): HTMLDivElement {
 
     const btn: HTMLButtonElement = overlay.querySelector<HTMLButtonElement>('.onboarding-dismiss')!
     btn.addEventListener('click', (): void => {
-        store.dismiss()
+        onDismiss()
         overlay.remove()
     })
 

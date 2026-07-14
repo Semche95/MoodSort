@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { setupCanvas } from '../utils/canvas'
+import { InMemoryStore } from '../services/Store'
+import { CardStateService } from '../services/CardStateService'
 
 import * as PIXI from 'pixi.js'
 
@@ -105,21 +107,21 @@ describe('Canvas Utilities', () => {
     describe('setupCanvas', () => {
         it('should create a PixiJS application', async () => {
             const images: string[] = ['image1.png', 'image2.png']
-            await setupCanvas(images)
+            await setupCanvas(images, new CardStateService(new InMemoryStore()))
 
             expect(PIXI.Application).toHaveBeenCalled()
         })
 
         it('should load images and create cards', async () => {
             const images: string[] = ['image1.png', 'image2.png']
-            await setupCanvas(images)
+            await setupCanvas(images, new CardStateService(new InMemoryStore()))
 
             expect(PIXI.Assets.load).toHaveBeenCalledTimes(images.length)
         })
 
         it('should throw an error if no images are provided', async () => {
             const images: string[] = []
-            await expect(setupCanvas(images)).rejects.toThrow('No images found')
+            await expect(setupCanvas(images, new CardStateService(new InMemoryStore()))).rejects.toThrow('No images found')
         })
     })
 })
