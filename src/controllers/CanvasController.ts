@@ -8,6 +8,8 @@ import { PositionPersistence } from './PositionPersistence'
 import { StackOverlay } from './StackOverlay'
 import { StackDragManager } from './StackDragManager'
 import { CardStateService } from '../services/CardStateService'
+import { ActionHistory } from '../services/ActionHistory'
+import { IStore } from '../services/Store'
 import { computeStacks, findStackAtPoint } from '../utils/stack'
 
 /**
@@ -21,25 +23,36 @@ export class CanvasController {
     private positionPersistence: PositionPersistence
     private overlay: StackOverlay
     private stackDragManager: StackDragManager
+    private actionHistory: ActionHistory
     private stacks: Card[][]
+    private onHistoryChange: () => void
 
-    constructor(store: CardStateService) {
+    constructor(store: CardStateService, historyStore: IStore) {
         this.app = new Application()
         this.cards = []
+        this.onHistoryChange = (): void => { /* set by initToolbar */ }
         this.positionPersistence = new PositionPersistence(store)
         this.cardManager = new CardManager(this.app)
+        this.actionHistory = new ActionHistory(historyStore, (): void => {
+            this.onHistoryChange()
+        })
         this.dragHandler = new DragHandler(new DragController(), this.app, (): void => {
             this.positionPersistence.saveFromStage(this.app.stage)
             this.stacks = computeStacks(this.cards)
-        })
+        }, this.actionHistory)
         this.overlay = new StackOverlay(this.app)
         this.stackDragManager = new StackDragManager(
             this.app,
             this.overlay,
             (): Card[][] => this.stacks,
+            this.actionHistory,
         )
         this.stacks = []
         this.overlay.initHandle(this.handleDragHandlePointerDown)
+    }
+
+    setOnHistoryChange(callback: () => void): void {
+        this.onHistoryChange = callback
     }
 
     async init(images: string[]): Promise<void> {
@@ -72,6 +85,32 @@ export class CanvasController {
         this.app.stage.on('pointerupoutside', this.handleStackDragEnd)
         window.addEventListener('resize', this.handleResize)
         document.body.appendChild(this.app.canvas)
+    }
+
+    get canUndo(): boolean {
+        return this.actionHistory.canUndo
+    }
+
+    get canRedo(): boolean {
+        return this.actionHistory.canRedo
+    }
+
+    undo(): void {
+        if (this.dragHandler.isDragging || this.stackDragManager.isDragging) {
+            return
+        }
+        this.actionHistory.undo(this.cards, this.app.stage)
+        this.positionPersistence.saveFromStage(this.app.stage)
+        this.stacks = computeStacks(this.cards)
+    }
+
+    redo(): void {
+        if (this.dragHandler.isDragging || this.stackDragManager.isDragging) {
+            return
+        }
+        this.actionHistory.redo(this.cards, this.app.stage)
+        this.positionPersistence.saveFromStage(this.app.stage)
+        this.stacks = computeStacks(this.cards)
     }
 
     private handlePointerMove: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void => {
@@ -123,6 +162,7 @@ export class CanvasController {
     }
 
     resetPositions(): void {
+        this.actionHistory.clear()
         this.positionPersistence.clear()
         const targets: AnimationTarget[] = this.cardManager.shuffleAndBuildTargets(this.cards)
         this.animateToCenter(targets, 20)

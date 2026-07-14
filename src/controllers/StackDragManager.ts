@@ -3,6 +3,7 @@ import { Card } from '../types/card.types'
 import { Position } from '../types/position.types'
 import { StackOverlay } from './StackOverlay'
 import { findMergeTargets } from '../utils/stack'
+import { ActionHistory } from '../services/ActionHistory'
 
 /**
  * Manages the stack drag state machine: start, move, end.
@@ -12,6 +13,7 @@ export class StackDragManager {
     private app: Application
     private overlay: StackOverlay
     private getStacks: () => Card[][]
+    private actionHistory: ActionHistory
     private _isDragging: boolean
     private _dragTarget: Card[]
     private _sourceStack: Card[] | null
@@ -20,10 +22,16 @@ export class StackDragManager {
     private startMouse: Position
     private boundDragMove: (e: FederatedPointerEvent) => void
 
-    constructor(app: Application, overlay: StackOverlay, getStacks: () => Card[][]) {
+    constructor(
+        app: Application,
+        overlay: StackOverlay,
+        getStacks: () => Card[][],
+        actionHistory: ActionHistory,
+    ) {
         this.app = app
         this.overlay = overlay
         this.getStacks = getStacks
+        this.actionHistory = actionHistory
         this._isDragging = false
         this._dragTarget = []
         this._sourceStack = null
@@ -56,6 +64,7 @@ export class StackDragManager {
             (a: Card, b: Card): number =>
                 this.app.stage.children.indexOf(a) - this.app.stage.children.indexOf(b),
         )
+        this.actionHistory.captureBefore(this._dragTarget, this.app.stage)
         this.startMouse = { x: mousePos.x, y: mousePos.y }
         this.startPos = new Map()
         for (const card of this._dragTarget) {
@@ -69,6 +78,7 @@ export class StackDragManager {
         if (!this._isDragging) {
             return
         }
+        this.actionHistory.recordAfter(this._dragTarget, this.app.stage)
         this._isDragging = false
         this._dragTarget = []
         this._sourceStack = null

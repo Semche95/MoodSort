@@ -6,7 +6,8 @@ A visual emotion exploration tool. Load 85 emotion cards onto a full-screen canv
 
 - **Drag and drop** — freely move cards across the canvas
 - **Stacks** — overlapping cards form visual stacks with highlight, handle bar, and merge feedback
-- **Auto-persistence** — card positions are saved to `localStorage` and restored on the next visit
+- **Undo / redo** — undo and redo card movements via toolbar buttons or keyboard shortcuts (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, Ctrl/Cmd+Y), with history persisted across sessions
+- **Auto-persistence** — card positions and undo/redo history are saved to `localStorage` and restored on the next visit
 - **Responsive resizing** — cards are repositioned proportionally when the browser window is resized
 - **Animated reset** — cards travel back to the center with an ease-out cubic animation
 - **Onboarding** — a welcome guide explains the app to first-time users
@@ -54,28 +55,31 @@ src/
   style.css                  # Global styles
   cards/                     # 85 .webp images (one per emotion)
   controllers/
-    CanvasController.ts      # Orchestrator: init, reset, resize, event wiring
-    StackDragManager.ts      # Stack drag state machine + merge detection
+    CanvasController.ts      # Orchestrator: init, reset, resize, undo/redo, event wiring
+    StackDragManager.ts      # Stack drag state machine + merge detection + history capture
     StackOverlay.ts          # Graphics rendering: highlight, handle, merge indicators
     CardManager.ts           # Card creation, scaling, placement, order
     DragController.ts        # State machine for card drag and drop
-    DragHandler.ts           # Card drag callback chain + stage wiring
+    DragHandler.ts           # Card drag callback chain, stage wiring + history capture
     PositionPersistence.ts   # Read/write card positions via CardStateService
   types/
-    card.types.ts            # Card, CardState, AnimationTarget interfaces + storage keys
+    card.types.ts            # Card, CardState, AnimationTarget, CardActionEntry, HistoryData + storage keys
     drag.types.ts            # CardDragState interface
     position.types.ts        # Position {x, y} interface
   utils/
     card.ts                  # constrainPosition, createCard, findStack, computeBoundingBox
     stack.ts                 # computeStacks, findStackAtPoint, findMergeTargets
-    canvas.ts                # DOM helpers: overlay, header, toolbar, onboarding
+    canvas.ts                # DOM helpers: overlay, header, toolbar, onboarding, keyboard shortcuts
     constants.ts             # Constants (opacity, reference width, stack highlight dimensions)
   services/
     Store.ts                 # Generic localStorage wrapper + InMemoryStore
     CardStateService.ts      # CardState persistence (positions, order, onboarding)
+    ActionHistory.ts         # Undo/redo with before/after snapshots, 15-action limit, localStorage persistence
   ui/
     settings.ts              # Settings button and modal
     onboarding.ts            # Onboarding overlay and help button
+    undo.ts                  # Undo toolbar button
+    redo.ts                  # Redo toolbar button
   __tests__/                 # 32 tests covering cards, drag, canvas, store
 ```
 
@@ -104,9 +108,23 @@ The dragged cards and the `+` symbol are always rendered above the dark overlay.
 
 `DragController` manages a full lifecycle: reparenting to the stage, cursor tracking, viewport boundary clamping, and snap-back if the card was not moved. Opacity drops to 50% during drag. `DragHandler` wires the drag callbacks to the PixiJS stage.
 
-### Persistence
+### Persistence and History
 
 `Store` is a generic, app-agnostic `localStorage` wrapper. `CardStateService` uses it to persist `CardState` (positions, order, onboarding status) under a single key. `PositionPersistence` reads card positions from the stage and saves them. Storage keys (`POSITIONS_KEY`, `ORDER_KEY`, `ONBOARDING_KEY`) are typed constants defined in `card.types.ts`.
+
+### Undo / Redo
+
+`ActionHistory` captures before/after snapshots of card positions and z-indices at each drag cycle (one mousedown→mouseup = one action). It maintains an undo stack (max 15 entries) and a redo stack, both persisted to `localStorage` under `HISTORY_KEY`. Redo is cleared on any new action. Reset clears the entire history.
+
+Both `DragHandler` (single card drag) and `StackDragManager` (stack drag) call `captureBefore` and `recordAfter` to feed the history. `CanvasController` exposes `undo()`, `redo()`, `canUndo`, `canRedo`, and `setOnHistoryChange` for the UI layer.
+
+Toolbar buttons are created by `createUndoButton` and `createRedoButton` in `src/ui/`. Keyboard shortcuts are registered in `initToolbar`:
+
+| Shortcut | Action |
+|---|---|
+| Ctrl+Z / Cmd+Z | Undo |
+| Ctrl+Shift+Z / Cmd+Shift+Z | Redo |
+| Ctrl+Y / Cmd+Y | Redo |
 
 ### Reset Animation
 

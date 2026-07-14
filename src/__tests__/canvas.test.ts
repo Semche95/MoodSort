@@ -95,7 +95,7 @@ vi.mock('pixi.js', () => {
             y: number = 0
         },
         BlurFilter: class MockBlurFilter {
-            constructor(_options?: Record<string, unknown>) {}
+            constructor() {}
         },
         FederatedPointerEvent: class MockFederatedPointerEvent {
             constructor(type: string, options: Record<string, unknown>) {

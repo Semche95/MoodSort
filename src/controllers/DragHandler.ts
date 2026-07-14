@@ -1,5 +1,7 @@
 import { Application, FederatedPointerEvent } from 'pixi.js'
+import { Card } from '../types/card.types'
 import { DragController } from './DragController'
+import { ActionHistory } from '../services/ActionHistory'
 
 /**
  * Wires DragController to PixiJS stage events.
@@ -9,11 +11,20 @@ export class DragHandler {
     private dragController: DragController
     private app: Application
     private onDragEnd: () => void
+    private actionHistory: ActionHistory
+    private lastDraggedCard: Card | null
 
-    constructor(dragController: DragController, app: Application, onDragEnd: () => void) {
+    constructor(
+        dragController: DragController,
+        app: Application,
+        onDragEnd: () => void,
+        actionHistory: ActionHistory,
+    ) {
         this.dragController = dragController
         this.app = app
         this.onDragEnd = onDragEnd
+        this.actionHistory = actionHistory
+        this.lastDraggedCard = null
     }
 
     get isDragging(): boolean {
@@ -21,6 +32,9 @@ export class DragHandler {
     }
 
     handleDragStart: (event: FederatedPointerEvent) => void = (event: FederatedPointerEvent) => {
+        const card: Card = event.currentTarget as Card
+        this.lastDraggedCard = card
+        this.actionHistory.captureBefore([card], this.app.stage)
         this.dragController.handleDragStart(event, this.app.stage, this.handleDragMove)
     }
 
@@ -43,6 +57,10 @@ export class DragHandler {
             this.app.screen.width,
             this.app.screen.height,
         )
+        if (this.lastDraggedCard) {
+            this.actionHistory.recordAfter([this.lastDraggedCard], this.app.stage)
+            this.lastDraggedCard = null
+        }
         this.onDragEnd()
     }
 

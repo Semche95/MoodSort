@@ -10,6 +10,7 @@ export interface CardState {
 export const POSITIONS_KEY = 'positions' as const
 export const ORDER_KEY = 'order' as const
 export const ONBOARDING_KEY = 'onboardingDismissed' as const
+export const HISTORY_KEY = 'moodsort-history' as const
 
 export interface AnimationTarget {
     card: Card
@@ -17,6 +18,22 @@ export interface AnimationTarget {
     fromY: number
     toX: number
     toY: number
+}
+
+export interface CardActionEntry {
+    cards: Record<string, {
+        fromX: number
+        fromY: number
+        fromIndex: number
+        toX: number
+        toY: number
+        toIndex: number
+    }>
+}
+
+export interface HistoryData {
+    undoStack: CardActionEntry[]
+    redoStack: CardActionEntry[]
 }
 
 /**

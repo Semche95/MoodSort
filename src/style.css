@@ -176,8 +176,31 @@ body {
 }
 
 .help-button:hover,
-.settings-button:hover {
+.settings-button:hover,
+.history-button:hover:not(:disabled) {
     background: #fff;
+}
+
+/* History buttons */
+.history-button {
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    color: #333;
+    font-size: 1.8rem;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.history-button:disabled {
+    opacity: 0.35;
+    cursor: default;
 }
 
 /* Settings modal */
