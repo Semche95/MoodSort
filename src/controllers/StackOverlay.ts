@@ -23,9 +23,7 @@ export class StackOverlay {
     }
 
     initHandle(onPointerDown: (e: FederatedPointerEvent) => void): void {
-        this.stackBorder.eventMode = 'static'
-        this.stackBorder.cursor = 'grab'
-        this.stackBorder.on('pointerdown', onPointerDown)
+        this.stackBorder.eventMode = 'passive'
         this.stackDragHandle.eventMode = 'static'
         this.stackDragHandle.cursor = 'grab'
         this.stackDragHandle.on('pointerdown', onPointerDown)
