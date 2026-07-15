@@ -1,23 +1,23 @@
 import { CanvasController } from '../controllers/CanvasController'
 import { POSITIONS_KEY, ORDER_KEY, ONBOARDING_KEY } from '../types/card.types'
 import { CardStateService } from '../services/CardStateService'
-import { IStore, Store } from '../services/Store'
+import { Store } from '../services/Store'
 import { createOnboarding, createHelpButton } from '../ui/onboarding'
 import { createSettingsButton, createSettingsModal } from '../ui/settings'
 import { createUndoButton } from '../ui/undo'
 import { createRedoButton } from '../ui/redo'
 
 export function createLoadingOverlay(): HTMLDivElement {
-    const overlay: HTMLDivElement = document.createElement('div')
+    const overlay = document.createElement('div')
     overlay.className = 'loading-overlay'
 
-    const content: HTMLDivElement = document.createElement('div')
+    const content = document.createElement('div')
     content.className = 'loading-content'
 
-    const spinner: HTMLDivElement = document.createElement('div')
+    const spinner = document.createElement('div')
     spinner.className = 'loading-spinner'
 
-    const text: HTMLDivElement = document.createElement('div')
+    const text = document.createElement('div')
     text.textContent = 'Chargement…'
 
     content.appendChild(spinner)
@@ -35,21 +35,21 @@ export function createLoadingOverlay(): HTMLDivElement {
  * @throws Error if no images are provided
  */
 export async function setupCanvas(images: string[], store: CardStateService): Promise<{ controller: CanvasController }> {
-    const historyStore: IStore = new Store()
-    const controller: CanvasController = new CanvasController(store, historyStore)
+    const historyStore = new Store()
+    const controller = new CanvasController(store, historyStore)
     await controller.init(images)
     return { controller }
 }
 
 export function createHeader(): void {
-    const header: HTMLDivElement = document.createElement('div')
+    const header = document.createElement('div')
     header.className = 'app-header'
 
-    const logo: HTMLSpanElement = document.createElement('span')
+    const logo = document.createElement('span')
     logo.className = 'app-header-logo'
     logo.textContent = '🎭'
 
-    const title: HTMLSpanElement = document.createElement('span')
+    const title = document.createElement('span')
     title.className = 'app-header-title'
     title.textContent = 'MoodSort'
 
@@ -71,8 +71,8 @@ export function dismissOnboarding(store: CardStateService): void {
 }
 
 export function initOnboarding(store: CardStateService): void {
-    const showOnboarding: () => void = (): void => {
-        const existing: Element | null = document.querySelector('.onboarding-overlay')
+    const showOnboarding = (): void => {
+        const existing = document.querySelector('.onboarding-overlay')
         if (existing) return
         document.body.appendChild(createOnboarding((): void => { dismissOnboarding(store) }))
     }
@@ -83,7 +83,7 @@ export function initOnboarding(store: CardStateService): void {
 }
 
 export function initHistoryShortcuts(doUndo: () => void, doRedo: () => void): void {
-    const mod: (e: KeyboardEvent) => boolean = (e: KeyboardEvent): boolean => e.ctrlKey || e.metaKey
+    const mod = (e: KeyboardEvent): boolean => e.ctrlKey || e.metaKey
 
     window.addEventListener('keydown', (e: KeyboardEvent): void => {
         if (!mod(e)) return
@@ -101,14 +101,14 @@ export function initHistoryShortcuts(doUndo: () => void, doRedo: () => void): vo
 }
 
 export function initToolbar(controller: CanvasController, store: CardStateService): void {
-    const showOnboarding: () => void = (): void => {
-        const existing: Element | null = document.querySelector('.onboarding-overlay')
+    const showOnboarding = (): void => {
+        const existing = document.querySelector('.onboarding-overlay')
         if (existing) return
         document.body.appendChild(createOnboarding((): void => { dismissOnboarding(store) }))
     }
 
-    const openSettings: () => void = (): void => {
-        const existing: Element | null = document.querySelector('.settings-overlay')
+    const openSettings = (): void => {
+        const existing = document.querySelector('.settings-overlay')
         if (existing) return
         document.body.appendChild(createSettingsModal({
             onResetPositions: (): void => {
@@ -118,21 +118,20 @@ export function initToolbar(controller: CanvasController, store: CardStateServic
         }))
     }
 
-    const doUndo: () => void = (): void => {
+    const doUndo = (): void => {
         controller.undo()
         updateUndoRedoButtons()
     }
 
-    const doRedo: () => void = (): void => {
+    const doRedo = (): void => {
         controller.redo()
         updateUndoRedoButtons()
     }
 
-    const { button: undoBtn, setEnabled: setUndoEnabled }: { button: HTMLButtonElement; setEnabled: (enabled: boolean) => void } = createUndoButton(doUndo)
+    const { button: undoBtn, setEnabled: setUndoEnabled } = createUndoButton(doUndo)
+    const { button: redoBtn, setEnabled: setRedoEnabled } = createRedoButton(doRedo)
 
-    const { button: redoBtn, setEnabled: setRedoEnabled }: { button: HTMLButtonElement; setEnabled: (enabled: boolean) => void } = createRedoButton(doRedo)
-
-    const updateUndoRedoButtons: () => void = (): void => {
+    const updateUndoRedoButtons = (): void => {
         setUndoEnabled(controller.canUndo)
         setRedoEnabled(controller.canRedo)
     }
@@ -143,7 +142,7 @@ export function initToolbar(controller: CanvasController, store: CardStateServic
 
     updateUndoRedoButtons()
 
-    const toolbar: HTMLDivElement = document.createElement('div')
+    const toolbar = document.createElement('div')
     toolbar.className = 'toolbar'
     toolbar.appendChild(undoBtn)
     toolbar.appendChild(redoBtn)

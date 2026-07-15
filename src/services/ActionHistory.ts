@@ -2,7 +2,7 @@ import { Container } from 'pixi.js'
 import { Card, CardActionEntry, HistoryData, HISTORY_KEY } from '../types/card.types'
 import { IStore } from './Store'
 
-const MAX_HISTORY: number = 15
+const MAX_HISTORY = 15
 
 /**
  * Manages undo/redo history for card actions.
@@ -19,7 +19,7 @@ export class ActionHistory {
         this.store = store
         this.onUpdate = onUpdate
         this.beforeSnapshot = null
-        const saved: HistoryData | null = this.store.load<HistoryData>(HISTORY_KEY)
+        const saved = this.store.load<HistoryData>(HISTORY_KEY)
         this.undoStack = saved?.undoStack ?? []
         this.redoStack = saved?.redoStack ?? []
     }
@@ -48,16 +48,16 @@ export class ActionHistory {
             return
         }
         const entry: CardActionEntry = { cards: {} }
-        let changed: boolean = false
+        let changed = false
 
         for (const card of cards) {
             const before = this.beforeSnapshot.get(card)
             if (!before) {
                 continue
             }
-            const toIndex: number = stage.children.indexOf(card)
-            const toX: number = card.x
-            const toY: number = card.y
+            const toIndex = stage.children.indexOf(card)
+            const toX = card.x
+            const toY = card.y
 
             if (before.x !== toX || before.y !== toY || before.index !== toIndex) {
                 changed = true
@@ -89,7 +89,7 @@ export class ActionHistory {
     }
 
     undo(allCards: Card[], stage: Container): void {
-        const entry: CardActionEntry | undefined = this.undoStack.pop()
+        const entry = this.undoStack.pop()
         if (!entry) {
             return
         }
@@ -100,7 +100,7 @@ export class ActionHistory {
     }
 
     redo(allCards: Card[], stage: Container): void {
-        const entry: CardActionEntry | undefined = this.redoStack.pop()
+        const entry = this.redoStack.pop()
         if (!entry) {
             return
         }
@@ -127,15 +127,15 @@ export class ActionHistory {
         const affected: Array<{ card: Card; index: number }> = []
 
         for (const [imageUrl, data] of Object.entries(entry.cards)) {
-            const card: Card | undefined = allCards.find(
+            const card = allCards.find(
                 (c: Card): boolean => c.imageUrl === imageUrl,
             )
             if (!card) {
                 continue
             }
-            const index: number = reverse ? data.fromIndex : data.toIndex
-            const x: number = reverse ? data.fromX : data.toX
-            const y: number = reverse ? data.fromY : data.toY
+            const index = reverse ? data.fromIndex : data.toIndex
+            const x = reverse ? data.fromX : data.toX
+            const y = reverse ? data.fromY : data.toY
 
             card.x = x
             card.y = y
@@ -166,7 +166,7 @@ function restoreCardZIndices(
     }
 
     for (const { card, index } of entries) {
-        const insertAt: number = Math.min(index, stage.children.length)
+        const insertAt = Math.min(index, stage.children.length)
         stage.addChildAt(card, insertAt)
     }
 }

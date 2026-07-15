@@ -1,5 +1,5 @@
 export function createUndoButton(onClick: () => void): { button: HTMLButtonElement; setEnabled: (enabled: boolean) => void } {
-    const btn: HTMLButtonElement = document.createElement('button')
+    const btn = document.createElement('button')
     btn.className = 'history-button'
     btn.innerHTML = '&#8630;'
     btn.title = 'Annuler'

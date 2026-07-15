@@ -32,7 +32,7 @@ export class DragHandler {
     }
 
     handleDragStart: (event: FederatedPointerEvent) => void = (event: FederatedPointerEvent) => {
-        const card: Card = event.currentTarget as Card
+        const card = event.currentTarget as Card
         this.lastDraggedCard = card
         this.actionHistory.captureBefore([card], this.app.stage)
         this.dragController.handleDragStart(event, this.app.stage, this.handleDragMove)

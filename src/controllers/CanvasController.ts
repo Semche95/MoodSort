@@ -1,5 +1,5 @@
 import { Application, FederatedPointerEvent } from 'pixi.js'
-import { AnimationTarget, Card, CardState } from '../types/card.types'
+import { AnimationTarget, Card } from '../types/card.types'
 import { Position } from '../types/position.types'
 import { CardManager } from './CardManager'
 import { DragHandler } from './DragHandler'
@@ -66,8 +66,8 @@ export class CanvasController {
         })
         this.app.renderer.resize(window.innerWidth, window.innerHeight)
 
-        const saved: CardState = this.positionPersistence.load()
-        const ordered: string[] = this.cardManager.resolveOrder(images, saved)
+        const saved = this.positionPersistence.load()
+        const ordered = this.cardManager.resolveOrder(images, saved)
         this.positionPersistence.save({
             positions: saved.positions,
             order: ordered,
@@ -122,7 +122,7 @@ export class CanvasController {
             return
         }
         const point: Position = { x: e.global.x, y: e.global.y }
-        const stack: Card[] | null = findStackAtPoint(this.stacks, point)
+        const stack = findStackAtPoint(this.stacks, point)
         if (stack) {
             this.overlay.showHighlight(stack)
             return
@@ -141,7 +141,7 @@ export class CanvasController {
             return
         }
         const point: Position = { x: e.global.x, y: e.global.y }
-        const stack: Card[] | null = findStackAtPoint(this.stacks, point)
+        const stack = findStackAtPoint(this.stacks, point)
         if (!stack) {
             return
         }
@@ -164,17 +164,17 @@ export class CanvasController {
     resetPositions(): void {
         this.actionHistory.clear()
         this.positionPersistence.clear()
-        const targets: AnimationTarget[] = this.cardManager.shuffleAndBuildTargets(this.cards)
+        const targets = this.cardManager.shuffleAndBuildTargets(this.cards)
         this.animateToCenter(targets, 20)
     }
 
     private animateToCenter(targets: AnimationTarget[], duration: number): void {
-        let elapsed: number = 0
-        const tick: () => void = (): void => {
+        let elapsed = 0
+        const tick = (): void => {
             elapsed++
             for (const t of targets) {
-                const progress: number = Math.min(elapsed / duration, 1)
-                const ease: number = 1 - Math.pow(1 - progress, 3)
+                const progress = Math.min(elapsed / duration, 1)
+                const ease = 1 - Math.pow(1 - progress, 3)
                 t.card.x = t.fromX + (t.toX - t.fromX) * ease
                 t.card.y = t.fromY + (t.toY - t.fromY) * ease
             }
@@ -188,15 +188,15 @@ export class CanvasController {
     }
 
     private handleResize: () => void = (): void => {
-        const oldWidth: number = this.app.screen.width
-        const oldHeight: number = this.app.screen.height
+        const oldWidth = this.app.screen.width
+        const oldHeight = this.app.screen.height
 
         this.app.renderer.resize(window.innerWidth, window.innerHeight)
 
-        const newWidth: number = this.app.screen.width
-        const newHeight: number = this.app.screen.height
-        const ratioX: number = newWidth / oldWidth
-        const ratioY: number = newHeight / oldHeight
+        const newWidth = this.app.screen.width
+        const newHeight = this.app.screen.height
+        const ratioX = newWidth / oldWidth
+        const ratioY = newHeight / oldHeight
 
         for (const card of this.cards) {
             this.cardManager.repositionForResize(card, ratioX, ratioY, newWidth, newHeight)

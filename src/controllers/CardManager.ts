@@ -16,7 +16,7 @@ export class CardManager {
 
     resolveOrder(images: string[], saved: CardState): string[] {
         if (saved.order.length === images.length) {
-            const filtered: string[] = saved.order.filter((url: string): boolean => images.includes(url))
+            const filtered = saved.order.filter((url: string): boolean => images.includes(url))
             if (filtered.length === images.length) {
                 return filtered
             }
@@ -30,8 +30,8 @@ export class CardManager {
         onDragStart: (event: FederatedPointerEvent) => void,
     ): Promise<Card[]> {
         const cards: Card[] = []
-        for (let i: number = 0; i < images.length; i++) {
-            const card: Card = await createCard(images[i], onDragStart)
+        for (let i = 0; i < images.length; i++) {
+            const card = await createCard(images[i], onDragStart)
             this.applyScale(card)
             cards.push(card)
             this.placeCard(card, positions[images[i]])
@@ -41,7 +41,7 @@ export class CardManager {
     }
 
     applyScale(card: Card): void {
-        const cardScale: number = this.app.screen.width / CARD_REFERENCE_WIDTH
+        const cardScale = this.app.screen.width / CARD_REFERENCE_WIDTH
         card.scale.set(cardScale)
     }
 
@@ -50,9 +50,9 @@ export class CardManager {
             card.x = savedPos.x
             card.y = savedPos.y
         } else {
-            const centerX: number = (this.app.screen.width - card.width) / 2
-            const centerY: number = (this.app.screen.height - card.height) / 2
-            const jitter: number = 25
+            const centerX = (this.app.screen.width - card.width) / 2
+            const centerY = (this.app.screen.height - card.height) / 2
+            const jitter = 25
             card.x = centerX + (Math.random() * 2 - 1) * jitter
             card.y = centerY + (Math.random() * 2 - 1) * jitter
         }
@@ -62,23 +62,23 @@ export class CardManager {
         this.applyScale(card)
         card.x = card.x * ratioX
         card.y = card.y * ratioY
-        const constrained: Position = constrainPosition(card.x, card.y, card.width, card.height, newWidth, newHeight)
+        const constrained = constrainPosition(card.x, card.y, card.width, card.height, newWidth, newHeight)
         card.x = constrained.x
         card.y = constrained.y
     }
 
     shuffleAndBuildTargets(cards: Card[]): AnimationTarget[] {
         const targets: AnimationTarget[] = []
-        for (let i: number = 0; i < cards.length; i++) {
-            const j: number = Math.floor(Math.random() * (cards.length - i)) + i;
+        for (let i = 0; i < cards.length; i++) {
+            const j = Math.floor(Math.random() * (cards.length - i)) + i;
             [cards[i], cards[j]] = [cards[j], cards[i]]
             this.app.stage.addChild(cards[i])
 
-            const card: Card = cards[i]
+            const card = cards[i]
             this.applyScale(card)
-            const centerX: number = (this.app.screen.width - card.width) / 2
-            const centerY: number = (this.app.screen.height - card.height) / 2
-            const jitter: number = 25
+            const centerX = (this.app.screen.width - card.width) / 2
+            const centerY = (this.app.screen.height - card.height) / 2
+            const jitter = 25
             targets.push({
                 card,
                 fromX: card.x,
@@ -91,9 +91,9 @@ export class CardManager {
     }
 
     shuffleImages(images: string[]): string[] {
-        const shuffled: string[] = [...images]
-        for (let i: number = shuffled.length - 1; i > 0; i--) {
-            const j: number = Math.floor(Math.random() * (i + 1));
+        const shuffled = [...images]
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
             [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
         }
         return shuffled

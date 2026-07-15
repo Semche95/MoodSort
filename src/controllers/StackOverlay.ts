@@ -87,20 +87,20 @@ export class StackOverlay {
 
     private drawHighlight(stack: Card[]): void {
         const box = computeBoundingBox(stack)
-        const pad: number = STACK_HIGHLIGHT_PADDING
-        const bx: number = box.x - pad
-        const by: number = box.y - pad
-        const bw: number = box.width + pad * 2
-        const bh: number = box.height + pad * 2
+        const pad = STACK_HIGHLIGHT_PADDING
+        const bx = box.x - pad
+        const by = box.y - pad
+        const bw = box.width + pad * 2
+        const bh = box.height + pad * 2
 
         this.stackBorder.rect(bx, by, bw, bh)
         this.stackBorder.fill({ color: 0x000000, alpha: 0.001 })
         this.stackBorder.rect(bx, by, bw, bh)
         this.stackBorder.stroke({ color: 0x333333, width: 2, alpha: 0.6 })
 
-        const handleWidth: number = Math.min(bw, 80)
-        const hx: number = bx + (bw - handleWidth) / 2
-        const hy: number = by - STACK_HANDLE_HEIGHT / 2
+        const handleWidth = Math.min(bw, 80)
+        const hx = bx + (bw - handleWidth) / 2
+        const hy = by - STACK_HANDLE_HEIGHT / 2
 
         this.stackDragHandle.roundRect(hx, hy, handleWidth, STACK_HANDLE_HEIGHT, 6)
         this.stackDragHandle.fill({ color: 0x444444, alpha: 0.75 })
@@ -108,11 +108,11 @@ export class StackOverlay {
     }
 
     private drawGripIcon(hx: number, hy: number, handleWidth: number): void {
-        const cx: number = hx + handleWidth / 2
-        const cy: number = hy + STACK_HANDLE_HEIGHT / 2
-        const lineHalfWidth: number = 10
-        const spacing: number = 4
-        for (let i: number = -1; i <= 1; i++) {
+        const cx = hx + handleWidth / 2
+        const cy = hy + STACK_HANDLE_HEIGHT / 2
+        const lineHalfWidth = 10
+        const spacing = 4
+        for (let i = -1; i <= 1; i++) {
             this.stackDragHandle.rect(cx - lineHalfWidth, cy + i * spacing - 1, lineHalfWidth * 2, 2)
             this.stackDragHandle.fill({ color: 0xaaaaaa, alpha: 0.9 })
         }
@@ -120,10 +120,10 @@ export class StackOverlay {
 
     private drawMergeTargetBorder(stack: Card[]): void {
         const box = computeBoundingBox(stack)
-        const bx: number = box.x - STACK_HIGHLIGHT_PADDING
-        const by: number = box.y - STACK_HIGHLIGHT_PADDING
-        const bw: number = box.width + STACK_HIGHLIGHT_PADDING * 2
-        const bh: number = box.height + STACK_HIGHLIGHT_PADDING * 2
+        const bx = box.x - STACK_HIGHLIGHT_PADDING
+        const by = box.y - STACK_HIGHLIGHT_PADDING
+        const bw = box.width + STACK_HIGHLIGHT_PADDING * 2
+        const bh = box.height + STACK_HIGHLIGHT_PADDING * 2
 
         this.mergeIndicator.rect(bx, by, bw, bh)
         this.mergeIndicator.fill({ color: 0x000000, alpha: 0.001 })
@@ -133,20 +133,20 @@ export class StackOverlay {
 
     private drawMergeDim(stack: Card[]): void {
         const box = computeBoundingBox(stack)
-        const bx: number = box.x - STACK_HIGHLIGHT_PADDING
-        const by: number = box.y - STACK_HIGHLIGHT_PADDING
-        const bw: number = box.width + STACK_HIGHLIGHT_PADDING * 2
-        const bh: number = box.height + STACK_HIGHLIGHT_PADDING * 2
+        const bx = box.x - STACK_HIGHLIGHT_PADDING
+        const by = box.y - STACK_HIGHLIGHT_PADDING
+        const bw = box.width + STACK_HIGHLIGHT_PADDING * 2
+        const bh = box.height + STACK_HIGHLIGHT_PADDING * 2
         this.mergeIndicator.rect(bx, by, bw, bh)
         this.mergeIndicator.fill({ color: 0x000000, alpha: 0.15 })
     }
 
     private drawMergePlus(stack: Card[]): void {
         const box = computeBoundingBox(stack)
-        const cx: number = box.x + box.width / 2
-        const cy: number = box.y + box.height / 2
-        const arm: number = 20
-        const thickness: number = 5
+        const cx = box.x + box.width / 2
+        const cy = box.y + box.height / 2
+        const arm = 20
+        const thickness = 5
         this.mergePlus.rect(cx - arm, cy - thickness / 2, arm * 2, thickness)
         this.mergePlus.fill({ color: 0x333333, alpha: 0.7 })
         this.mergePlus.rect(cx - thickness / 2, cy - arm, thickness, arm * 2)

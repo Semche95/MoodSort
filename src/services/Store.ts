@@ -21,7 +21,7 @@ export class Store implements IStore {
 
     load<T>(key: string): T | null {
         try {
-            const raw: string | null = localStorage.getItem(key)
+            const raw = localStorage.getItem(key)
             if (raw) {
                 const parsed: unknown = JSON.parse(raw)
                 if (parsed !== null) {

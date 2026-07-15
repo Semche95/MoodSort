@@ -15,10 +15,10 @@
     "@typescript-eslint/typedef": [
       "error",
       {
-        "arrayDestructuring": true,
+        "arrayDestructuring": false,
         "arrowParameter": true,
         "memberVariableDeclaration": true,
-        "objectDestructuring": true,
+        "objectDestructuring": false,
         "parameter": true,
         "propertyDeclaration": true,
         "variableDeclaration": false,

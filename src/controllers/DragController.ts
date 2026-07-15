@@ -27,7 +27,7 @@ export class DragController {
         stage: Container,
         onDragMove: (event: FederatedPointerEvent) => void,
     ): void {
-        const target: Card = event.currentTarget as Card
+        const target = event.currentTarget as Card
         target.alpha = DRAGGING_OPACITY
         this.dragState.dragTarget = target
         this.dragState.cardMoved = false
@@ -41,7 +41,7 @@ export class DragController {
         this.dragState.dragOffset.x = globalPosition.x - event.global.x
         this.dragState.dragOffset.y = globalPosition.y - event.global.y
 
-        const parent: Container | null = target.parent
+        const parent = target.parent
         if (parent) {
             parent.removeChild(target)
         }
@@ -63,10 +63,10 @@ export class DragController {
 
         this.dragState.cardMoved = true
 
-        const newGlobalX: number = event.global.x + this.dragState.dragOffset.x
-        const newGlobalY: number = event.global.y + this.dragState.dragOffset.y
+        const newGlobalX = event.global.x + this.dragState.dragOffset.x
+        const newGlobalY = event.global.y + this.dragState.dragOffset.y
 
-        const constrained: Position = constrainPosition(
+        const constrained = constrainPosition(
             newGlobalX,
             newGlobalY,
             this.dragState.dragTarget.width,
@@ -90,11 +90,11 @@ export class DragController {
 
         stage.off('pointermove', onDragMove)
 
-        const card: Card = this.dragState.dragTarget
+        const card = this.dragState.dragTarget
         card.alpha = DEFAULT_OPACITY
 
         if (!this.dragState.cardMoved) {
-            const currentParent: Container | null = card.parent
+            const currentParent = card.parent
             if (currentParent) {
                 currentParent.removeChild(card)
             }
@@ -107,7 +107,7 @@ export class DragController {
             card.y = this.dragState.originalPosition.y
         }
 
-        const constrained: Position = constrainPosition(
+        const constrained = constrainPosition(
             card.x,
             card.y,
             card.width,

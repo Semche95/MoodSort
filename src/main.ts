@@ -1,21 +1,20 @@
 import './style.css'
 import { createLoadingOverlay, createHeader, setupCanvas, initOnboarding, initToolbar } from './utils/canvas'
-import { CanvasController } from './controllers/CanvasController'
 import { CardStateService } from './services/CardStateService'
 
 (async (): Promise<void> => {
-    const overlay: HTMLDivElement = createLoadingOverlay()
+    const overlay = createLoadingOverlay()
     document.body.appendChild(overlay)
 
-    const cardStateService: CardStateService = new CardStateService()
+    const cardStateService = new CardStateService()
 
-    const images: string[] = Object.values(import.meta.glob<string>('./cards/*.webp', {
+    const images = Object.values(import.meta.glob<string>('./cards/*.webp', {
         query: '?url',
         import: 'default',
         eager: true,
     }))
 
-    const { controller }: { controller: CanvasController } = await setupCanvas(images, cardStateService)
+    const { controller } = await setupCanvas(images, cardStateService)
 
     if (overlay.parentElement) {
         overlay.parentElement.removeChild(overlay)

@@ -1,4 +1,4 @@
-import { Assets, BlurFilter, Container, Graphics, Sprite, Texture, FederatedPointerEvent } from 'pixi.js'
+import { Assets, BlurFilter, Container, Graphics, Sprite, FederatedPointerEvent } from 'pixi.js'
 import { Card } from '../types/card.types'
 import { Position } from '../types/position.types'
 
@@ -13,10 +13,10 @@ function cardsOverlap(a: Card, b: Card): boolean {
 
 export function findStack(card: Card, allCards: Card[]): Card[] {
     const stack: Card[] = []
-    const visited: Set<Card> = new Set()
-    const queue: Card[] = [card]
+    const visited = new Set<Card>()
+    const queue = [card]
     while (queue.length > 0) {
-        const current: Card = queue.shift()!
+        const current = queue.shift()!
         if (visited.has(current)) continue
         visited.add(current)
         stack.push(current)
@@ -30,10 +30,10 @@ export function findStack(card: Card, allCards: Card[]): Card[] {
 }
 
 export function computeBoundingBox(cards: Card[]): { x: number; y: number; width: number; height: number } {
-    let minX: number = Infinity
-    let minY: number = Infinity
-    let maxX: number = -Infinity
-    let maxY: number = -Infinity
+    let minX = Infinity
+    let minY = Infinity
+    let maxX = -Infinity
+    let maxY = -Infinity
     for (const card of cards) {
         minX = Math.min(minX, card.x)
         minY = Math.min(minY, card.y)
@@ -61,10 +61,10 @@ export function constrainPosition(
     appWidth: number,
     appHeight: number,
 ): Position {
-    const minX: number = 0
-    const minY: number = 0
-    const maxX: number = appWidth - width
-    const maxY: number = appHeight - height
+    const minX = 0
+    const minY = 0
+    const maxX = appWidth - width
+    const maxY = appHeight - height
 
     return {
         x: Math.max(minX, Math.min(x, maxX)),
@@ -82,12 +82,12 @@ export async function createCard(
     image: string,
     onDragStart: (event: FederatedPointerEvent) => void,
 ): Promise<Card> {
-    const texture: Texture = await Assets.load(image)
+    const texture = await Assets.load(image)
 
-    const card: Card = new Container() as Card
+    const card = new Container() as Card
     card.imageUrl = image
 
-    const shadow: Graphics = new Graphics()
+    const shadow = new Graphics()
     shadow.roundRect(0, 0, texture.width, texture.height, 8)
     shadow.fill({ color: 0x000000, alpha: 0.25 })
     shadow.filters = [new BlurFilter({ strength: 4 })]
@@ -95,7 +95,7 @@ export async function createCard(
     shadow.y = 4
     card.addChild(shadow)
 
-    const sprite: Sprite = new Sprite(texture)
+    const sprite = new Sprite(texture)
     card.addChild(sprite)
     card.innerSprite = sprite
 

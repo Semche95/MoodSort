@@ -1,5 +1,5 @@
 export function createRedoButton(onClick: () => void): { button: HTMLButtonElement; setEnabled: (enabled: boolean) => void } {
-    const btn: HTMLButtonElement = document.createElement('button')
+    const btn = document.createElement('button')
     btn.className = 'history-button'
     btn.innerHTML = '&#8631;'
     btn.title = 'Refaire'

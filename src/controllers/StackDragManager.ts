@@ -92,10 +92,10 @@ export class StackDragManager {
         if (!this._isDragging) {
             return
         }
-        const dx: number = e.global.x - this.startMouse.x
-        const dy: number = e.global.y - this.startMouse.y
+        const dx = e.global.x - this.startMouse.x
+        const dy = e.global.y - this.startMouse.y
         for (const card of this._dragTarget) {
-            const start: Position = this.startPos.get(card)!
+            const start = this.startPos.get(card)!
             card.x = start.x + dx
             card.y = start.y + dy
         }

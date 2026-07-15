@@ -1,5 +1,5 @@
 export function createOnboarding(onDismiss: () => void): HTMLDivElement {
-    const overlay: HTMLDivElement = document.createElement('div')
+    const overlay = document.createElement('div')
     overlay.className = 'onboarding-overlay'
 
     overlay.innerHTML = `
@@ -26,7 +26,7 @@ export function createOnboarding(onDismiss: () => void): HTMLDivElement {
         </div>
     `
 
-    const btn: HTMLButtonElement = overlay.querySelector<HTMLButtonElement>('.onboarding-dismiss')!
+    const btn = overlay.querySelector<HTMLButtonElement>('.onboarding-dismiss')!
     btn.addEventListener('click', (): void => {
         onDismiss()
         overlay.remove()
@@ -36,7 +36,7 @@ export function createOnboarding(onDismiss: () => void): HTMLDivElement {
 }
 
 export function createHelpButton(onClick: () => void): HTMLButtonElement {
-    const btn: HTMLButtonElement = document.createElement('button')
+    const btn = document.createElement('button')
     btn.className = 'help-button'
     btn.textContent = '?'
     btn.title = 'Afficher l\'aide'

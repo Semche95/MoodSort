@@ -1,5 +1,5 @@
 export function createSettingsButton(onClick: () => void): HTMLButtonElement {
-    const btn: HTMLButtonElement = document.createElement('button')
+    const btn = document.createElement('button')
     btn.className = 'settings-button'
     btn.innerHTML = '&#9881;'
     btn.title = 'Réglages'
@@ -10,10 +10,10 @@ export function createSettingsButton(onClick: () => void): HTMLButtonElement {
 export function createSettingsModal(options: {
     onResetPositions: () => void
 }): HTMLDivElement {
-    const overlay: HTMLDivElement = document.createElement('div')
+    const overlay = document.createElement('div')
     overlay.className = 'settings-overlay'
 
-    const modal: HTMLDivElement = document.createElement('div')
+    const modal = document.createElement('div')
     modal.className = 'settings-modal'
 
     modal.innerHTML = `
@@ -30,7 +30,7 @@ export function createSettingsModal(options: {
         </div>
     `
 
-    const closeBtn: HTMLButtonElement = modal.querySelector<HTMLButtonElement>('.settings-close')!
+    const closeBtn = modal.querySelector<HTMLButtonElement>('.settings-close')!
     closeBtn.addEventListener('click', (): void => {
         overlay.remove()
     })
@@ -41,7 +41,7 @@ export function createSettingsModal(options: {
         }
     })
 
-    const resetBtn: HTMLButtonElement = modal.querySelector<HTMLButtonElement>('.settings-reset-positions')!
+    const resetBtn = modal.querySelector<HTMLButtonElement>('.settings-reset-positions')!
     resetBtn.addEventListener('click', (): void => {
         showConfirmation(modal, 'Réinitialiser les positions ?', 'Toutes les cartes reviendront au centre.', (): void => {
             options.onResetPositions()
@@ -59,7 +59,7 @@ function showConfirmation(
     message: string,
     onConfirm: () => void,
 ): void {
-    const confirm: HTMLDivElement = document.createElement('div')
+    const confirm = document.createElement('div')
     confirm.className = 'settings-confirm'
 
     confirm.innerHTML = `
@@ -71,12 +71,12 @@ function showConfirmation(
         </div>
     `
 
-    const cancelBtn: HTMLButtonElement = confirm.querySelector<HTMLButtonElement>('.settings-confirm-cancel')!
+    const cancelBtn = confirm.querySelector<HTMLButtonElement>('.settings-confirm-cancel')!
     cancelBtn.addEventListener('click', (): void => {
         confirm.remove()
     })
 
-    const okBtn: HTMLButtonElement = confirm.querySelector<HTMLButtonElement>('.settings-confirm-ok')!
+    const okBtn = confirm.querySelector<HTMLButtonElement>('.settings-confirm-ok')!
     okBtn.addEventListener('click', (): void => {
         confirm.remove()
         onConfirm()

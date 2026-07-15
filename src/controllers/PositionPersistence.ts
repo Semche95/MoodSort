@@ -21,7 +21,7 @@ export class PositionPersistence {
         const positions: Record<string, Position> = {}
         const order: string[] = []
         for (const child of stage.children) {
-            const card: Card = child as Card
+            const card = child as Card
             if (card.imageUrl) {
                 positions[card.imageUrl] = { x: card.x, y: card.y }
                 order.push(card.imageUrl)

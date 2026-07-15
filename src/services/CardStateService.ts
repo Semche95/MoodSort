@@ -21,7 +21,7 @@ export class CardStateService {
     }
 
     load<K extends keyof CardState>(key: K): CardState[K] {
-        const state: CardState = this.store.load<CardState>(STORAGE_KEY) ?? DEFAULTS
+        const state = this.store.load<CardState>(STORAGE_KEY) ?? DEFAULTS
         return state[key]
     }
 

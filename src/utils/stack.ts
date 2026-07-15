@@ -5,12 +5,12 @@ import { STACK_HIGHLIGHT_PADDING, STACK_HANDLE_HEIGHT } from './constants'
 
 export function computeStacks(cards: Card[]): Card[][] {
     const stacks: Card[][] = []
-    const assigned: Set<Card> = new Set()
+    const assigned = new Set<Card>()
     for (const card of cards) {
         if (assigned.has(card)) {
             continue
         }
-        const stack: Card[] = findStack(card, cards)
+        const stack = findStack(card, cards)
         stacks.push(stack)
         for (const c of stack) {
             assigned.add(c)
