@@ -6,6 +6,7 @@ import { createOnboarding, createHelpButton } from '../ui/onboarding'
 import { createSettingsButton, createSettingsModal } from '../ui/settings'
 import { createUndoButton } from '../ui/undo'
 import { createRedoButton } from '../ui/redo'
+import { createFooter } from '../ui/legal'
 import type { Spritesheet } from 'pixi.js'
 
 export function createLoadingOverlay(): HTMLDivElement {
@@ -57,6 +58,7 @@ export function createHeader(): void {
     header.appendChild(logo)
     header.appendChild(title)
     document.body.appendChild(header)
+    document.body.appendChild(createFooter())
 }
 
 export function isOnboardingDismissed(store: CardStateService): boolean {

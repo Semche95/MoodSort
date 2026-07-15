@@ -11,6 +11,7 @@ A visual emotion exploration tool. Load 85 emotion cards onto a full-screen canv
 - **Responsive resizing** — cards are repositioned proportionally when the browser window is resized
 - **Animated reset** — cards travel back to the center with an ease-out cubic animation
 - **Onboarding** — a welcome guide explains the app to first-time users
+- **Legal notices** — footer link opens a modal with mandatory French legal mentions (LCEN compliance)
 - **Privacy** — all data stays in your browser; nothing is sent or stored externally
 
 ## Tech Stack
@@ -89,6 +90,7 @@ src/
     onboarding.ts              # Onboarding overlay and help button
     undo.ts                    # Undo toolbar button
     redo.ts                    # Redo toolbar button
+    legal.ts                   # Footer link + legal notices modal (LCEN)
   __tests__/                   # 31 tests covering cards, drag, canvas, store
 ```
 
