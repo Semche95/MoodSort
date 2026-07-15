@@ -1,4 +1,4 @@
-import { Assets, BlurFilter, Container, Graphics, Sprite, FederatedPointerEvent } from 'pixi.js'
+import { BlurFilter, Container, Graphics, Sprite, FederatedPointerEvent, Texture } from 'pixi.js'
 import { Card } from '../types/card.types'
 import { Position } from '../types/position.types'
 
@@ -73,19 +73,19 @@ export function constrainPosition(
 }
 
 /**
- * Creates a card sprite from an image
- * @param image - Path to the image to load
+ * Creates a card from a frame name and pre-loaded texture.
+ * @param frameName - Atlas frame name (used as card identity)
+ * @param texture - Pre-loaded texture from the atlas spritesheet
  * @param onDragStart - The function to call when the card is dragged
- * @returns Promise that resolves with the created card
+ * @returns The created card
  */
-export async function createCard(
-    image: string,
+export function createCard(
+    frameName: string,
+    texture: Texture,
     onDragStart: (event: FederatedPointerEvent) => void,
-): Promise<Card> {
-    const texture = await Assets.load(image)
-
+): Card {
     const card = new Container() as Card
-    card.imageUrl = image
+    card.imageUrl = frameName
 
     const shadow = new Graphics()
     shadow.roundRect(0, 0, texture.width, texture.height, 8)

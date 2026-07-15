@@ -6,6 +6,7 @@ import { createOnboarding, createHelpButton } from '../ui/onboarding'
 import { createSettingsButton, createSettingsModal } from '../ui/settings'
 import { createUndoButton } from '../ui/undo'
 import { createRedoButton } from '../ui/redo'
+import type { Spritesheet } from 'pixi.js'
 
 export function createLoadingOverlay(): HTMLDivElement {
     const overlay = document.createElement('div')
@@ -34,10 +35,10 @@ export function createLoadingOverlay(): HTMLDivElement {
  * @returns Promise that resolves with the controller
  * @throws Error if no images are provided
  */
-export async function setupCanvas(images: string[], store: CardStateService): Promise<{ controller: CanvasController }> {
+export async function setupCanvas(frameNames: string[], spritesheet: Spritesheet, store: CardStateService): Promise<{ controller: CanvasController }> {
     const historyStore = new Store()
     const controller = new CanvasController(store, historyStore)
-    await controller.init(images)
+    await controller.init(frameNames, spritesheet)
     return { controller }
 }
 

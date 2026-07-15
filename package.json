@@ -4,8 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
+    "atlas": "node scripts/generate-atlas.mjs",
+    "dev": "node scripts/generate-atlas.mjs && vite",
+    "build": "node scripts/generate-atlas.mjs && tsc && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -19,6 +20,7 @@
     "@typescript-eslint/parser": "^7.3.1",
     "eslint": "^8.57.0",
     "jsdom": "^26.1.0",
+    "sharp": "^0.33.0",
     "typescript": "~5.7.2",
     "vite": "^6.1.0",
     "vitest": "^3.2.3"

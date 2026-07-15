@@ -1,4 +1,4 @@
-import { Application, FederatedPointerEvent } from 'pixi.js'
+import { Application, FederatedPointerEvent, Spritesheet } from 'pixi.js'
 import { AnimationTarget, Card, CardState } from '../types/card.types'
 import { Position } from '../types/position.types'
 import { constrainPosition, createCard } from '../utils/card'
@@ -24,17 +24,19 @@ export class CardManager {
         return this.shuffleImages(images)
     }
 
-    async loadCards(
-        images: string[],
+    loadCards(
+        frameNames: string[],
         positions: Record<string, Position>,
         onDragStart: (event: FederatedPointerEvent) => void,
-    ): Promise<Card[]> {
+        spritesheet: Spritesheet,
+    ): Card[] {
         const cards: Card[] = []
-        for (let i = 0; i < images.length; i++) {
-            const card = await createCard(images[i], onDragStart)
+        for (let i = 0; i < frameNames.length; i++) {
+            const texture = spritesheet.textures[frameNames[i]]
+            const card = createCard(frameNames[i], texture, onDragStart)
             this.applyScale(card)
             cards.push(card)
-            this.placeCard(card, positions[images[i]])
+            this.placeCard(card, positions[frameNames[i]])
             this.app.stage.addChild(card)
         }
         return cards

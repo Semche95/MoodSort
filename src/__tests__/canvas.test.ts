@@ -4,6 +4,21 @@ import { InMemoryStore } from '../services/Store'
 import { CardStateService } from '../services/CardStateService'
 
 import * as PIXI from 'pixi.js'
+import type { Spritesheet } from 'pixi.js'
+
+type MockSpritesheet = Pick<Spritesheet, 'textures' | 'parse'>
+
+const { mockTexture, mockSpritesheet } = vi.hoisted(() => {
+    const mockTexture = { width: 200, height: 300 }
+    const mockSpritesheet: MockSpritesheet = {
+        textures: {
+            'card-1': mockTexture as PIXI.Texture,
+            'card-2': mockTexture as PIXI.Texture,
+        },
+        parse: vi.fn().mockResolvedValue(undefined),
+    }
+    return { mockTexture, mockSpritesheet }
+})
 
 vi.mock('pixi.js', () => {
     const mockApp: Record<string, unknown> = {
@@ -30,6 +45,7 @@ vi.mock('pixi.js', () => {
 
     return {
         Application: vi.fn(() => mockApp),
+        Spritesheet: vi.fn(() => mockSpritesheet),
         Container: class MockContainer {
             children: unknown[] = []
             x: number = 0
@@ -54,9 +70,7 @@ vi.mock('pixi.js', () => {
             }
         },
         Assets: {
-            load: vi.fn().mockImplementation(() =>
-                Promise.resolve({ width: 200, height: 300 }),
-            ),
+            load: vi.fn().mockResolvedValue(mockTexture),
         },
         Sprite: class MockSprite {
             constructor(texture: Record<string, unknown>) {
@@ -116,22 +130,15 @@ beforeEach(() => {
 describe('Canvas Utilities', () => {
     describe('setupCanvas', () => {
         it('should create a PixiJS application', async () => {
-            const images: string[] = ['image1.png', 'image2.png']
-            await setupCanvas(images, new CardStateService(new InMemoryStore()))
+            const frameNames: string[] = ['card-1', 'card-2']
+            await setupCanvas(frameNames, mockSpritesheet as Spritesheet, new CardStateService(new InMemoryStore()))
 
             expect(PIXI.Application).toHaveBeenCalled()
         })
 
-        it('should load images and create cards', async () => {
-            const images: string[] = ['image1.png', 'image2.png']
-            await setupCanvas(images, new CardStateService(new InMemoryStore()))
-
-            expect(PIXI.Assets.load).toHaveBeenCalledTimes(images.length)
-        })
-
         it('should throw an error if no images are provided', async () => {
-            const images: string[] = []
-            await expect(setupCanvas(images, new CardStateService(new InMemoryStore()))).rejects.toThrow('No images found')
+            const frameNames: string[] = []
+            await expect(setupCanvas(frameNames, mockSpritesheet as Spritesheet, new CardStateService(new InMemoryStore()))).rejects.toThrow('No images found')
         })
     })
 })

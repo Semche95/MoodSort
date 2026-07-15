@@ -22,6 +22,7 @@ A visual emotion exploration tool. Load 85 emotion cards onto a full-screen canv
 | Vite ^6.1 | Dev server and production bundler |
 | Vitest ^3.2 | Test framework |
 | ESLint ^8.57 | Linting with strict TypeScript rules |
+| sharp ^0.33 | Atlas generation (devDependency) |
 
 Only runtime dependency: `pixi.js`.
 
@@ -36,10 +37,13 @@ The app runs at `http://localhost:5173`.
 
 ## Scripts
 
+The atlas (`src/assets/atlas.webp` + `atlas.json`) is generated automatically by `dev` and `build` from the individual card images in `src/cards/`. These generated files are git-ignored — a fresh clone will build them on first `pnpm dev` or `pnpm build`.
+
 | Command | Description |
 |---|---|
-| `pnpm dev` | Start dev server |
-| `pnpm build` | Type-check then build for production |
+| `pnpm atlas` | Regenerate the spritesheet atlas from `src/cards/` |
+| `pnpm dev` | Start dev server (auto-generates atlas) |
+| `pnpm build` | Type-check then build for production (auto-generates atlas) |
 | `pnpm preview` | Preview the production build |
 | `pnpm test` | Run tests |
 | `pnpm test:watch` | Run tests in watch mode |
@@ -50,44 +54,49 @@ The app runs at `http://localhost:5173`.
 ## Project Structure
 
 ```
+scripts/
+  generate-atlas.mjs           # Generates atlas.webp + atlas.json from src/cards/
 src/
-  main.ts                    # Entry point
-  style.css                  # Global styles
-  cards/                     # 85 .webp images (one per emotion)
+  main.ts                      # Entry point: loads atlas, wires UI
+  style.css                    # Global styles
+  cards/                       # 85 .webp images (one per emotion)
+  assets/
+    atlas.webp                 # Generated spritesheet (git-ignored)
+    atlas.json                 # Generated atlas manifest (git-ignored)
   controllers/
-    CanvasController.ts      # Orchestrator: init, reset, resize, undo/redo, event wiring
-    StackDragManager.ts      # Stack drag state machine + merge detection + history capture
-    StackOverlay.ts          # Graphics rendering: highlight, handle, merge indicators
-    CardManager.ts           # Card creation, scaling, placement, order
-    DragController.ts        # State machine for card drag and drop
-    DragHandler.ts           # Card drag callback chain, stage wiring + history capture
-    PositionPersistence.ts   # Read/write card positions via CardStateService
+    CanvasController.ts        # Orchestrator: init, reset, resize, undo/redo, event wiring
+    StackDragManager.ts        # Stack drag state machine + merge detection + history capture
+    StackOverlay.ts            # Graphics rendering: highlight, handle, merge indicators
+    CardManager.ts             # Card creation, scaling, placement, order
+    DragController.ts          # State machine for card drag and drop
+    DragHandler.ts             # Card drag callback chain, stage wiring + history capture
+    PositionPersistence.ts     # Read/write card positions + legacy URL→frame name migration
   types/
-    card.types.ts            # Card, CardState, AnimationTarget, CardActionEntry, HistoryData + storage keys
-    drag.types.ts            # CardDragState interface
-    position.types.ts        # Position {x, y} interface
+    card.types.ts              # Card, CardState, AnimationTarget, CardActionEntry, HistoryData + storage keys
+    drag.types.ts              # CardDragState interface
+    position.types.ts          # Position {x, y} interface
   utils/
-    card.ts                  # constrainPosition, createCard, findStack, computeBoundingBox
-    stack.ts                 # computeStacks, findStackAtPoint, findMergeTargets
-    canvas.ts                # DOM helpers: overlay, header, toolbar, onboarding, keyboard shortcuts
-    constants.ts             # Constants (opacity, reference width, stack highlight dimensions)
+    card.ts                    # constrainPosition, createCard, findStack, computeBoundingBox
+    stack.ts                   # computeStacks, findStackAtPoint, findMergeTargets
+    canvas.ts                  # DOM helpers: overlay, header, toolbar, onboarding, keyboard shortcuts
+    constants.ts               # Constants (opacity, reference width, stack highlight dimensions)
   services/
-    Store.ts                 # Generic localStorage wrapper + InMemoryStore
-    CardStateService.ts      # CardState persistence (positions, order, onboarding)
-    ActionHistory.ts         # Undo/redo with before/after snapshots, 15-action limit, localStorage persistence
+    Store.ts                   # Generic localStorage wrapper + InMemoryStore
+    CardStateService.ts        # CardState persistence (positions, order, onboarding)
+    ActionHistory.ts           # Undo/redo with before/after snapshots, 15-action limit, localStorage persistence
   ui/
-    settings.ts              # Settings button and modal
-    onboarding.ts            # Onboarding overlay and help button
-    undo.ts                  # Undo toolbar button
-    redo.ts                  # Redo toolbar button
-  __tests__/                 # 32 tests covering cards, drag, canvas, store
+    settings.ts                # Settings button and modal
+    onboarding.ts              # Onboarding overlay and help button
+    undo.ts                    # Undo toolbar button
+    redo.ts                    # Redo toolbar button
+  __tests__/                   # 31 tests covering cards, drag, canvas, store
 ```
 
 ## Architecture
 
 ### Cards
 
-Each `Card` is a PixiJS `Container` holding an image sprite and a drop-shadow layer (Graphics + BlurFilter). Cards scale proportionally based on a 2560 px reference width. `CardManager` owns all card creation, placement, and scaling logic.
+Each `Card` is a PixiJS `Container` holding an image sprite and a drop-shadow layer (Graphics + BlurFilter). Cards are created from a pre-built spritesheet atlas: `main.ts` loads `atlas.webp` + `atlas.json`, parses them into a `Spritesheet`, and passes frame names + textures to `CardManager`. `createCard` receives a frame name (used as identity key) and a `Texture` directly — no per-card asset loading at runtime. Cards scale proportionally based on a 2560 px reference width.
 
 ### Stacks
 
@@ -112,13 +121,15 @@ The dragged cards and the `+` symbol are always rendered above the dark overlay.
 
 `Store` is a generic, app-agnostic `localStorage` wrapper. `CardStateService` uses it to persist `CardState` (positions, order, onboarding status) under a single key. `PositionPersistence` reads card positions from the stage and saves them. Storage keys (`POSITIONS_KEY`, `ORDER_KEY`, `ONBOARDING_KEY`) are typed constants defined in `card.types.ts`.
 
+On first load after the atlas migration, `PositionPersistence.load()` automatically converts old Vite-hashed URL keys (e.g. `/assets/abandon-kDvhRWIr.webp`) to frame names (e.g. `abandon`) and re-saves the migrated data. If migration occurs, undo/redo history is cleared to avoid stale references.
+
 ### Undo / Redo
 
 `ActionHistory` captures before/after snapshots of card positions and z-indices at each drag cycle (one mousedown→mouseup = one action). It maintains an undo stack (max 15 entries) and a redo stack, both persisted to `localStorage` under `HISTORY_KEY`. Redo is cleared on any new action. Reset clears the entire history.
 
 Both `DragHandler` (single card drag) and `StackDragManager` (stack drag) call `captureBefore` and `recordAfter` to feed the history. `CanvasController` exposes `undo()`, `redo()`, `canUndo`, `canRedo`, and `setOnHistoryChange` for the UI layer.
 
-Toolbar buttons are created by `createUndoButton` and `createRedoButton` in `src/ui/`. Keyboard shortcuts are registered in `initToolbar`:
+Toolbar buttons are created by `createUndoButton` and `createRedoButton` in `src/ui/`. Keyboard shortcuts are registered in `initHistoryShortcuts` (wired from `initToolbar`):
 
 | Shortcut | Action |
 |---|---|

@@ -1,4 +1,4 @@
-import { Application, FederatedPointerEvent } from 'pixi.js'
+import { Application, FederatedPointerEvent, Spritesheet } from 'pixi.js'
 import { AnimationTarget, Card } from '../types/card.types'
 import { Position } from '../types/position.types'
 import { CardManager } from './CardManager'
@@ -55,8 +55,8 @@ export class CanvasController {
         this.onHistoryChange = callback
     }
 
-    async init(images: string[]): Promise<void> {
-        if (images.length === 0) {
+    async init(frameNames: string[], spritesheet: Spritesheet): Promise<void> {
+        if (frameNames.length === 0) {
             throw new Error('No images found')
         }
 
@@ -67,14 +67,17 @@ export class CanvasController {
         this.app.renderer.resize(window.innerWidth, window.innerHeight)
 
         const saved = this.positionPersistence.load()
-        const ordered = this.cardManager.resolveOrder(images, saved)
+        const ordered = this.cardManager.resolveOrder(frameNames, saved)
         this.positionPersistence.save({
             positions: saved.positions,
             order: ordered,
             onboardingDismissed: saved.onboardingDismissed,
         })
 
-        this.cards = await this.cardManager.loadCards(ordered, saved.positions, this.dragHandler.handleDragStart)
+        this.cards = this.cardManager.loadCards(ordered, saved.positions, this.dragHandler.handleDragStart, spritesheet)
+        if (this.positionPersistence.wasMigrated) {
+            this.actionHistory.clear()
+        }
         this.stacks = computeStacks(this.cards)
 
         this.overlay.addToStage()
