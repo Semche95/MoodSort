@@ -39,6 +39,9 @@ vi.mock('pixi.js', () => {
         renderer: {
             resize: vi.fn(),
         },
+        ticker: {
+            add: vi.fn(),
+        },
         init: vi.fn().mockResolvedValue({}),
         canvas: document.createElement('canvas'),
     }

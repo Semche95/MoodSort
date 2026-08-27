@@ -1,11 +1,14 @@
-import { Application, FederatedPointerEvent, Graphics } from 'pixi.js'
+import { Application, Container, FederatedPointerEvent, Graphics } from 'pixi.js'
 import { Card } from '../types/card.types'
 import { computeBoundingBox } from '../utils/card'
-import { STACK_HIGHLIGHT_PADDING, STACK_HANDLE_HEIGHT } from '../utils/constants'
+import { computeStacks, findMergeTargets } from '../utils/stack'
+import { STACK_HIGHLIGHT_PADDING, STACK_HANDLE_HEIGHT, DRAGGING_OPACITY } from '../utils/constants'
 
 /**
  * Manages all Graphics-based visual feedback for stacks:
- * hover highlight, drag border/handle, merge indicators.
+ * permanent border/handle, drag merge indicators.
+ * The stack border and handle are redrawn every frame from the cards on the
+ * stage, so they are permanently visible on every stack regardless of hover.
  */
 export class StackOverlay {
     private app: Application
@@ -13,6 +16,11 @@ export class StackOverlay {
     stackDragHandle: Graphics
     private mergeIndicator: Graphics
     private mergePlus: Graphics
+    private cards: Card[]
+    private draggedCards: Card[]
+    private restStacks: Map<Card, Card[]>
+    private draggedSourceCards: Card[] | null
+    private draggedSourceGeos: { x: number; y: number; width: number; height: number }[]
 
     constructor(app: Application) {
         this.app = app
@@ -20,6 +28,11 @@ export class StackOverlay {
         this.stackDragHandle = new Graphics()
         this.mergeIndicator = new Graphics()
         this.mergePlus = new Graphics()
+        this.cards = []
+        this.draggedCards = []
+        this.restStacks = new Map()
+        this.draggedSourceCards = null
+        this.draggedSourceGeos = []
     }
 
     initHandle(onPointerDown: (e: FederatedPointerEvent) => void): void {
@@ -33,22 +46,21 @@ export class StackOverlay {
         this.app.stage.addChildAt(this.stackBorder, 0)
         this.app.stage.addChildAt(this.stackDragHandle, 1)
         this.app.stage.addChild(this.mergeIndicator)
+        this.collectCards()
+        this.app.ticker.add(this.render)
     }
 
     showHighlight(stack: Card[]): void {
-        this.stackBorder.clear()
-        this.stackDragHandle.clear()
+        void stack
         this.mergeIndicator.clear()
         this.mergePlus.clear()
-        this.drawHighlight(stack)
     }
 
     showDragHighlights(
         draggedStack: Card[],
         mergeTargets: Card[][],
     ): void {
-        this.stackBorder.clear()
-        this.stackDragHandle.clear()
+        this.draggedCards = draggedStack
         this.mergeIndicator.clear()
         this.mergePlus.clear()
 
@@ -65,26 +77,111 @@ export class StackOverlay {
                 this.drawMergePlus(target)
             }
             this.app.stage.addChild(this.mergePlus)
+            this.app.stage.addChild(this.stackBorder)
+            this.app.stage.addChild(this.stackDragHandle)
         }
-        this.drawHighlight(draggedStack)
-        this.app.stage.addChild(this.stackBorder)
-        this.app.stage.addChild(this.stackDragHandle)
     }
 
     hide(): void {
-        this.stackBorder.clear()
-        this.stackDragHandle.clear()
         this.mergeIndicator.clear()
         this.mergePlus.clear()
     }
 
     restoreZOrder(): void {
+        this.draggedCards = []
         this.app.stage.addChildAt(this.stackBorder, 0)
         this.app.stage.addChildAt(this.stackDragHandle, 1)
     }
 
-    private drawHighlight(stack: Card[]): void {
-        const box = computeBoundingBox(stack)
+    private collectCards(): void {
+        this.cards = this.app.stage.children.filter(
+            (child: Container): child is Card => 'imageUrl' in child,
+        )
+    }
+
+    private render: () => void = (): void => {
+        this.stackBorder.clear()
+        this.stackDragHandle.clear()
+
+        const draggingCard = this.cards.find(
+            (card: Card): boolean => card.alpha === DRAGGING_OPACITY,
+        )
+        if (!draggingCard) {
+            if (this.draggedCards.length === 0) {
+                this.mergeIndicator.clear()
+                this.mergePlus.clear()
+            }
+            this.draggedSourceCards = null
+            this.draggedSourceGeos = []
+            for (const stack of computeStacks(this.cards)) {
+                for (const card of stack) {
+                    this.restStacks.set(card, stack)
+                }
+            }
+        } else if (this.draggedSourceCards === null) {
+            const source = this.restStacks.get(draggingCard)
+            if (source) {
+                this.draggedSourceCards = source
+                const remaining = source.filter((card: Card): boolean => card !== draggingCard)
+                this.draggedSourceGeos = computeStacks(remaining).map(
+                    (group: Card[]): { x: number; y: number; width: number; height: number } =>
+                        computeBoundingBox(group),
+                )
+            }
+        }
+
+        const excluded = new Set<Card>(this.draggedSourceCards ?? [])
+        const draggedStack = new Set<Card>(this.draggedCards)
+        const stackedCards = this.cards.filter(
+            (card: Card): boolean =>
+                card.alpha !== DRAGGING_OPACITY && !excluded.has(card) && !draggedStack.has(card),
+        )
+
+        for (const box of this.draggedSourceGeos) {
+            this.drawSingleBox(box)
+        }
+        for (const stack of computeStacks(this.draggedCards)) {
+            this.drawSingleStack(stack)
+        }
+        for (const stack of computeStacks(stackedCards)) {
+            this.drawSingleStack(stack)
+        }
+
+        if (draggingCard) {
+            this.drawSingleCardMergeIndicator(draggingCard)
+        }
+    }
+
+    private drawSingleCardMergeIndicator(draggingCard: Card): void {
+        this.mergeIndicator.clear()
+        this.mergePlus.clear()
+
+        const mergeTargets = findMergeTargets(
+            [draggingCard],
+            computeStacks(this.cards.filter((card: Card): boolean => card !== draggingCard)),
+            this.draggedSourceCards,
+        )
+
+        if (mergeTargets.length === 0) {
+            return
+        }
+
+        for (const target of mergeTargets) {
+            this.drawMergeTargetBorder(target)
+            this.drawMergeDim(target)
+        }
+        this.app.stage.addChild(this.mergeIndicator)
+        for (const target of mergeTargets) {
+            this.drawMergePlus(target)
+        }
+        this.app.stage.addChild(this.mergePlus)
+    }
+
+    private drawSingleStack(stack: Card[]): void {
+        this.drawSingleBox(computeBoundingBox(stack))
+    }
+
+    private drawSingleBox(box: { x: number; y: number; width: number; height: number }): void {
         const pad = STACK_HIGHLIGHT_PADDING
         const bx = box.x - pad
         const by = box.y - pad
