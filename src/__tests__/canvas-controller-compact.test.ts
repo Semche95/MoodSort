@@ -3,7 +3,8 @@ import type { Spritesheet } from 'pixi.js'
 import { CanvasController } from '../controllers/CanvasController'
 import { CardStateService } from '../services/CardStateService'
 import { InMemoryStore } from './InMemoryStore'
-import { Card, CardActionEntry, HistoryData, HISTORY_KEY } from '../types/card.types'
+import { Card } from '../types/card.types'
+import { CardActionEntry, HistoryData, HISTORY_KEY } from '../types/history.types'
 
 const { mockSpritesheet } = vi.hoisted(() => {
     const mockTexture = { width: 200, height: 300 }

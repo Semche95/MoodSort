@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import type { Application, Container } from 'pixi.js'
 import { CardManager } from '../controllers/CardManager'
-import { AnimationTarget, Card } from '../types/card.types'
+import { Card } from '../types/card.types'
+import { AnimationTarget } from '../types/animation.types'
 
 function makeCard(x: number, y: number, imageUrl: string): Card {
     return { x, y, imageUrl } as unknown as Card

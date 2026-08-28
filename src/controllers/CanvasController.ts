@@ -1,5 +1,6 @@
 import { Application, Container, FederatedPointerEvent, Spritesheet } from 'pixi.js'
-import { AnimationTarget, Card } from '../types/card.types'
+import { Card } from '../types/card.types'
+import { AnimationTarget } from '../types/animation.types'
 import { Position } from '../types/position.types'
 import { CardManager } from './CardManager'
 import { DragHandler } from './DragHandler'

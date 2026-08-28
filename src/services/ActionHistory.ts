@@ -1,5 +1,6 @@
 import { Container } from 'pixi.js'
-import { Card, CardActionEntry, HistoryData, HISTORY_KEY } from '../types/card.types'
+import { Card } from '../types/card.types'
+import { CardActionEntry, HistoryData, HISTORY_KEY } from '../types/history.types'
 import { IStore } from './Store'
 
 const MAX_HISTORY = 15

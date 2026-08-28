@@ -1,5 +1,6 @@
 import { Container } from 'pixi.js'
-import { Card, CardState, POSITIONS_KEY, ORDER_KEY, ONBOARDING_KEY } from '../types/card.types'
+import { Card } from '../types/card.types'
+import { CardState, POSITIONS_KEY, ORDER_KEY, ONBOARDING_KEY } from '../types/card-state.types'
 import { Position } from '../types/position.types'
 import { CardStateService } from '../services/CardStateService'
 

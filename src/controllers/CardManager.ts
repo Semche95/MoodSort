@@ -1,5 +1,7 @@
 import { Application, Container, FederatedPointerEvent, Spritesheet } from 'pixi.js'
-import { AnimationTarget, Card, CardState } from '../types/card.types'
+import { Card } from '../types/card.types'
+import { AnimationTarget } from '../types/animation.types'
+import { CardState } from '../types/card-state.types'
 import { Position } from '../types/position.types'
 import { constrainPosition, createCard } from '../utils/card'
 import { CARD_REFERENCE_WIDTH } from '../utils/constants'
