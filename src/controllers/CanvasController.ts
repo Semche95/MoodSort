@@ -85,6 +85,8 @@ export class CanvasController {
         await this.app.init({
             antialias: true,
             backgroundColor: '#a9a9a9',
+            resolution: window.devicePixelRatio || 1,
+            autoDensity: true,
         })
         this.app.renderer.resize(window.innerWidth, window.innerHeight)
         this.app.stage.addChild(this.cardLayer)

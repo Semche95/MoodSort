@@ -37,6 +37,12 @@ const { pixi, ui, buttons } = vi.hoisted(() => {
         circle(): this {
             return this
         }
+        roundRect(): this {
+            return this
+        }
+        clear(): this {
+            return this
+        }
         stroke(): this {
             return this
         }
@@ -103,6 +109,8 @@ const { pixi, ui, buttons } = vi.hoisted(() => {
         iconView: unknown = null
         options: Record<string, unknown>
         private onPressCallback: (() => void) | null = null
+        private onHoverCallback: (() => void) | null = null
+        private onOutCallback: (() => void) | null = null
         position: { set(x: number, y: number): void } = {
             set: (x: number, y: number): void => {
                 this.x = x
@@ -114,6 +122,16 @@ const { pixi, ui, buttons } = vi.hoisted(() => {
                 this.onPressCallback = fn
             },
         }
+        onHover: { connect(fn: () => void): void } = {
+            connect: (fn: () => void): void => {
+                this.onHoverCallback = fn
+            },
+        }
+        onOut: { connect(fn: () => void): void } = {
+            connect: (fn: () => void): void => {
+                this.onOutCallback = fn
+            },
+        }
         constructor(options: Record<string, unknown> = {}) {
             this.options = options
             this.iconView = options.icon
@@ -122,6 +140,16 @@ const { pixi, ui, buttons } = vi.hoisted(() => {
         press(): void {
             if (this.onPressCallback !== null) {
                 this.onPressCallback()
+            }
+        }
+        hover(): void {
+            if (this.onHoverCallback !== null) {
+                this.onHoverCallback()
+            }
+        }
+        out(): void {
+            if (this.onOutCallback !== null) {
+                this.onOutCallback()
             }
         }
     }
@@ -363,6 +391,49 @@ describe('TopToolbar', () => {
         const logo = toolbar.children[0] as { x: number; y: number }
         expect(logo.x).toBe(16)
         expect(logo.y).toBe(16 + 28 / 2)
+    })
+
+    it('should show a tooltip with the button label on hover, anchored below the button', () => {
+        const host = createHost()
+        new TopToolbar(host, createStore(), createTextures())
+
+        const [undo] = buttons
+        undo.hover()
+
+        const toolbar = host.stage.children[0] as { children: unknown[] }
+        const tooltip = toolbar.children[toolbar.children.length - 1] as {
+            visible: boolean
+            x: number
+            y: number
+            children: Array<{ text?: unknown }>
+        }
+        expect(tooltip.visible).toBe(true)
+        expect(tooltip.x).toBe(undo.x)
+        expect(tooltip.children[1].text).toBe('Annuler')
+    })
+
+    it('should hide the tooltip on pointer out, on press, and on resize', () => {
+        const host = createHost()
+        new TopToolbar(host, createStore(), createTextures())
+
+        const [undo] = buttons
+        const toolbar = host.stage.children[0] as { children: unknown[] }
+        const tooltip = toolbar.children[toolbar.children.length - 1] as { visible: boolean }
+
+        undo.hover()
+        expect(tooltip.visible).toBe(true)
+        undo.out()
+        expect(tooltip.visible).toBe(false)
+
+        undo.hover()
+        expect(tooltip.visible).toBe(true)
+        undo.press()
+        expect(tooltip.visible).toBe(false)
+
+        undo.hover()
+        expect(tooltip.visible).toBe(true)
+        host.resize()
+        expect(tooltip.visible).toBe(false)
     })
 
     it('should load a texture for every toolbar icon', async () => {

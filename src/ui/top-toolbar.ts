@@ -2,6 +2,7 @@ import { Assets, Container, Graphics, Sprite, Text, Texture } from 'pixi.js'
 import { FancyButton } from '@pixi/ui'
 import type { CardStateService } from '../services/CardStateService'
 import { dismissOnboarding, initHistoryShortcuts } from '../utils/canvas'
+import { CanvasTooltip } from './canvas-tooltip'
 import { createOnboarding } from './onboarding'
 import { createSettingsModal } from './settings'
 import undoIconUrl from '../assets/icons/undo-2.webp?url'
@@ -22,6 +23,7 @@ const TOP_MARGIN = 16
 const SIDE_MARGIN = 16
 const LOGO_EMOJI_SIZE = 28
 const DISABLED_ICON_ALPHA = 0.35
+const TOOLTIP_GAP = 8
 
 /**
  * Minimal surface of CanvasController used by the toolbar, kept small so it can
@@ -75,6 +77,7 @@ export class TopToolbar {
     private readonly settingsButton: FancyButton
     private readonly undoIcon: Sprite
     private readonly redoIcon: Sprite
+    private readonly tooltip: CanvasTooltip
 
     constructor(host: ToolbarHost, store: CardStateService, iconTextures: Record<string, Texture>) {
         this.host = host
@@ -84,16 +87,18 @@ export class TopToolbar {
         this.logo = this.createLogo()
         this.undoIcon = this.createIcon(iconTextures['undo-2'])
         this.redoIcon = this.createIcon(iconTextures['redo-2'])
-        this.undoButton = this.createButton(this.undoIcon, (): void => { this.doUndo() }, 'toolbar-undobutton')
-        this.redoButton = this.createButton(this.redoIcon, (): void => { this.doRedo() }, 'toolbar-redobutton')
-        this.helpButton = this.createButton(this.createHelpIcon(), (): void => { this.showOnboarding() }, 'toolbar-helpbutton', 1)
-        this.settingsButton = this.createButton(this.createIcon(iconTextures['sliders-horizontal']), (): void => { this.openSettings() }, 'toolbar-settingsbutton')
+        this.undoButton = this.createButton(this.undoIcon, (): void => { this.doUndo() }, 'toolbar-undobutton', 'Annuler')
+        this.redoButton = this.createButton(this.redoIcon, (): void => { this.doRedo() }, 'toolbar-redobutton', 'Rétablir')
+        this.helpButton = this.createButton(this.createHelpIcon(), (): void => { this.showOnboarding() }, 'toolbar-helpbutton', 'Aide', 1)
+        this.settingsButton = this.createButton(this.createIcon(iconTextures['sliders-horizontal']), (): void => { this.openSettings() }, 'toolbar-settingsbutton', 'Réglages')
+        this.tooltip = new CanvasTooltip()
 
         this.container.addChild(this.logo)
         this.container.addChild(this.undoButton)
         this.container.addChild(this.redoButton)
         this.container.addChild(this.helpButton)
         this.container.addChild(this.settingsButton)
+        this.container.addChild(this.tooltip.view)
         this.host.stage.addChild(this.container)
 
         initHistoryShortcuts((): void => { this.doUndo() }, (): void => { this.doRedo() })
@@ -154,7 +159,7 @@ export class TopToolbar {
         })
     }
 
-    private createButton(icon: Container, onClick: () => void, label: string, iconScale: number = ICON_SIZE / ICON_SOURCE_SIZE): FancyButton {
+    private createButton(icon: Container, onClick: () => void, label: string, tooltipLabel: string, iconScale: number = ICON_SIZE / ICON_SOURCE_SIZE): FancyButton {
         const button = new FancyButton({
             defaultView: createCircleView(0xffffff, 0.85),
             hoverView: createCircleView(0xffffff, 1),
@@ -169,7 +174,14 @@ export class TopToolbar {
             },
         })
         button.label = label
-        button.onPress.connect((): void => { onClick() })
+        button.onPress.connect((): void => {
+            onClick()
+            this.tooltip.hide()
+        })
+        button.onHover.connect((): void => {
+            this.tooltip.show(button.x, button.y + BUTTON_SIZE / 2 + TOOLTIP_GAP, tooltipLabel)
+        })
+        button.onOut.connect((): void => { this.tooltip.hide() })
         return button
     }
 
@@ -210,6 +222,9 @@ export class TopToolbar {
     private setButtonEnabled(button: FancyButton, icon: Sprite, enabled: boolean): void {
         button.enabled = enabled
         icon.alpha = enabled ? 1 : DISABLED_ICON_ALPHA
+        if (!enabled) {
+            this.tooltip.hide()
+        }
     }
 
     /**
@@ -217,6 +232,7 @@ export class TopToolbar {
      * logo pinned to the left edge.
      */
     resize(): void {
+        this.tooltip.hide()
         const buttons = [
             this.settingsButton,
             this.helpButton,
