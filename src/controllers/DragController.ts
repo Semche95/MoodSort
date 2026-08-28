@@ -25,6 +25,7 @@ export class DragController {
     handleDragStart(
         event: FederatedPointerEvent,
         stage: Container,
+        cardLayer: Container,
         onDragMove: (event: FederatedPointerEvent) => void,
     ): void {
         const target = event.currentTarget as Card
@@ -46,7 +47,7 @@ export class DragController {
             parent.removeChild(target)
         }
 
-        stage.addChild(target)
+        cardLayer.addChild(target)
         target.position.set(globalPosition.x, globalPosition.y)
 
         stage.on('pointermove', onDragMove)

@@ -1,6 +1,9 @@
 import './style.css'
-import { Assets, SpritesheetData, Spritesheet } from 'pixi.js'
-import { createLoadingOverlay, createHeader, setupCanvas, initOnboarding, initToolbar } from './utils/canvas'
+import { Assets, Spritesheet } from 'pixi.js'
+import type { SpritesheetData } from 'pixi.js'
+import { createLoadingOverlay, setupCanvas, initOnboarding } from './utils/canvas'
+import { TopToolbar, loadToolbarIconTextures } from './ui/top-toolbar'
+import { createFooter } from './ui/legal'
 import { CardStateService } from './services/CardStateService'
 import atlasData from './assets/atlas.json'
 import atlasImageUrl from './assets/atlas.webp?url'
@@ -22,8 +25,10 @@ import atlasImageUrl from './assets/atlas.webp?url'
         overlay.parentElement.removeChild(overlay)
     }
 
-    createHeader()
+    document.body.appendChild(createFooter())
 
     initOnboarding(cardStateService)
-    initToolbar(controller, cardStateService)
+
+    const iconTextures = await loadToolbarIconTextures()
+    new TopToolbar(controller, cardStateService, iconTextures)
 })()

@@ -1,4 +1,4 @@
-import { Application, FederatedPointerEvent, Spritesheet } from 'pixi.js'
+import { Application, Container, FederatedPointerEvent, Spritesheet } from 'pixi.js'
 import { AnimationTarget, Card, CardState } from '../types/card.types'
 import { Position } from '../types/position.types'
 import { constrainPosition, createCard } from '../utils/card'
@@ -9,9 +9,11 @@ import { CARD_REFERENCE_WIDTH } from '../utils/constants'
  */
 export class CardManager {
     private app: Application
+    private cardLayer: Container
 
-    constructor(app: Application) {
+    constructor(app: Application, cardLayer: Container) {
         this.app = app
+        this.cardLayer = cardLayer
     }
 
     resolveOrder(images: string[], saved: CardState): string[] {
@@ -37,7 +39,7 @@ export class CardManager {
             this.applyScale(card)
             cards.push(card)
             this.placeCard(card, positions[frameNames[i]])
-            this.app.stage.addChild(card)
+            this.cardLayer.addChild(card)
         }
         return cards
     }
@@ -74,7 +76,7 @@ export class CardManager {
         for (let i = 0; i < cards.length; i++) {
             const j = Math.floor(Math.random() * (cards.length - i)) + i;
             [cards[i], cards[j]] = [cards[j], cards[i]]
-            this.app.stage.addChild(cards[i])
+            this.cardLayer.addChild(cards[i])
 
             const card = cards[i]
             this.applyScale(card)

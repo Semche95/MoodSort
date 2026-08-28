@@ -2,11 +2,7 @@ import { CanvasController } from '../controllers/CanvasController'
 import { POSITIONS_KEY, ORDER_KEY, ONBOARDING_KEY } from '../types/card.types'
 import { CardStateService } from '../services/CardStateService'
 import { Store } from '../services/Store'
-import { createOnboarding, createHelpButton } from '../ui/onboarding'
-import { createSettingsButton, createSettingsModal } from '../ui/settings'
-import { createUndoButton } from '../ui/undo'
-import { createRedoButton } from '../ui/redo'
-import { createFooter } from '../ui/legal'
+import { createOnboarding } from '../ui/onboarding'
 import type { Spritesheet } from 'pixi.js'
 
 export function createLoadingOverlay(): HTMLDivElement {
@@ -41,24 +37,6 @@ export async function setupCanvas(frameNames: string[], spritesheet: Spritesheet
     const controller = new CanvasController(store, historyStore)
     await controller.init(frameNames, spritesheet)
     return { controller }
-}
-
-export function createHeader(): void {
-    const header = document.createElement('div')
-    header.className = 'app-header'
-
-    const logo = document.createElement('span')
-    logo.className = 'app-header-logo'
-    logo.textContent = '🎭'
-
-    const title = document.createElement('span')
-    title.className = 'app-header-title'
-    title.textContent = 'MoodSort'
-
-    header.appendChild(logo)
-    header.appendChild(title)
-    document.body.appendChild(header)
-    document.body.appendChild(createFooter())
 }
 
 export function isOnboardingDismissed(store: CardStateService): boolean {
@@ -101,55 +79,4 @@ export function initHistoryShortcuts(doUndo: () => void, doRedo: () => void): vo
             doRedo()
         }
     })
-}
-
-export function initToolbar(controller: CanvasController, store: CardStateService): void {
-    const showOnboarding = (): void => {
-        const existing = document.querySelector('.onboarding-overlay')
-        if (existing) return
-        document.body.appendChild(createOnboarding((): void => { dismissOnboarding(store) }))
-    }
-
-    const openSettings = (): void => {
-        const existing = document.querySelector('.settings-overlay')
-        if (existing) return
-        document.body.appendChild(createSettingsModal({
-            onResetPositions: (): void => {
-                controller.resetPositions()
-                updateUndoRedoButtons()
-            },
-        }))
-    }
-
-    const doUndo = (): void => {
-        controller.undo()
-        updateUndoRedoButtons()
-    }
-
-    const doRedo = (): void => {
-        controller.redo()
-        updateUndoRedoButtons()
-    }
-
-    const { button: undoBtn, setEnabled: setUndoEnabled } = createUndoButton(doUndo)
-    const { button: redoBtn, setEnabled: setRedoEnabled } = createRedoButton(doRedo)
-
-    const updateUndoRedoButtons = (): void => {
-        setUndoEnabled(controller.canUndo)
-        setRedoEnabled(controller.canRedo)
-    }
-
-    initHistoryShortcuts(doUndo, doRedo)
-
-    controller.setOnHistoryChange(updateUndoRedoButtons)
-
-    updateUndoRedoButtons()
-
-    const toolbar = document.createElement('div')
-    toolbar.className = 'toolbar'
-    toolbar.appendChild(undoBtn)
-    toolbar.appendChild(redoBtn)
-    toolbar.appendChild(createHelpButton(showOnboarding))
-    toolbar.appendChild(createSettingsButton(openSettings))
-    document.body.appendChild(toolbar)
 }

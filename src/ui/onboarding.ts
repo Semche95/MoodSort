@@ -34,12 +34,3 @@ export function createOnboarding(onDismiss: () => void): HTMLDivElement {
 
     return overlay
 }
-
-export function createHelpButton(onClick: () => void): HTMLButtonElement {
-    const btn = document.createElement('button')
-    btn.className = 'help-button'
-    btn.textContent = '?'
-    btn.title = 'Afficher l\'aide'
-    btn.addEventListener('click', onClick)
-    return btn
-}

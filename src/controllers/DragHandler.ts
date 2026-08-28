@@ -1,4 +1,4 @@
-import { Application, FederatedPointerEvent } from 'pixi.js'
+import { Application, Container, FederatedPointerEvent } from 'pixi.js'
 import { Card } from '../types/card.types'
 import { DragController } from './DragController'
 import { ActionHistory } from '../services/ActionHistory'
@@ -10,6 +10,7 @@ import { ActionHistory } from '../services/ActionHistory'
 export class DragHandler {
     private dragController: DragController
     private app: Application
+    private cardLayer: Container
     private onDragEnd: () => void
     private actionHistory: ActionHistory
     private lastDraggedCard: Card | null
@@ -17,11 +18,13 @@ export class DragHandler {
     constructor(
         dragController: DragController,
         app: Application,
+        cardLayer: Container,
         onDragEnd: () => void,
         actionHistory: ActionHistory,
     ) {
         this.dragController = dragController
         this.app = app
+        this.cardLayer = cardLayer
         this.onDragEnd = onDragEnd
         this.actionHistory = actionHistory
         this.lastDraggedCard = null
@@ -34,8 +37,8 @@ export class DragHandler {
     handleDragStart: (event: FederatedPointerEvent) => void = (event: FederatedPointerEvent) => {
         const card = event.currentTarget as Card
         this.lastDraggedCard = card
-        this.actionHistory.captureBefore([card], this.app.stage)
-        this.dragController.handleDragStart(event, this.app.stage, this.handleDragMove)
+        this.actionHistory.captureBefore([card], this.cardLayer)
+        this.dragController.handleDragStart(event, this.app.stage, this.cardLayer, this.handleDragMove)
     }
 
     handleDragMove: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent) => {
@@ -58,7 +61,7 @@ export class DragHandler {
             this.app.screen.height,
         )
         if (this.lastDraggedCard) {
-            this.actionHistory.recordAfter([this.lastDraggedCard], this.app.stage)
+            this.actionHistory.recordAfter([this.lastDraggedCard], this.cardLayer)
             this.lastDraggedCard = null
         }
         this.onDragEnd()

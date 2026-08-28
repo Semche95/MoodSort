@@ -1,4 +1,4 @@
-import { Application, FederatedPointerEvent, Spritesheet } from 'pixi.js'
+import { Application, Container, FederatedPointerEvent, Spritesheet } from 'pixi.js'
 import { AnimationTarget, Card } from '../types/card.types'
 import { Position } from '../types/position.types'
 import { CardManager } from './CardManager'
@@ -17,6 +17,7 @@ import { computeStacks, findStackAtPoint } from '../utils/stack'
  */
 export class CanvasController {
     private app: Application
+    private cardLayer: Container
     private cards: Card[]
     private cardManager: CardManager
     private dragHandler: DragHandler
@@ -26,23 +27,28 @@ export class CanvasController {
     private actionHistory: ActionHistory
     private stacks: Card[][]
     private onHistoryChange: () => void
+    private onResize: () => void
 
     constructor(store: CardStateService, historyStore: IStore) {
         this.app = new Application()
+        this.cardLayer = new Container()
+        this.cardLayer.label = 'card-layer'
         this.cards = []
-        this.onHistoryChange = (): void => { /* set by initToolbar */ }
+        this.onHistoryChange = (): void => {}
+        this.onResize = (): void => {}
         this.positionPersistence = new PositionPersistence(store)
-        this.cardManager = new CardManager(this.app)
+        this.cardManager = new CardManager(this.app, this.cardLayer)
         this.actionHistory = new ActionHistory(historyStore, (): void => {
             this.onHistoryChange()
         })
-        this.dragHandler = new DragHandler(new DragController(), this.app, (): void => {
-            this.positionPersistence.saveFromStage(this.app.stage)
+        this.dragHandler = new DragHandler(new DragController(), this.app, this.cardLayer, (): void => {
+            this.positionPersistence.saveFromStage(this.cardLayer)
             this.stacks = computeStacks(this.cards)
         }, this.actionHistory)
-        this.overlay = new StackOverlay(this.app)
+        this.overlay = new StackOverlay(this.app, this.cardLayer)
         this.stackDragManager = new StackDragManager(
             this.app,
+            this.cardLayer,
             this.overlay,
             (): Card[][] => this.stacks,
             this.actionHistory,
@@ -55,6 +61,22 @@ export class CanvasController {
         this.onHistoryChange = callback
     }
 
+    registerOnResize(callback: () => void): void {
+        this.onResize = callback
+    }
+
+    get stage(): Container {
+        return this.app.stage
+    }
+
+    get screenWidth(): number {
+        return this.app.screen.width
+    }
+
+    get screenHeight(): number {
+        return this.app.screen.height
+    }
+
     async init(frameNames: string[], spritesheet: Spritesheet): Promise<void> {
         if (frameNames.length === 0) {
             throw new Error('No images found')
@@ -65,6 +87,7 @@ export class CanvasController {
             backgroundColor: '#a9a9a9',
         })
         this.app.renderer.resize(window.innerWidth, window.innerHeight)
+        this.app.stage.addChild(this.cardLayer)
 
         const saved = this.positionPersistence.load()
         const ordered = this.cardManager.resolveOrder(frameNames, saved)
@@ -102,8 +125,8 @@ export class CanvasController {
         if (this.dragHandler.isDragging || this.stackDragManager.isDragging) {
             return
         }
-        this.actionHistory.undo(this.cards, this.app.stage)
-        this.positionPersistence.saveFromStage(this.app.stage)
+        this.actionHistory.undo(this.cards, this.cardLayer)
+        this.positionPersistence.saveFromStage(this.cardLayer)
         this.stacks = computeStacks(this.cards)
     }
 
@@ -111,8 +134,8 @@ export class CanvasController {
         if (this.dragHandler.isDragging || this.stackDragManager.isDragging) {
             return
         }
-        this.actionHistory.redo(this.cards, this.app.stage)
-        this.positionPersistence.saveFromStage(this.app.stage)
+        this.actionHistory.redo(this.cards, this.cardLayer)
+        this.positionPersistence.saveFromStage(this.cardLayer)
         this.stacks = computeStacks(this.cards)
     }
 
@@ -160,7 +183,7 @@ export class CanvasController {
             return
         }
         this.stackDragManager.end()
-        this.positionPersistence.saveFromStage(this.app.stage)
+        this.positionPersistence.saveFromStage(this.cardLayer)
         this.stacks = computeStacks(this.cards)
     }
 
@@ -183,7 +206,7 @@ export class CanvasController {
             }
             if (elapsed >= duration) {
                 this.app.ticker.remove(tick)
-                this.positionPersistence.saveFromStage(this.app.stage)
+                this.positionPersistence.saveFromStage(this.cardLayer)
                 this.stacks = computeStacks(this.cards)
             }
         }
@@ -205,6 +228,7 @@ export class CanvasController {
             this.cardManager.repositionForResize(card, ratioX, ratioY, newWidth, newHeight)
         }
 
-        this.positionPersistence.saveFromStage(this.app.stage)
+        this.positionPersistence.saveFromStage(this.cardLayer)
+        this.onResize()
     }
 }

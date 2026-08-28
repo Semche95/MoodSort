@@ -12,8 +12,11 @@ import { STACK_HIGHLIGHT_PADDING, STACK_HANDLE_HEIGHT, DRAGGING_OPACITY } from '
  */
 export class StackOverlay {
     private app: Application
+    private cardLayer: Container
     stackBorder: Graphics
     stackDragHandle: Graphics
+    private draggedBorder: Graphics
+    private draggedHandle: Graphics
     private mergeIndicator: Graphics
     private mergePlus: Graphics
     private cards: Card[]
@@ -22,10 +25,13 @@ export class StackOverlay {
     private draggedSourceCards: Card[] | null
     private draggedSourceGeos: { x: number; y: number; width: number; height: number }[]
 
-    constructor(app: Application) {
+    constructor(app: Application, cardLayer: Container) {
         this.app = app
+        this.cardLayer = cardLayer
         this.stackBorder = new Graphics()
         this.stackDragHandle = new Graphics()
+        this.draggedBorder = new Graphics()
+        this.draggedHandle = new Graphics()
         this.mergeIndicator = new Graphics()
         this.mergePlus = new Graphics()
         this.cards = []
@@ -43,9 +49,11 @@ export class StackOverlay {
     }
 
     addToStage(): void {
-        this.app.stage.addChildAt(this.stackBorder, 0)
-        this.app.stage.addChildAt(this.stackDragHandle, 1)
-        this.app.stage.addChild(this.mergeIndicator)
+        this.cardLayer.addChildAt(this.stackBorder, 0)
+        this.cardLayer.addChildAt(this.stackDragHandle, 1)
+        this.cardLayer.addChild(this.mergeIndicator)
+        this.cardLayer.addChild(this.draggedBorder)
+        this.cardLayer.addChild(this.draggedHandle)
         this.collectCards()
         this.app.ticker.add(this.render)
     }
@@ -69,16 +77,20 @@ export class StackOverlay {
                 this.drawMergeTargetBorder(target)
                 this.drawMergeDim(target)
             }
-            this.app.stage.addChild(this.mergeIndicator)
-            for (const card of draggedStack) {
-                this.app.stage.addChild(card)
-            }
+            this.cardLayer.addChild(this.mergeIndicator)
+        }
+
+        for (const card of draggedStack) {
+            this.cardLayer.addChild(card)
+        }
+        this.cardLayer.addChild(this.draggedBorder)
+        this.cardLayer.addChild(this.draggedHandle)
+
+        if (mergeTargets.length > 0) {
             for (const target of mergeTargets) {
                 this.drawMergePlus(target)
             }
-            this.app.stage.addChild(this.mergePlus)
-            this.app.stage.addChild(this.stackBorder)
-            this.app.stage.addChild(this.stackDragHandle)
+            this.cardLayer.addChild(this.mergePlus)
         }
     }
 
@@ -89,12 +101,12 @@ export class StackOverlay {
 
     restoreZOrder(): void {
         this.draggedCards = []
-        this.app.stage.addChildAt(this.stackBorder, 0)
-        this.app.stage.addChildAt(this.stackDragHandle, 1)
+        this.cardLayer.addChildAt(this.stackBorder, 0)
+        this.cardLayer.addChildAt(this.stackDragHandle, 1)
     }
 
     private collectCards(): void {
-        this.cards = this.app.stage.children.filter(
+        this.cards = this.cardLayer.children.filter(
             (child: Container): child is Card => 'imageUrl' in child,
         )
     }
@@ -102,6 +114,8 @@ export class StackOverlay {
     private render: () => void = (): void => {
         this.stackBorder.clear()
         this.stackDragHandle.clear()
+        this.draggedBorder.clear()
+        this.draggedHandle.clear()
 
         const draggingCard = this.cards.find(
             (card: Card): boolean => card.alpha === DRAGGING_OPACITY,
@@ -138,13 +152,13 @@ export class StackOverlay {
         )
 
         for (const box of this.draggedSourceGeos) {
-            this.drawSingleBox(box)
-        }
-        for (const stack of computeStacks(this.draggedCards)) {
-            this.drawSingleStack(stack)
+            this.drawSingleBox(box, this.stackBorder, this.stackDragHandle)
         }
         for (const stack of computeStacks(stackedCards)) {
-            this.drawSingleStack(stack)
+            this.drawSingleStack(stack, this.stackBorder, this.stackDragHandle)
+        }
+        for (const stack of computeStacks(this.draggedCards)) {
+            this.drawSingleStack(stack, this.draggedBorder, this.draggedHandle)
         }
 
         if (draggingCard) {
@@ -170,46 +184,50 @@ export class StackOverlay {
             this.drawMergeTargetBorder(target)
             this.drawMergeDim(target)
         }
-        this.app.stage.addChild(this.mergeIndicator)
+        this.cardLayer.addChild(this.mergeIndicator)
         for (const target of mergeTargets) {
             this.drawMergePlus(target)
         }
-        this.app.stage.addChild(this.mergePlus)
+        this.cardLayer.addChild(this.mergePlus)
     }
 
-    private drawSingleStack(stack: Card[]): void {
-        this.drawSingleBox(computeBoundingBox(stack))
+    private drawSingleStack(stack: Card[], border: Graphics, handle: Graphics): void {
+        this.drawSingleBox(computeBoundingBox(stack), border, handle)
     }
 
-    private drawSingleBox(box: { x: number; y: number; width: number; height: number }): void {
+    private drawSingleBox(
+        box: { x: number; y: number; width: number; height: number },
+        border: Graphics,
+        handle: Graphics,
+    ): void {
         const pad = STACK_HIGHLIGHT_PADDING
         const bx = box.x - pad
         const by = box.y - pad
         const bw = box.width + pad * 2
         const bh = box.height + pad * 2
 
-        this.stackBorder.rect(bx, by, bw, bh)
-        this.stackBorder.fill({ color: 0x000000, alpha: 0.001 })
-        this.stackBorder.rect(bx, by, bw, bh)
-        this.stackBorder.stroke({ color: 0x333333, width: 2, alpha: 0.6 })
+        border.rect(bx, by, bw, bh)
+        border.fill({ color: 0x000000, alpha: 0.001 })
+        border.rect(bx, by, bw, bh)
+        border.stroke({ color: 0x333333, width: 2, alpha: 0.6 })
 
         const handleWidth = Math.min(bw, 80)
         const hx = bx + (bw - handleWidth) / 2
         const hy = by - STACK_HANDLE_HEIGHT / 2
 
-        this.stackDragHandle.roundRect(hx, hy, handleWidth, STACK_HANDLE_HEIGHT, 6)
-        this.stackDragHandle.fill({ color: 0x444444, alpha: 0.75 })
-        this.drawGripIcon(hx, hy, handleWidth)
+        handle.roundRect(hx, hy, handleWidth, STACK_HANDLE_HEIGHT, 6)
+        handle.fill({ color: 0x444444, alpha: 0.75 })
+        this.drawGripIcon(hx, hy, handleWidth, handle)
     }
 
-    private drawGripIcon(hx: number, hy: number, handleWidth: number): void {
+    private drawGripIcon(hx: number, hy: number, handleWidth: number, handle: Graphics): void {
         const cx = hx + handleWidth / 2
         const cy = hy + STACK_HANDLE_HEIGHT / 2
         const lineHalfWidth = 10
         const spacing = 4
         for (let i = -1; i <= 1; i++) {
-            this.stackDragHandle.rect(cx - lineHalfWidth, cy + i * spacing - 1, lineHalfWidth * 2, 2)
-            this.stackDragHandle.fill({ color: 0xaaaaaa, alpha: 0.9 })
+            handle.rect(cx - lineHalfWidth, cy + i * spacing - 1, lineHalfWidth * 2, 2)
+            handle.fill({ color: 0xaaaaaa, alpha: 0.9 })
         }
     }
 

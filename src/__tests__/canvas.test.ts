@@ -63,6 +63,11 @@ vi.mock('pixi.js', () => {
                 (child as Record<string, unknown>).parent = this
                 return child
             }
+            addChildAt(child: unknown, index: number): unknown {
+                this.children.splice(index, 0, child);
+                (child as Record<string, unknown>).parent = this
+                return child
+            }
             removeChild(child: unknown): unknown {
                 const index: number = this.children.indexOf(child)
                 if (index !== -1) {

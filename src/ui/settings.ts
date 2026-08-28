@@ -1,12 +1,3 @@
-export function createSettingsButton(onClick: () => void): HTMLButtonElement {
-    const btn = document.createElement('button')
-    btn.className = 'settings-button'
-    btn.innerHTML = '&#9881;'
-    btn.title = 'Réglages'
-    btn.addEventListener('click', onClick)
-    return btn
-}
-
 export function createSettingsModal(options: {
     onResetPositions: () => void
 }): HTMLDivElement {

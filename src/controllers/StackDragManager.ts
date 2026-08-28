@@ -1,4 +1,4 @@
-import { Application, FederatedPointerEvent } from 'pixi.js'
+import { Application, Container, FederatedPointerEvent } from 'pixi.js'
 import { Card } from '../types/card.types'
 import { Position } from '../types/position.types'
 import { StackOverlay } from './StackOverlay'
@@ -11,6 +11,7 @@ import { ActionHistory } from '../services/ActionHistory'
  */
 export class StackDragManager {
     private app: Application
+    private cardLayer: Container
     private overlay: StackOverlay
     private getStacks: () => Card[][]
     private actionHistory: ActionHistory
@@ -24,11 +25,13 @@ export class StackDragManager {
 
     constructor(
         app: Application,
+        cardLayer: Container,
         overlay: StackOverlay,
         getStacks: () => Card[][],
         actionHistory: ActionHistory,
     ) {
         this.app = app
+        this.cardLayer = cardLayer
         this.overlay = overlay
         this.getStacks = getStacks
         this.actionHistory = actionHistory
@@ -62,14 +65,14 @@ export class StackDragManager {
         this._sourceStack = sourceStack
         this._dragTarget = [...stack].sort(
             (a: Card, b: Card): number =>
-                this.app.stage.children.indexOf(a) - this.app.stage.children.indexOf(b),
+                this.cardLayer.children.indexOf(a) - this.cardLayer.children.indexOf(b),
         )
-        this.actionHistory.captureBefore(this._dragTarget, this.app.stage)
+        this.actionHistory.captureBefore(this._dragTarget, this.cardLayer)
         this.startMouse = { x: mousePos.x, y: mousePos.y }
         this.startPos = new Map()
         for (const card of this._dragTarget) {
             this.startPos.set(card, { x: card.x, y: card.y })
-            this.app.stage.addChild(card)
+            this.cardLayer.addChild(card)
         }
         this.app.stage.on('pointermove', this.boundDragMove)
     }
@@ -78,7 +81,7 @@ export class StackDragManager {
         if (!this._isDragging) {
             return
         }
-        this.actionHistory.recordAfter(this._dragTarget, this.app.stage)
+        this.actionHistory.recordAfter(this._dragTarget, this.cardLayer)
         this._isDragging = false
         this._dragTarget = []
         this._sourceStack = null

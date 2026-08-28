@@ -92,6 +92,7 @@ describe('DragController', () => {
     let controller: DragController
     let mockCard: Card
     let mockStage: Container
+    let mockCardLayer: Container
     let mockEvent: FederatedPointerEvent
     let onDragMoveMock: (event: FederatedPointerEvent) => void
 
@@ -116,6 +117,9 @@ describe('DragController', () => {
         vi.spyOn(mockStage, 'removeChild')
         vi.spyOn(mockStage, 'on')
         vi.spyOn(mockStage, 'off')
+
+        mockCardLayer = new Container()
+        vi.spyOn(mockCardLayer, 'addChild')
 
         mockEvent = Reflect.construct(FederatedPointerEvent, []) as FederatedPointerEvent
         Object.defineProperty(mockEvent, 'global', {
@@ -142,17 +146,17 @@ describe('DragController', () => {
 
     describe('handleDragStart', () => {
         it('should set up the drag state correctly', () => {
-            controller.handleDragStart(mockEvent, mockStage, onDragMoveMock)
+            controller.handleDragStart(mockEvent, mockStage, mockCardLayer, onDragMoveMock)
 
             expect(controller.dragState.dragTarget).toBe(mockCard)
             expect(controller.dragState.cardMoved).toBe(false)
             expect(mockCard.alpha).toBe(DRAGGING_OPACITY)
-            expect(vi.mocked(mockStage.addChild)).toHaveBeenCalledWith(mockCard)
+            expect(vi.mocked(mockCardLayer.addChild)).toHaveBeenCalledWith(mockCard)
             expect(vi.mocked(mockStage.on)).toHaveBeenCalledWith('pointermove', onDragMoveMock)
         })
 
         it('should calculate the drag offset correctly', () => {
-            controller.handleDragStart(mockEvent, mockStage, onDragMoveMock)
+            controller.handleDragStart(mockEvent, mockStage, mockCardLayer, onDragMoveMock)
 
             expect(controller.dragState.dragOffset).toEqual({
                 x: mockCard.getGlobalPosition().x - mockEvent.global.x,
