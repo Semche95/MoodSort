@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Spritesheet } from 'pixi.js'
 import { CanvasController } from '../controllers/CanvasController'
 import { CardStateService } from '../services/CardStateService'
-import { InMemoryStore } from '../services/Store'
+import { InMemoryStore } from './InMemoryStore'
 import { Card, CardActionEntry, HistoryData, HISTORY_KEY } from '../types/card.types'
 
 const { mockSpritesheet } = vi.hoisted(() => {

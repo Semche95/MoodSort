@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { setupCanvas } from '../utils/canvas'
-import { InMemoryStore } from '../services/Store'
+import { InMemoryStore } from './InMemoryStore'
 import { CardStateService } from '../services/CardStateService'
 
 import * as PIXI from 'pixi.js'

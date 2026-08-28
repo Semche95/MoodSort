@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { Store, InMemoryStore } from '../services/Store'
+import { Store } from '../services/Store'
+import { InMemoryStore } from './InMemoryStore'
 
 // Mock localStorage for jsdom environment
 const localStorageMock: Record<string, string> = {}

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Container, Texture } from 'pixi.js'
 import { CardStateService } from '../services/CardStateService'
-import { InMemoryStore } from '../services/Store'
+import { InMemoryStore } from './InMemoryStore'
 import { TopToolbar, loadToolbarIconTextures, TOOLBAR_ICONS } from '../ui/top-toolbar'
 import type { ToolbarHost } from '../ui/top-toolbar'
 
