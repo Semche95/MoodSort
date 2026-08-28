@@ -19,11 +19,11 @@ A visual emotion exploration tool. Load 85 emotion cards onto a full-screen canv
 | Technology | Role |
 |---|---|
 | TypeScript ~5.7 | Primary language (strict mode) |
-| PixiJS ^8.10 | 2D rendering engine (WebGL canvas) |
-| Vite ^6.1 | Dev server and production bundler |
-| Vitest ^3.2 | Test framework |
-| ESLint ^8.57 | Linting with strict TypeScript rules |
-| sharp ^0.33 | Atlas generation (devDependency) |
+| PixiJS ^8 | 2D rendering engine (WebGL canvas) |
+| Vite ^6 | Dev server and production bundler |
+| Vitest ^3 | Test framework |
+| ESLint ^8 | Linting with strict TypeScript rules |
+| sharp ^0.35 | Atlas generation (devDependency) |
 
 Only runtime dependency: `pixi.js`.
 

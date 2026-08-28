@@ -15,17 +15,17 @@
     "lint:fix": "eslint . --ext .ts,.tsx --fix"
   },
   "devDependencies": {
-    "@types/node": "^26.1.1",
-    "@typescript-eslint/eslint-plugin": "^7.3.1",
-    "@typescript-eslint/parser": "^7.3.1",
-    "eslint": "^8.57.0",
+    "@types/node": "^26.4.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.1",
     "jsdom": "^26.1.0",
-    "sharp": "^0.33.0",
-    "typescript": "~5.7.2",
-    "vite": "^6.1.0",
-    "vitest": "^3.2.3"
+    "sharp": "^0.35.4",
+    "typescript": "~5.7.3",
+    "vite": "^6.4.3",
+    "vitest": "^3.2.7"
   },
   "dependencies": {
-    "pixi.js": "^8.10.1"
+    "pixi.js": "^8.20.1"
   }
 }
