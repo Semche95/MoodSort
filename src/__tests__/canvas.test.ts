@@ -116,6 +116,31 @@ vi.mock('pixi.js', () => {
             x: number = 0
             y: number = 0
         },
+        Text: class MockText {
+            text: string
+            width: number = 40
+            height: number = 16
+            label: string = ''
+            visible: boolean = true
+            eventMode: string = 'auto'
+            x: number = 0
+            y: number = 0
+            children: unknown[] = []
+            anchor: { set(x: number, y: number): void } = { set: vi.fn() }
+            position: { set(x: number, y: number): void } = {
+                set: (x: number, y: number): void => {
+                    this.x = x
+                    this.y = y
+                },
+            }
+            constructor(options: { text?: string } = {}) {
+                this.text = options.text ?? ''
+            }
+            addChild(child: unknown): unknown {
+                this.children.push(child)
+                return child
+            }
+        },
         BlurFilter: class MockBlurFilter {
             constructor() {}
         },

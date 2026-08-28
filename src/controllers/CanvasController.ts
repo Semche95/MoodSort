@@ -10,7 +10,7 @@ import { StackDragManager } from './StackDragManager'
 import { CardStateService } from '../services/CardStateService'
 import { ActionHistory } from '../services/ActionHistory'
 import { IStore } from '../services/Store'
-import { computeStacks, findStackAtPoint } from '../utils/stack'
+import { computeStacks, findStackAtPoint, findStackByCompactButtonAtPoint } from '../utils/stack'
 
 /**
  * Orchestrates PixiJS app, cards, drag interactions, and persistence.
@@ -25,6 +25,7 @@ export class CanvasController {
     private overlay: StackOverlay
     private stackDragManager: StackDragManager
     private actionHistory: ActionHistory
+    private isCompacting: boolean
     private stacks: Card[][]
     private onHistoryChange: () => void
     private onResize: () => void
@@ -41,6 +42,7 @@ export class CanvasController {
         this.actionHistory = new ActionHistory(historyStore, (): void => {
             this.onHistoryChange()
         })
+        this.isCompacting = false
         this.dragHandler = new DragHandler(new DragController(), this.app, this.cardLayer, (): void => {
             this.positionPersistence.saveFromStage(this.cardLayer)
             this.stacks = computeStacks(this.cards)
@@ -55,6 +57,7 @@ export class CanvasController {
         )
         this.stacks = []
         this.overlay.initHandle(this.handleDragHandlePointerDown)
+        this.overlay.initCompactButton(this.handleCompactButtonPointerDown)
     }
 
     setOnHistoryChange(callback: () => void): void {
@@ -99,7 +102,7 @@ export class CanvasController {
             onboardingDismissed: saved.onboardingDismissed,
         })
 
-        this.cards = this.cardManager.loadCards(ordered, saved.positions, this.dragHandler.handleDragStart, spritesheet)
+        this.cards = this.cardManager.loadCards(ordered, saved.positions, this.handleCardPointerDown, spritesheet)
         if (this.positionPersistence.wasMigrated) {
             this.actionHistory.clear()
         }
@@ -124,7 +127,7 @@ export class CanvasController {
     }
 
     undo(): void {
-        if (this.dragHandler.isDragging || this.stackDragManager.isDragging) {
+        if (this.dragHandler.isDragging || this.stackDragManager.isDragging || this.isCompacting) {
             return
         }
         this.actionHistory.undo(this.cards, this.cardLayer)
@@ -133,7 +136,7 @@ export class CanvasController {
     }
 
     redo(): void {
-        if (this.dragHandler.isDragging || this.stackDragManager.isDragging) {
+        if (this.dragHandler.isDragging || this.stackDragManager.isDragging || this.isCompacting) {
             return
         }
         this.actionHistory.redo(this.cards, this.cardLayer)
@@ -141,9 +144,17 @@ export class CanvasController {
         this.stacks = computeStacks(this.cards)
     }
 
+    private handleCardPointerDown: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void => {
+        if (this.isCompacting) {
+            return
+        }
+        this.dragHandler.handleDragStart(e)
+    }
+
     private handlePointerMove: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void => {
         if (this.dragHandler.isDragging) {
             this.overlay.hide()
+            this.overlay.setHoveredStack(null)
             return
         }
         if (this.stackDragManager.isDragging) {
@@ -151,6 +162,7 @@ export class CanvasController {
         }
         const point: Position = { x: e.global.x, y: e.global.y }
         const stack = findStackAtPoint(this.stacks, point)
+        this.overlay.setHoveredStack(stack)
         if (stack) {
             this.overlay.showHighlight(stack)
             return
@@ -161,11 +173,12 @@ export class CanvasController {
     private handlePointerOut: () => void = (): void => {
         if (!this.stackDragManager.isDragging) {
             this.overlay.hide()
+            this.overlay.setHoveredStack(null)
         }
     }
 
     private handleDragHandlePointerDown: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void => {
-        if (this.dragHandler.isDragging) {
+        if (this.dragHandler.isDragging || this.isCompacting) {
             return
         }
         const point: Position = { x: e.global.x, y: e.global.y }
@@ -180,6 +193,54 @@ export class CanvasController {
         )
     }
 
+    private handleCompactButtonPointerDown: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void => {
+        if (this.dragHandler.isDragging || this.stackDragManager.isDragging || this.isCompacting) {
+            return
+        }
+        const point: Position = { x: e.global.x, y: e.global.y }
+        const stack = findStackByCompactButtonAtPoint(this.stacks, point)
+        if (!stack) {
+            return
+        }
+        this.compactStack(stack)
+    }
+
+    private compactStack(stack: Card[]): void {
+        const topCard = stack.reduce(
+            (top: Card, card: Card): Card =>
+                this.cardLayer.children.indexOf(card) > this.cardLayer.children.indexOf(top) ? card : top,
+        )
+        const others = stack.filter((card: Card): boolean => card !== topCard)
+        if (others.length === 0) {
+            return
+        }
+        this.actionHistory.captureBefore(others, this.cardLayer)
+        const targets = this.cardManager.buildCompactTargets(topCard, others)
+        this.isCompacting = true
+        this.animateCompactStack(targets, others, 20)
+    }
+
+    private animateCompactStack(targets: AnimationTarget[], others: Card[], duration: number): void {
+        let elapsed = 0
+        const tick = (): void => {
+            elapsed++
+            for (const t of targets) {
+                const progress = Math.min(elapsed / duration, 1)
+                const ease = 1 - Math.pow(1 - progress, 3)
+                t.card.x = t.fromX + (t.toX - t.fromX) * ease
+                t.card.y = t.fromY + (t.toY - t.fromY) * ease
+            }
+            if (elapsed >= duration) {
+                this.app.ticker.remove(tick)
+                this.actionHistory.recordAfter(others, this.cardLayer)
+                this.positionPersistence.saveFromStage(this.cardLayer)
+                this.stacks = computeStacks(this.cards)
+                this.isCompacting = false
+            }
+        }
+        this.app.ticker.add(tick)
+    }
+
     private handleStackDragEnd: () => void = (): void => {
         if (!this.stackDragManager.isDragging) {
             return
@@ -190,6 +251,9 @@ export class CanvasController {
     }
 
     resetPositions(): void {
+        if (this.isCompacting) {
+            return
+        }
         this.actionHistory.clear()
         this.positionPersistence.clear()
         const targets = this.cardManager.shuffleAndBuildTargets(this.cards)

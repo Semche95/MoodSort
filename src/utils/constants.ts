@@ -27,3 +27,9 @@ export const STACK_HIGHLIGHT_PADDING: number = 20
 
 /** Height (in px) of the stack drag handle bar */
 export const STACK_HANDLE_HEIGHT: number = 22
+
+/** Size (in px) of the square stack compact button, next to the drag handle */
+export const STACK_COMPACT_BUTTON_SIZE: number = 22
+
+/** Gap (in px) between the stack drag handle and the compact button */
+export const STACK_COMPACT_BUTTON_GAP: number = 16

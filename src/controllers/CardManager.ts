@@ -94,6 +94,29 @@ export class CardManager {
         return targets
     }
 
+    /**
+     * Builds animation targets for the "compact stack" action: `others` are
+     * dispersed around `topCard`'s current position using the same random
+     * jitter formula as the natural first-visit stacking (see `placeCard`),
+     * just recentered on the top card instead of the screen center.
+     */
+    buildCompactTargets(topCard: Card, others: Card[]): AnimationTarget[] {
+        const targets: AnimationTarget[] = []
+        const centerX = topCard.x
+        const centerY = topCard.y
+        const jitter = 25
+        for (const card of others) {
+            targets.push({
+                card,
+                fromX: card.x,
+                fromY: card.y,
+                toX: centerX + (Math.random() * 2 - 1) * jitter,
+                toY: centerY + (Math.random() * 2 - 1) * jitter,
+            })
+        }
+        return targets
+    }
+
     shuffleImages(images: string[]): string[] {
         const shuffled = [...images]
         for (let i = shuffled.length - 1; i > 0; i--) {
