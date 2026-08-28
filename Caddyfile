@@ -1,0 +1,13 @@
+:8080 {
+	root * /usr/share/caddy
+	encode gzip zstd
+
+	@hashed {
+		path /assets/*
+	}
+	header @hashed Cache-Control "public, max-age=31536000, immutable"
+
+	header /index.html Cache-Control "no-cache"
+
+	file_server
+}
