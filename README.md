@@ -1,5 +1,9 @@
 # MoodSort
 
+[![CI](https://github.com/Semche95/MoodSort/actions/workflows/ci.yml/badge.svg)](https://github.com/Semche95/MoodSort/actions/workflows/ci.yml)
+[![Docker](https://github.com/Semche95/MoodSort/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/Semche95/MoodSort/actions/workflows/docker-publish.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.txt)
+
 A visual emotion exploration tool. 85 emotion cards on a full-screen canvas, arranged freely to compose your inner landscape.
 
 ## Features

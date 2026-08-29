@@ -1,8 +1,14 @@
 {
-  "name": "emotion-cards",
+  "name": "moodsort",
+  "description": "A visual emotion exploration tool. 85 emotion cards on a full-screen canvas, arranged freely to compose your inner landscape.",
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Semche95/MoodSort.git"
+  },
   "scripts": {
     "atlas": "node scripts/generate-atlas.mjs",
     "icons": "node scripts/generate-icons.mjs",
