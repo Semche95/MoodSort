@@ -11,21 +11,24 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 11
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Generate assets
+        run: pnpm atlas && pnpm icons
 
       - name: Typecheck
         run: pnpm typecheck
