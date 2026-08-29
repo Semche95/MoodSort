@@ -1,22 +1,19 @@
 import { Application, Container, FederatedPointerEvent, Spritesheet } from 'pixi.js'
 import { Card } from '../types/card.types'
-import { AnimationTarget } from '../types/animation.types'
 import { Position } from '../types/position.types'
-import { CardManager } from './CardManager'
-import { DragHandler } from './DragHandler'
-import { DragController } from './DragController'
-import { PositionPersistence } from './PositionPersistence'
-import { StackOverlay } from './StackOverlay'
-import { StackDragManager } from './StackDragManager'
-import { CardStateService } from '../services/CardStateService'
-import { ActionHistory } from '../services/ActionHistory'
+import { AnimationTarget } from '../types/animation.types'
+import { CardManager } from './card-manager'
+import { DragHandler } from './drag-handler'
+import { DragController } from './drag-controller'
+import { PositionPersistence } from './position-persistence'
+import { StackOverlay } from './stack-overlay/stack-overlay'
+import { StackDragManager } from './stack-drag-manager'
+import { CardStateService } from '../services/card-state-service'
+import { ActionHistory } from '../services/action-history'
 import { IStore } from '../types/store.types'
 import { computeStacks, findStackAtPoint, findStackByCompactButtonAtPoint } from '../utils/stack'
 import { snapshotCards, applyHistoryEntry } from '../utils/history'
 
-/**
- * Orchestrates PixiJS app, cards, drag interactions, and persistence.
- */
 export class CanvasController {
     private app: Application
     private cardLayer: Container
@@ -225,28 +222,12 @@ export class CanvasController {
         this.actionHistory.captureBefore(snapshotCards(others, this.cardLayer))
         const targets = this.cardManager.buildCompactTargets(topCard, others)
         this.isCompacting = true
-        this.animateCompactStack(targets, others, 20)
-    }
-
-    private animateCompactStack(targets: AnimationTarget[], others: Card[], duration: number): void {
-        let elapsed = 0
-        const tick = (): void => {
-            elapsed++
-            for (const t of targets) {
-                const progress = Math.min(elapsed / duration, 1)
-                const ease = 1 - Math.pow(1 - progress, 3)
-                t.card.x = t.fromX + (t.toX - t.fromX) * ease
-                t.card.y = t.fromY + (t.toY - t.fromY) * ease
-            }
-            if (elapsed >= duration) {
-                this.app.ticker.remove(tick)
-                this.actionHistory.recordAfter(snapshotCards(others, this.cardLayer))
-                this.positionPersistence.saveFromStage(this.cardLayer)
-                this.stacks = computeStacks(this.cards)
-                this.isCompacting = false
-            }
-        }
-        this.app.ticker.add(tick)
+        this.animateTargets(targets, 20, (): void => {
+            this.actionHistory.recordAfter(snapshotCards(others, this.cardLayer))
+            this.positionPersistence.saveFromStage(this.cardLayer)
+            this.stacks = computeStacks(this.cards)
+            this.isCompacting = false
+        })
     }
 
     private handleStackDragEnd: () => void = (): void => {
@@ -265,10 +246,13 @@ export class CanvasController {
         this.actionHistory.clear()
         this.positionPersistence.clear()
         const targets = this.cardManager.shuffleAndBuildTargets(this.cards)
-        this.animateToCenter(targets, 20)
+        this.animateTargets(targets, 20, (): void => {
+            this.positionPersistence.saveFromStage(this.cardLayer)
+            this.stacks = computeStacks(this.cards)
+        })
     }
 
-    private animateToCenter(targets: AnimationTarget[], duration: number): void {
+    private animateTargets(targets: AnimationTarget[], duration: number, onComplete: () => void): void {
         let elapsed = 0
         const tick = (): void => {
             elapsed++
@@ -280,8 +264,7 @@ export class CanvasController {
             }
             if (elapsed >= duration) {
                 this.app.ticker.remove(tick)
-                this.positionPersistence.saveFromStage(this.cardLayer)
-                this.stacks = computeStacks(this.cards)
+                onComplete()
             }
         }
         this.app.ticker.add(tick)

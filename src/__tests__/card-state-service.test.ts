@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { CardStateService } from '../services/CardStateService'
-import { InMemoryStore } from './InMemoryStore'
+import { CardStateService } from '../services/card-state-service'
+import { InMemoryStore } from './in-memory-store'
 
 describe('CardStateService', () => {
     let store: InMemoryStore

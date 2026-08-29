@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Spritesheet } from 'pixi.js'
-import { CanvasController } from '../controllers/CanvasController'
-import { CardStateService } from '../services/CardStateService'
-import { InMemoryStore } from './InMemoryStore'
+import { CanvasController } from '../controllers/canvas-controller'
+import { CardStateService } from '../services/card-state-service'
+import { InMemoryStore } from './in-memory-store'
 import { Card } from '../types/card.types'
 import { CardActionEntry, HistoryData, HISTORY_KEY } from '../types/history.types'
 

@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { Application, Container } from 'pixi.js'
-import { StackDragManager } from '../controllers/StackDragManager'
-import { StackOverlay } from '../controllers/StackOverlay'
-import { ActionHistory } from '../services/ActionHistory'
-import { InMemoryStore } from './InMemoryStore'
+import { StackDragManager } from '../controllers/stack-drag-manager'
+import { StackOverlay } from '../controllers/stack-overlay/stack-overlay'
+import { ActionHistory } from '../services/action-history'
+import { InMemoryStore } from './in-memory-store'
 import { Card } from '../types/card.types'
 
 vi.mock('pixi.js', () => {

@@ -2,7 +2,7 @@ import { Container } from 'pixi.js'
 import { Card } from '../types/card.types'
 import { CardState, POSITIONS_KEY, ORDER_KEY, ONBOARDING_KEY } from '../types/card-state.types'
 import { Position } from '../types/position.types'
-import { CardStateService } from '../services/CardStateService'
+import { CardStateService } from '../services/card-state-service'
 
 const URL_PREFIX_RE = /^\/assets\/(.+)-[A-Za-z0-9_-]+\.webp$/
 
@@ -37,9 +37,6 @@ function migrateKeys(
     return { positions: newPositions, order: newOrder, migrated }
 }
 
-/**
- * Reads card positions from the stage and persists them via CardStateService.
- */
 export class PositionPersistence {
     private store: CardStateService
     private migrated: boolean = false

@@ -1,37 +1,10 @@
-import { CanvasController } from './controllers/CanvasController'
+import { CanvasController } from './controllers/canvas-controller'
 import { POSITIONS_KEY, ORDER_KEY, ONBOARDING_KEY } from './types/card-state.types'
-import { CardStateService } from './services/CardStateService'
-import { Store } from './services/Store'
+import { CardStateService } from './services/card-state-service'
+import { Store } from './services/store'
 import { createOnboarding } from './ui/onboarding'
 import type { Spritesheet } from 'pixi.js'
 
-export function createLoadingOverlay(): HTMLDivElement {
-    const overlay = document.createElement('div')
-    overlay.className = 'loading-overlay'
-
-    const content = document.createElement('div')
-    content.className = 'loading-content'
-
-    const spinner = document.createElement('div')
-    spinner.className = 'loading-spinner'
-
-    const text = document.createElement('div')
-    text.textContent = 'Chargement…'
-
-    content.appendChild(spinner)
-    content.appendChild(text)
-    overlay.appendChild(content)
-
-    return overlay
-}
-
-/**
- * Sets up the canvas with the provided images
- * @param images - Array of image paths to load
- * @param store - Shared store instance
- * @returns Promise that resolves with the controller
- * @throws Error if no images are provided
- */
 export async function setupCanvas(frameNames: string[], spritesheet: Spritesheet, store: CardStateService): Promise<{ controller: CanvasController }> {
     const historyStore = new Store()
     const controller = new CanvasController(store, historyStore)

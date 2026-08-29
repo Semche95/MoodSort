@@ -1,13 +1,9 @@
 import { Application, Container, FederatedPointerEvent } from 'pixi.js'
 import { Card } from '../types/card.types'
-import { DragController } from './DragController'
-import { ActionHistory } from '../services/ActionHistory'
+import { DragController } from './drag-controller'
+import { ActionHistory } from '../services/action-history'
 import { snapshotCards } from '../utils/history'
 
-/**
- * Wires DragController to PixiJS stage events.
- * Owns the drag callback chain: start -> move -> end.
- */
 export class DragHandler {
     private dragController: DragController
     private app: Application

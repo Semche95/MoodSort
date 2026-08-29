@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { ActionHistory } from '../services/ActionHistory'
-import { InMemoryStore } from './InMemoryStore'
+import { ActionHistory } from '../services/action-history'
+import { InMemoryStore } from './in-memory-store'
 import { HistorySnapshot, HistoryData, HISTORY_KEY } from '../types/history.types'
 
 function snap(id: string, x: number, y: number, index: number): HistorySnapshot {

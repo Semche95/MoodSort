@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Application, Container } from 'pixi.js'
-import { StackOverlay } from '../controllers/StackOverlay'
+import { StackOverlay } from '../controllers/stack-overlay/stack-overlay'
 import { computeCompactButtonBox } from '../utils/stack'
 import { Card } from '../types/card.types'
 

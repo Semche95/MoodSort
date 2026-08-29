@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { Application, Container, FederatedPointerEvent } from 'pixi.js'
-import { DragHandler } from '../controllers/DragHandler'
-import { DragController } from '../controllers/DragController'
-import { ActionHistory } from '../services/ActionHistory'
-import { InMemoryStore } from './InMemoryStore'
+import { DragHandler } from '../controllers/drag-handler'
+import { DragController } from '../controllers/drag-controller'
+import { ActionHistory } from '../services/action-history'
+import { InMemoryStore } from './in-memory-store'
 import { Card } from '../types/card.types'
 
 vi.mock('pixi.js', () => {

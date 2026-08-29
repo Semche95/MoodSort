@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { setupCanvas } from '../bootstrap'
-import { InMemoryStore } from './InMemoryStore'
-import { CardStateService } from '../services/CardStateService'
+import { InMemoryStore } from './in-memory-store'
+import { CardStateService } from '../services/card-state-service'
 
 import * as PIXI from 'pixi.js'
 import type { Spritesheet } from 'pixi.js'

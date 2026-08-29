@@ -1,15 +1,11 @@
 import { CardState } from '../types/card-state.types'
-import { Store } from './Store'
+import { Store } from './store'
 import { IStore } from '../types/store.types'
 
 const STORAGE_KEY: string = 'moodsort-card-state'
 
 const DEFAULTS: CardState = { positions: {}, order: [], onboardingDismissed: false }
 
-/**
- * Application-level service for card state persistence.
- * Delegates storage to a generic IStore instance.
- */
 export class CardStateService {
     private store: IStore
 

@@ -1,15 +1,11 @@
 import { Application, Container, FederatedPointerEvent } from 'pixi.js'
 import { Card } from '../types/card.types'
 import { Position } from '../types/position.types'
-import { StackOverlay } from './StackOverlay'
+import { StackOverlay } from './stack-overlay/stack-overlay'
 import { findMergeTargets } from '../utils/stack'
-import { ActionHistory } from '../services/ActionHistory'
+import { ActionHistory } from '../services/action-history'
 import { snapshotCards } from '../utils/history'
 
-/**
- * Manages the stack drag state machine: start, move, end.
- * Coordinates card reparenting, z-order preservation, and merge detection.
- */
 export class StackDragManager {
     private app: Application
     private cardLayer: Container

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { DragController } from '../controllers/DragController'
+import { DragController } from '../controllers/drag-controller'
 
 describe('DragController', () => {
     let controller: DragController
