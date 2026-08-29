@@ -6,6 +6,8 @@
 
 A visual emotion exploration tool. Arrange emotion cards on a canvas to identify and express what you're feeling.
 
+This app is in French, made for a French-speaking audience.
+
 ## Features
 
 - Drag and drop cards freely across the canvas
