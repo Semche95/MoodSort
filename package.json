@@ -1,6 +1,6 @@
 {
   "name": "moodsort",
-  "description": "A visual emotion exploration tool. 85 emotion cards on a full-screen canvas, arranged freely to compose your inner landscape.",
+  "description": "A visual emotion exploration tool. Arrange emotion cards on a canvas to identify and express what you're feeling.",
   "private": true,
   "version": "0.1.0",
   "type": "module",

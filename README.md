@@ -4,7 +4,7 @@
 [![Docker](https://github.com/Semche95/MoodSort/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/Semche95/MoodSort/actions/workflows/docker-publish.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.txt)
 
-A visual emotion exploration tool. 85 emotion cards on a full-screen canvas, arranged freely to compose your inner landscape.
+A visual emotion exploration tool. Arrange emotion cards on a canvas to identify and express what you're feeling.
 
 ## Features
 
