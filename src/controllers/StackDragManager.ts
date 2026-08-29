@@ -4,6 +4,7 @@ import { Position } from '../types/position.types'
 import { StackOverlay } from './StackOverlay'
 import { findMergeTargets } from '../utils/stack'
 import { ActionHistory } from '../services/ActionHistory'
+import { snapshotCards } from '../utils/history'
 
 /**
  * Manages the stack drag state machine: start, move, end.
@@ -67,7 +68,7 @@ export class StackDragManager {
             (a: Card, b: Card): number =>
                 this.cardLayer.children.indexOf(a) - this.cardLayer.children.indexOf(b),
         )
-        this.actionHistory.captureBefore(this._dragTarget, this.cardLayer)
+        this.actionHistory.captureBefore(snapshotCards(this._dragTarget, this.cardLayer))
         this.startMouse = { x: mousePos.x, y: mousePos.y }
         this.startPos = new Map()
         for (const card of this._dragTarget) {
@@ -81,7 +82,7 @@ export class StackDragManager {
         if (!this._isDragging) {
             return
         }
-        this.actionHistory.recordAfter(this._dragTarget, this.cardLayer)
+        this.actionHistory.recordAfter(snapshotCards(this._dragTarget, this.cardLayer))
         this._isDragging = false
         this._dragTarget = []
         this._sourceStack = null

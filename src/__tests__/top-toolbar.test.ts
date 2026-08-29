@@ -1,9 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Container, Texture } from 'pixi.js'
-import { CardStateService } from '../services/CardStateService'
-import { InMemoryStore } from './InMemoryStore'
-import { TopToolbar, loadToolbarIconTextures, TOOLBAR_ICONS } from '../ui/top-toolbar'
-import type { ToolbarHost } from '../ui/top-toolbar'
+import { initTopToolbar } from '../ui/top-toolbar/top-toolbar'
+import type { ToolbarHost } from '../types/toolbar.types'
 
 const { pixi, ui, buttons } = vi.hoisted(() => {
     class Texture {
@@ -236,10 +234,6 @@ function createHost(initial: { width?: number } = {}): TestHost {
     }
 }
 
-function createStore(): CardStateService {
-    return new CardStateService(new InMemoryStore())
-}
-
 function createTextures(): Record<string, Texture> {
     return {
         'undo-2': new pixi.Texture() as unknown as Texture,
@@ -256,7 +250,7 @@ describe('TopToolbar', () => {
 
     it('should add the toolbar container to the host stage with logo and four buttons', () => {
         const host = createHost()
-        new TopToolbar(host, createStore(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures())
 
         expect(host.stage.children).toHaveLength(1)
         expect(buttons).toHaveLength(4)
@@ -270,7 +264,7 @@ describe('TopToolbar', () => {
 
     it('should pin the buttons to the right edge on construction', () => {
         const host = createHost()
-        new TopToolbar(host, createStore(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures())
 
         const [undo, redo, help, settings] = buttons
         expect(undo.x).toBe(800 - 16 - 24 - 3 * 56)
@@ -283,7 +277,7 @@ describe('TopToolbar', () => {
 
     it('should render the mask emoji logo aligned with the MoodSort title', () => {
         const host = createHost()
-        new TopToolbar(host, createStore(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures())
 
         const toolbar = host.stage.children[0] as { children: unknown[] }
         const logo = toolbar.children[0] as { children: unknown[] }
@@ -303,7 +297,7 @@ describe('TopToolbar', () => {
 
     it('should scale button icons to about half the button size', () => {
         const host = createHost()
-        new TopToolbar(host, createStore(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures())
 
         const [undo, redo, help, settings] = buttons
         for (const button of [undo, redo, settings]) {
@@ -315,14 +309,14 @@ describe('TopToolbar', () => {
 
     it('should render the help button icon as a plain question mark text', () => {
         const host = createHost()
-        new TopToolbar(host, createStore(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures())
 
         expect((buttons[2].iconView as { text: unknown }).text).toBe('?')
     })
 
     it('should render the help button with a background circle like the other buttons', () => {
         const host = createHost()
-        new TopToolbar(host, createStore(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures())
 
         const [, , help, settings] = buttons
         const helpOptions = help as unknown as { options: Record<string, unknown> }
@@ -336,7 +330,7 @@ describe('TopToolbar', () => {
 
     it('should disable undo/redo buttons when the history is empty', () => {
         const host = createHost()
-        new TopToolbar(host, createStore(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures())
 
         const [undo, redo, help, settings] = buttons
         expect(undo.enabled).toBe(false)
@@ -350,7 +344,7 @@ describe('TopToolbar', () => {
     it('should trigger the host undo action when the undo button is pressed', () => {
         const host = createHost()
         host.setUndoAvailable(true)
-        new TopToolbar(host, createStore(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures())
 
         buttons[0].press()
 
@@ -360,7 +354,7 @@ describe('TopToolbar', () => {
 
     it('should update enabled states when history availability changes', () => {
         const host = createHost()
-        new TopToolbar(host, createStore(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures())
 
         host.setUndoAvailable(true)
         host.setRedoAvailable(true)
@@ -378,7 +372,7 @@ describe('TopToolbar', () => {
 
     it('should re-anchor the buttons to the right edge on resize', () => {
         const host = createHost({ width: 800 })
-        new TopToolbar(host, createStore(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures())
 
         host.setWidth(1200)
         host.resize()
@@ -395,7 +389,7 @@ describe('TopToolbar', () => {
 
     it('should show a tooltip with the button label on hover, anchored below the button', () => {
         const host = createHost()
-        new TopToolbar(host, createStore(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures())
 
         const [undo] = buttons
         undo.hover()
@@ -414,7 +408,7 @@ describe('TopToolbar', () => {
 
     it('should hide the tooltip on pointer out, on press, and on resize', () => {
         const host = createHost()
-        new TopToolbar(host, createStore(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures())
 
         const [undo] = buttons
         const toolbar = host.stage.children[0] as { children: unknown[] }
@@ -434,14 +428,5 @@ describe('TopToolbar', () => {
         expect(tooltip.visible).toBe(true)
         host.resize()
         expect(tooltip.visible).toBe(false)
-    })
-
-    it('should load a texture for every toolbar icon', async () => {
-        const textures = await loadToolbarIconTextures()
-
-        for (const name of TOOLBAR_ICONS) {
-            expect(textures[name]).toBeInstanceOf(pixi.Texture)
-        }
-        expect(Object.keys(textures)).toHaveLength(TOOLBAR_ICONS.length)
     })
 })

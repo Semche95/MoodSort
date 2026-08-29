@@ -1,9 +1,10 @@
 import './style.css'
 import { Assets, Spritesheet } from 'pixi.js'
 import type { SpritesheetData } from 'pixi.js'
-import { createLoadingOverlay, setupCanvas, initOnboarding } from './utils/canvas'
-import { TopToolbar, loadToolbarIconTextures } from './ui/top-toolbar'
-import { createFooter } from './ui/legal'
+import { createLoadingOverlay, setupCanvas, initOnboarding, dismissOnboarding } from './bootstrap'
+import { initTopToolbar } from './ui/top-toolbar/top-toolbar'
+import { loadIconTextures } from './ui/icons'
+import { createFooter } from './ui/footer'
 import { CardStateService } from './services/CardStateService'
 import atlasData from './assets/atlas.json'
 import atlasImageUrl from './assets/atlas.webp?url'
@@ -29,6 +30,6 @@ import atlasImageUrl from './assets/atlas.webp?url'
 
     initOnboarding(cardStateService)
 
-    const iconTextures = await loadToolbarIconTextures()
-    new TopToolbar(controller, cardStateService, iconTextures)
+    const iconTextures = await loadIconTextures()
+    initTopToolbar(controller, (): void => { dismissOnboarding(cardStateService) }, iconTextures)
 })()

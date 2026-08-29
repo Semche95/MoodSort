@@ -1,4 +1,4 @@
-import { IStore } from '../services/Store'
+import { IStore } from '../types/store.types'
 
 /**
  * In-memory implementation of IStore for testing — no localStorage dependency

@@ -1,5 +1,6 @@
 import { CardState } from '../types/card-state.types'
-import { IStore, Store } from './Store'
+import { Store } from './Store'
+import { IStore } from '../types/store.types'
 
 const STORAGE_KEY: string = 'moodsort-card-state'
 

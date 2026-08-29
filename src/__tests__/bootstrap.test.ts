@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { setupCanvas } from '../utils/canvas'
+import { setupCanvas } from '../bootstrap'
 import { InMemoryStore } from './InMemoryStore'
 import { CardStateService } from '../services/CardStateService'
 
@@ -160,7 +160,7 @@ beforeEach(() => {
     vi.clearAllMocks()
 })
 
-describe('Canvas Utilities', () => {
+describe('Bootstrap', () => {
     describe('setupCanvas', () => {
         it('should create a PixiJS application', async () => {
             const frameNames: string[] = ['card-1', 'card-2']

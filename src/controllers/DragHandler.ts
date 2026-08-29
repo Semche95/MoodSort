@@ -2,6 +2,7 @@ import { Application, Container, FederatedPointerEvent } from 'pixi.js'
 import { Card } from '../types/card.types'
 import { DragController } from './DragController'
 import { ActionHistory } from '../services/ActionHistory'
+import { snapshotCards } from '../utils/history'
 
 /**
  * Wires DragController to PixiJS stage events.
@@ -37,7 +38,7 @@ export class DragHandler {
     handleDragStart: (event: FederatedPointerEvent) => void = (event: FederatedPointerEvent) => {
         const card = event.currentTarget as Card
         this.lastDraggedCard = card
-        this.actionHistory.captureBefore([card], this.cardLayer)
+        this.actionHistory.captureBefore(snapshotCards([card], this.cardLayer))
         this.dragController.handleDragStart(event, this.app.stage, this.cardLayer, this.handleDragMove)
     }
 
@@ -61,7 +62,7 @@ export class DragHandler {
             this.app.screen.height,
         )
         if (this.lastDraggedCard) {
-            this.actionHistory.recordAfter([this.lastDraggedCard], this.cardLayer)
+            this.actionHistory.recordAfter(snapshotCards([this.lastDraggedCard], this.cardLayer))
             this.lastDraggedCard = null
         }
         this.onDragEnd()

@@ -10,8 +10,9 @@ import { StackOverlay } from './StackOverlay'
 import { StackDragManager } from './StackDragManager'
 import { CardStateService } from '../services/CardStateService'
 import { ActionHistory } from '../services/ActionHistory'
-import { IStore } from '../services/Store'
+import { IStore } from '../types/store.types'
 import { computeStacks, findStackAtPoint, findStackByCompactButtonAtPoint } from '../utils/stack'
+import { snapshotCards, applyHistoryEntry } from '../utils/history'
 
 /**
  * Orchestrates PixiJS app, cards, drag interactions, and persistence.
@@ -131,7 +132,10 @@ export class CanvasController {
         if (this.dragHandler.isDragging || this.stackDragManager.isDragging || this.isCompacting) {
             return
         }
-        this.actionHistory.undo(this.cards, this.cardLayer)
+        const entry = this.actionHistory.undo()
+        if (entry) {
+            applyHistoryEntry(entry, this.cards, this.cardLayer, true)
+        }
         this.positionPersistence.saveFromStage(this.cardLayer)
         this.stacks = computeStacks(this.cards)
     }
@@ -140,7 +144,10 @@ export class CanvasController {
         if (this.dragHandler.isDragging || this.stackDragManager.isDragging || this.isCompacting) {
             return
         }
-        this.actionHistory.redo(this.cards, this.cardLayer)
+        const entry = this.actionHistory.redo()
+        if (entry) {
+            applyHistoryEntry(entry, this.cards, this.cardLayer, false)
+        }
         this.positionPersistence.saveFromStage(this.cardLayer)
         this.stacks = computeStacks(this.cards)
     }
@@ -215,7 +222,7 @@ export class CanvasController {
         if (others.length === 0) {
             return
         }
-        this.actionHistory.captureBefore(others, this.cardLayer)
+        this.actionHistory.captureBefore(snapshotCards(others, this.cardLayer))
         const targets = this.cardManager.buildCompactTargets(topCard, others)
         this.isCompacting = true
         this.animateCompactStack(targets, others, 20)
@@ -233,7 +240,7 @@ export class CanvasController {
             }
             if (elapsed >= duration) {
                 this.app.ticker.remove(tick)
-                this.actionHistory.recordAfter(others, this.cardLayer)
+                this.actionHistory.recordAfter(snapshotCards(others, this.cardLayer))
                 this.positionPersistence.saveFromStage(this.cardLayer)
                 this.stacks = computeStacks(this.cards)
                 this.isCompacting = false

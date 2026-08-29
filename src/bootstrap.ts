@@ -1,8 +1,8 @@
-import { CanvasController } from '../controllers/CanvasController'
-import { POSITIONS_KEY, ORDER_KEY, ONBOARDING_KEY } from '../types/card-state.types'
-import { CardStateService } from '../services/CardStateService'
-import { Store } from '../services/Store'
-import { createOnboarding } from '../ui/onboarding'
+import { CanvasController } from './controllers/CanvasController'
+import { POSITIONS_KEY, ORDER_KEY, ONBOARDING_KEY } from './types/card-state.types'
+import { CardStateService } from './services/CardStateService'
+import { Store } from './services/Store'
+import { createOnboarding } from './ui/onboarding'
 import type { Spritesheet } from 'pixi.js'
 
 export function createLoadingOverlay(): HTMLDivElement {

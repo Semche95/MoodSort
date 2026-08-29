@@ -1,19 +1,19 @@
-import { Container } from 'pixi.js'
-import { Card } from '../types/card.types'
-import { CardActionEntry, HistoryData, HISTORY_KEY } from '../types/history.types'
-import { IStore } from './Store'
+import { CardActionEntry, HistoryData, HistorySnapshot, HISTORY_KEY } from '../types/history.types'
+import { IStore } from '../types/store.types'
 
 const MAX_HISTORY = 15
 
 /**
- * Manages undo/redo history for card actions.
- * Captures before/after snapshots and persists to localStorage.
+ * Manages undo/redo history for positioned, z-ordered entities.
+ * Captures before/after snapshots and persists to storage. Has no knowledge
+ * of how entities are rendered: callers hand it plain snapshots and get
+ * plain entries back to apply themselves.
  */
 export class ActionHistory {
     private store: IStore
     private undoStack: CardActionEntry[]
     private redoStack: CardActionEntry[]
-    private beforeSnapshot: Map<Card, { x: number; y: number; index: number }> | null
+    private beforeSnapshot: Map<string, HistorySnapshot> | null
     private onUpdate: () => void
 
     constructor(store: IStore, onUpdate: () => void) {
@@ -33,44 +33,34 @@ export class ActionHistory {
         return this.redoStack.length > 0
     }
 
-    captureBefore(cards: Card[], stage: Container): void {
-        this.beforeSnapshot = new Map()
-        for (const card of cards) {
-            this.beforeSnapshot.set(card, {
-                x: card.x,
-                y: card.y,
-                index: stage.children.indexOf(card),
-            })
-        }
+    captureBefore(snapshots: HistorySnapshot[]): void {
+        this.beforeSnapshot = new Map(snapshots.map((s: HistorySnapshot): [string, HistorySnapshot] => [s.id, s]))
     }
 
-    recordAfter(cards: Card[], stage: Container): void {
+    recordAfter(snapshots: HistorySnapshot[]): void {
         if (!this.beforeSnapshot) {
             return
         }
         const entry: CardActionEntry = { cards: {} }
         let changed = false
 
-        for (const card of cards) {
-            const before = this.beforeSnapshot.get(card)
+        for (const after of snapshots) {
+            const before = this.beforeSnapshot.get(after.id)
             if (!before) {
                 continue
             }
-            const toIndex = stage.children.indexOf(card)
-            const toX = card.x
-            const toY = card.y
 
-            if (before.x !== toX || before.y !== toY || before.index !== toIndex) {
+            if (before.x !== after.x || before.y !== after.y || before.index !== after.index) {
                 changed = true
             }
 
-            entry.cards[card.imageUrl] = {
+            entry.cards[after.id] = {
                 fromX: before.x,
                 fromY: before.y,
                 fromIndex: before.index,
-                toX,
-                toY,
-                toIndex,
+                toX: after.x,
+                toY: after.y,
+                toIndex: after.index,
             }
         }
 
@@ -89,26 +79,26 @@ export class ActionHistory {
         this.onUpdate()
     }
 
-    undo(allCards: Card[], stage: Container): void {
+    undo(): CardActionEntry | undefined {
         const entry = this.undoStack.pop()
         if (!entry) {
-            return
+            return undefined
         }
-        this.applyEntry(entry, allCards, stage, true)
         this.redoStack.push(entry)
         this.persist()
         this.onUpdate()
+        return entry
     }
 
-    redo(allCards: Card[], stage: Container): void {
+    redo(): CardActionEntry | undefined {
         const entry = this.redoStack.pop()
         if (!entry) {
-            return
+            return undefined
         }
-        this.applyEntry(entry, allCards, stage, false)
         this.undoStack.push(entry)
         this.persist()
         this.onUpdate()
+        return entry
     }
 
     clear(): void {
@@ -119,55 +109,10 @@ export class ActionHistory {
         this.onUpdate()
     }
 
-    private applyEntry(
-        entry: CardActionEntry,
-        allCards: Card[],
-        stage: Container,
-        reverse: boolean,
-    ): void {
-        const affected: Array<{ card: Card; index: number }> = []
-
-        for (const [imageUrl, data] of Object.entries(entry.cards)) {
-            const card = allCards.find(
-                (c: Card): boolean => c.imageUrl === imageUrl,
-            )
-            if (!card) {
-                continue
-            }
-            const index = reverse ? data.fromIndex : data.toIndex
-            const x = reverse ? data.fromX : data.toX
-            const y = reverse ? data.fromY : data.toY
-
-            card.x = x
-            card.y = y
-            affected.push({ card, index })
-        }
-
-        restoreCardZIndices(stage, affected)
-    }
-
     private persist(): void {
         this.store.save<HistoryData>(HISTORY_KEY, {
             undoStack: this.undoStack,
             redoStack: this.redoStack,
         })
-    }
-}
-
-function restoreCardZIndices(
-    stage: Container,
-    entries: Array<{ card: Card; index: number }>,
-): void {
-    entries.sort((a: { card: Card; index: number }, b: { card: Card; index: number }): number => a.index - b.index)
-
-    for (const { card } of entries) {
-        if (card.parent === stage) {
-            stage.removeChild(card)
-        }
-    }
-
-    for (const { card, index } of entries) {
-        const insertAt = Math.min(index, stage.children.length)
-        stage.addChildAt(card, insertAt)
     }
 }
