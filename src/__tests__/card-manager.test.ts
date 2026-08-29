@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import type { Application, Container, Spritesheet } from 'pixi.js'
-import { CardManager } from '../controllers/CardManager'
+import type { Application, Container, Spritesheet, Texture } from 'pixi.js'
+import { CardManager, createCard } from '../controllers/card-manager'
 import { Card } from '../types/card.types'
 import { CardState } from '../types/card-state.types'
 import { CARD_REFERENCE_WIDTH } from '../utils/constants'
@@ -16,12 +16,16 @@ vi.mock('pixi.js', () => {
         cursor: string = 'default'
         filters: unknown[] = []
         scale: { set(v: number): void } = { set: vi.fn() }
+        listeners: Array<{ event: string; handler: (...args: unknown[]) => void }> = []
         addChild(child: unknown): unknown {
             this.children.push(child);
             (child as Record<string, unknown>).parent = this
             return child
         }
-        on(): this { return this }
+        on(event: string, handler: (...args: unknown[]) => void): this {
+            this.listeners.push({ event, handler })
+            return this
+        }
     }
     class MockGraphics extends MockContainer {
         roundRect(): this { return this }
@@ -52,6 +56,41 @@ function makeCard(imageUrl: string, x: number, y: number, width: number = 200, h
 function makeState(order: string[]): CardState {
     return { positions: {}, order, onboardingDismissed: false }
 }
+
+type Listener = { event: string; handler: (...args: unknown[]) => void }
+
+describe('createCard', () => {
+    it('builds a card carrying its frame name, a shadow, and the sprite as innerSprite', () => {
+        const texture = { width: 200, height: 300 }
+        const card = createCard('card-a', texture as unknown as Texture, vi.fn()) as unknown as Container & { children: unknown[]; imageUrl: string; innerSprite: unknown }
+
+        expect(card.imageUrl).toBe('card-a')
+        expect(card.eventMode).toBe('static')
+        expect(card.cursor).toBe('move')
+        expect(card.children).toHaveLength(2)
+        expect(card.innerSprite).toBe(card.children[1])
+    })
+
+    it('wires pointerdown to the given callback and dims/restores the sprite tint on hover', () => {
+        const texture = { width: 200, height: 300 }
+        const onDragStart = vi.fn()
+        const card = createCard('card-a', texture as unknown as Texture, onDragStart) as unknown as Container & {
+            listeners: Listener[]
+            innerSprite: { tint: number }
+        }
+
+        const pointerdown = card.listeners.find((l: Listener): boolean => l.event === 'pointerdown')!
+        expect(pointerdown.handler).toBe(onDragStart)
+
+        const pointerover = card.listeners.find((l: Listener): boolean => l.event === 'pointerover')!
+        pointerover.handler()
+        expect(card.innerSprite.tint).toBe(0xFFEEDD)
+
+        const pointerout = card.listeners.find((l: Listener): boolean => l.event === 'pointerout')!
+        pointerout.handler()
+        expect(card.innerSprite.tint).toBe(0xFFFFFF)
+    })
+})
 
 describe('CardManager', () => {
     let app: Application

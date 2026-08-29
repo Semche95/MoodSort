@@ -2,13 +2,10 @@ import { Container, FederatedPointerEvent } from 'pixi.js'
 import { Card } from '../types/card.types'
 import { CardDragState } from '../types/drag.types'
 import { Position } from '../types/position.types'
-import { constrainPosition } from '../utils/card'
+import { constrainPosition } from '../utils/geometry'
 import { DEFAULT_OPACITY, DRAGGING_OPACITY } from '../utils/constants'
 
-/**
- * DragController manages card drag state and interaction logic.
- * It is decoupled from the PixiJS Application for testability.
- */
+/** Decoupled from the PixiJS Application for testability. */
 export class DragController {
     dragState: CardDragState
 

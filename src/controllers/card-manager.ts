@@ -1,14 +1,40 @@
-import { Application, Container, FederatedPointerEvent, Spritesheet } from 'pixi.js'
+import { Application, BlurFilter, Container, FederatedPointerEvent, Graphics, Spritesheet, Sprite, Texture } from 'pixi.js'
 import { Card } from '../types/card.types'
 import { AnimationTarget } from '../types/animation.types'
 import { CardState } from '../types/card-state.types'
 import { Position } from '../types/position.types'
-import { constrainPosition, createCard } from '../utils/card'
+import { constrainPosition } from '../utils/geometry'
 import { CARD_REFERENCE_WIDTH } from '../utils/constants'
 
-/**
- * Handles card creation, scaling, placement, and order resolution.
- */
+export function createCard(
+    frameName: string,
+    texture: Texture,
+    onDragStart: (event: FederatedPointerEvent) => void,
+): Card {
+    const card = new Container() as Card
+    card.imageUrl = frameName
+
+    const shadow = new Graphics()
+    shadow.roundRect(0, 0, texture.width, texture.height, 8)
+    shadow.fill({ color: 0x000000, alpha: 0.25 })
+    shadow.filters = [new BlurFilter({ strength: 4 })]
+    shadow.x = 4
+    shadow.y = 4
+    card.addChild(shadow)
+
+    const sprite = new Sprite(texture)
+    card.addChild(sprite)
+    card.innerSprite = sprite
+
+    card.eventMode = 'static'
+    card.cursor = 'move'
+    card.on('pointerdown', onDragStart, card)
+    card.on('pointerover', (): void => { sprite.tint = 0xFFEEDD })
+    card.on('pointerout', (): void => { sprite.tint = 0xFFFFFF })
+
+    return card
+}
+
 export class CardManager {
     private app: Application
     private cardLayer: Container

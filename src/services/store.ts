@@ -1,8 +1,5 @@
 import { IStore } from '../types/store.types'
 
-/**
- * Generic localStorage-backed store
- */
 export class Store implements IStore {
     save<T>(key: string, state: T): void {
         try {

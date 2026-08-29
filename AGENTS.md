@@ -10,6 +10,7 @@
 - Don't use the `any` type
 - Don't expose a class whose instance is built with `new` and immediately discarded: use a plain init function unless the instance is kept and its methods called later.
 - Don't nest named functions inside another function to share its locals: that's a class in disguise. Extract them to top-level functions taking the shared state as an explicit parameter.
+- File and folder names are always kebab-case, no exceptions for files that export a class (`stack-overlay.ts`, not `StackOverlay.ts`). PascalCase is reserved for the TypeScript identifiers (class names, types) exported from those files.
 
 # Project structure conventions
 - `controllers/`: stateful orchestrators that own a slice of Pixi/DOM state (app, stage, listeners, lifecycle) and coordinate other components, delegating persistence to `services/` and computation to `utils/`. May depend on `types/`, `services/`, `utils/`, `ui/`, and other `controllers/`. If a controller has multiple responsibilities and outgrows one file (e.g. orchestration vs. pure Pixi drawing/animation helpers), split it into a subfolder named after the controller (e.g. `controllers/stack-overlay/`) instead of overloading a single file.

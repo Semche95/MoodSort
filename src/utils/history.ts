@@ -2,7 +2,6 @@ import { Container } from 'pixi.js'
 import { Card } from '../types/card.types'
 import { CardActionEntry, HistorySnapshot } from '../types/history.types'
 
-/** Reads the current position/z-index of each card into a plain snapshot for ActionHistory. */
 export function snapshotCards(cards: Card[], stage: Container): HistorySnapshot[] {
     return cards.map((card: Card): HistorySnapshot => ({
         id: card.imageUrl,

@@ -88,7 +88,7 @@ Dragging the handle (or the border) reparents the whole stack to the top of the 
 
 ### Reset animation
 
-Reset shuffles the card order, computes new target positions, then `CanvasController.animateToCenter` eases them there over 20 frames before saving and recomputing stacks.
+Reset shuffles the card order, computes new target positions, then `CanvasController.animateTargets` (also used by stack compacting) eases them there over 20 frames before saving and recomputing stacks.
 
 ## License
 

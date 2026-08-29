@@ -80,10 +80,6 @@ function openSettings(state: ToolbarState): void {
     }))
 }
 
-/**
- * Keeps the toolbar anchored on resize: buttons pinned to the right edge,
- * logo pinned to the left edge.
- */
 function resizeToolbar(state: ToolbarState): void {
     state.tooltip.hide()
     const buttons = [state.settingsButton, state.helpButton, state.redoButton, state.undoButton]

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { DragController } from '../controllers/DragController'
+import { DragController } from '../controllers/drag-controller'
 import { Card } from '../types/card.types'
 import { DRAGGING_OPACITY, DEFAULT_OPACITY } from '../utils/constants'
 import { Container, FederatedPointerEvent, Sprite } from 'pixi.js'
@@ -83,8 +83,8 @@ vi.mock('pixi.js', () => {
     }
 })
 
-// Mock card.ts functions
-vi.mock('../utils/card', () => ({
+// Mock geometry.ts functions
+vi.mock('../utils/geometry', () => ({
     constrainPosition: vi.fn((x: number, y: number) => ({ x, y })),
 }))
 

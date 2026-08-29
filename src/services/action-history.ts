@@ -3,12 +3,7 @@ import { IStore } from '../types/store.types'
 
 const MAX_HISTORY = 15
 
-/**
- * Manages undo/redo history for positioned, z-ordered entities.
- * Captures before/after snapshots and persists to storage. Has no knowledge
- * of how entities are rendered: callers hand it plain snapshots and get
- * plain entries back to apply themselves.
- */
+/** Has no knowledge of how entities are rendered: callers hand it plain snapshots and get plain entries back to apply themselves. */
 export class ActionHistory {
     private store: IStore
     private undoStack: CardActionEntry[]

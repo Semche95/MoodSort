@@ -1,12 +1,52 @@
 import { Card } from '../types/card.types'
 import { Position } from '../types/position.types'
-import { findStack, computeBoundingBox } from './card'
 import {
     STACK_HIGHLIGHT_PADDING,
     STACK_HANDLE_HEIGHT,
     STACK_COMPACT_BUTTON_SIZE,
     STACK_COMPACT_BUTTON_GAP,
 } from './constants'
+
+function cardsOverlap(a: Card, b: Card): boolean {
+    return (
+        a.x < b.x + b.width &&
+        a.x + a.width > b.x &&
+        a.y < b.y + b.height &&
+        a.y + a.height > b.y
+    )
+}
+
+export function findStack(card: Card, allCards: Card[]): Card[] {
+    const stack: Card[] = []
+    const visited = new Set<Card>()
+    const queue = [card]
+    while (queue.length > 0) {
+        const current = queue.shift()!
+        if (visited.has(current)) continue
+        visited.add(current)
+        stack.push(current)
+        for (const other of allCards) {
+            if (!visited.has(other) && cardsOverlap(current, other)) {
+                queue.push(other)
+            }
+        }
+    }
+    return stack
+}
+
+export function computeBoundingBox(cards: Card[]): { x: number; y: number; width: number; height: number } {
+    let minX = Infinity
+    let minY = Infinity
+    let maxX = -Infinity
+    let maxY = -Infinity
+    for (const card of cards) {
+        minX = Math.min(minX, card.x)
+        minY = Math.min(minY, card.y)
+        maxX = Math.max(maxX, card.x + card.width)
+        maxY = Math.max(maxY, card.y + card.height)
+    }
+    return { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
+}
 
 export function computeStacks(cards: Card[]): Card[][] {
     const stacks: Card[][] = []
@@ -39,11 +79,7 @@ export function findStackAtPoint(stacks: Card[][], point: Position): Card[] | nu
     return null
 }
 
-/**
- * Bounding box of the stack compact button, positioned next to the drag
- * handle. Returns null for stacks with fewer than 2 cards, since the compact
- * button is only relevant for actual stacks.
- */
+// Returns null for stacks with fewer than 2 cards: the compact button only makes sense on an actual stack.
 export function computeCompactButtonBox(
     stack: Card[],
 ): { x: number; y: number; width: number; height: number } | null {

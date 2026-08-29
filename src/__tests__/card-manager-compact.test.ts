@@ -1,8 +1,15 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import type { Application, Container } from 'pixi.js'
-import { CardManager } from '../controllers/CardManager'
+import { CardManager } from '../controllers/card-manager'
 import { Card } from '../types/card.types'
 import { AnimationTarget } from '../types/animation.types'
+
+vi.mock('pixi.js', () => ({
+    Container: class MockContainer {},
+    Graphics: class MockGraphics {},
+    Sprite: class MockSprite {},
+    BlurFilter: class MockBlurFilter {},
+}))
 
 function makeCard(x: number, y: number, imageUrl: string): Card {
     return { x, y, imageUrl } as unknown as Card
