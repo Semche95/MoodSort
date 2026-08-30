@@ -56,4 +56,6 @@ jobs:
           remoteDir: '/home/${{ secrets.OVH_SFTP_USERNAME }}/www'
           exclude: '.htaccess'
           removeExtraFilesOnServer: true
-          concurrency: 10
+          # OVH mutualized hosting caps concurrent SFTP channels; a higher value causes
+          # "Connect failed" errors on some uploads once the limit is exceeded.
+          concurrency: 2
