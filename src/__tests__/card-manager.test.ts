@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { Application, Container, Spritesheet, Texture } from 'pixi.js'
 import { CardManager, createCard, CARD_REFERENCE_WIDTH } from '../features/card/card-manager'
+import { STACK_HANDLE_TOP_CLEARANCE } from '../features/stack/stack'
 import { Card } from '../types/card.types'
 import { CardState } from '../types/card-state.types'
 
@@ -174,10 +175,19 @@ describe('CardManager', () => {
         it('uses the saved position when provided', () => {
             const card = makeCard('a', 0, 0)
 
-            manager.placeCard(card, { x: 15, y: 30 })
+            manager.placeCard(card, { x: 15, y: 300 })
 
             expect(card.x).toBe(15)
-            expect(card.y).toBe(30)
+            expect(card.y).toBe(300)
+        })
+
+        it('clamps a saved position that violates the handle top clearance', () => {
+            const card = makeCard('a', 0, 0)
+
+            manager.placeCard(card, { x: 15, y: 0 })
+
+            expect(card.x).toBe(15)
+            expect(card.y).toBe(STACK_HANDLE_TOP_CLEARANCE)
         })
 
         it('centers with jitter when no saved position is provided', () => {
@@ -215,6 +225,14 @@ describe('CardManager', () => {
             expect(card.x).toBeLessThanOrEqual(1000 - card.width)
             expect(card.y).toBeLessThanOrEqual(1000 - card.height)
         })
+
+        it('keeps the handle top clearance when shrinking the window pushes the card toward the top', () => {
+            const card = makeCard('a', 100, 100, 200, 300)
+
+            manager.repositionForResize(card, 1, 0.1, 1000, 1000)
+
+            expect(card.y).toBe(STACK_HANDLE_TOP_CLEARANCE)
+        })
     })
 
     describe('shuffleAndBuildTargets', () => {
@@ -236,6 +254,17 @@ describe('CardManager', () => {
                 expect(target.fromX).toBe(target.card.x)
                 expect(target.fromY).toBe(target.card.y)
             }
+        })
+
+        it('keeps the target below the handle top clearance for a card tall enough that centering alone would violate it', () => {
+            vi.spyOn(Math, 'random').mockReturnValue(0)
+            // Card height 680 on a 720-tall screen centers at y=20, already under the
+            // clearance of 31 before the jitter (-25 here) pushes it further up.
+            const tallCard = makeCard('a', 10, 10, 200, 680)
+
+            const [target] = manager.shuffleAndBuildTargets([tallCard])
+
+            expect(target.toY).toBe(STACK_HANDLE_TOP_CLEARANCE)
         })
     })
 

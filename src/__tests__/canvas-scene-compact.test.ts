@@ -160,7 +160,9 @@ function seedStore(historyStore: InMemoryStore, priorEntry?: CardActionEntry): C
             'card-a': { x: 100, y: 100 },
             'card-b': { x: 110, y: 110 },
             'card-top': { x: 90, y: 95 },
-            'card-other': { x: 2000, y: 2000 },
+            // Kept well within the 800x600 mock screen (unlike the a/b/top trio,
+            // which cluster near the origin) so it stays untouched by clamping.
+            'card-other': { x: 500, y: 250 },
         },
         order: ['card-a', 'card-b', 'card-top', 'card-other'],
         onboardingDismissed: false,
@@ -241,8 +243,8 @@ describe('CanvasScene compact stack action', () => {
         expect(Object.prototype.hasOwnProperty.call(a, 'rotation')).toBe(false)
         expect(Object.prototype.hasOwnProperty.call(b, 'rotation')).toBe(false)
 
-        expect(other.x).toBe(2000)
-        expect(other.y).toBe(2000)
+        expect(other.x).toBe(500)
+        expect(other.y).toBe(250)
 
         expect(testable.cardLayer.children).toEqual(orderBefore)
     })
@@ -250,7 +252,7 @@ describe('CanvasScene compact stack action', () => {
     it('pushes a single undo/redo entry and does not clear pre-existing history', async () => {
         const priorEntry: CardActionEntry = {
             cards: {
-                'card-other': { fromX: 1990, fromY: 1990, fromIndex: 3, toX: 2000, toY: 2000, toIndex: 3 },
+                'card-other': { fromX: 490, fromY: 240, fromIndex: 3, toX: 500, toY: 250, toIndex: 3 },
             },
         }
         const { scene, testable, tick } = await setup(priorEntry)
@@ -288,8 +290,8 @@ describe('CanvasScene compact stack action', () => {
         expect(scene.canRedo).toBe(true)
 
         const other = findCard(testable, 'card-other')
-        expect(other.x).toBe(2000)
-        expect(other.y).toBe(2000)
+        expect(other.x).toBe(500)
+        expect(other.y).toBe(250)
 
         scene.redo()
 

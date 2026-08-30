@@ -2,8 +2,7 @@ import { Container, FederatedPointerEvent } from 'pixi.js'
 import { Card } from '../../types/card.types'
 import { CardDragState } from '../../types/drag.types'
 import { Position } from '../../types/position.types'
-import { constrainPosition } from '../../shared/utils/geometry'
-import { STACK_HANDLE_TOP_CLEARANCE } from '../stack/stack'
+import { clampCardPosition } from '../stack/stack'
 
 /** Opacity of a card while it is being dragged */
 export const DRAGGING_OPACITY: number = 0.5
@@ -69,15 +68,7 @@ export class CardDrag {
         const newGlobalX = event.global.x + this.dragState.dragOffset.x
         const newGlobalY = event.global.y + this.dragState.dragOffset.y
 
-        const constrained = constrainPosition(
-            newGlobalX,
-            newGlobalY,
-            this.dragState.dragTarget.width,
-            this.dragState.dragTarget.height,
-            appWidth,
-            appHeight,
-            STACK_HANDLE_TOP_CLEARANCE,
-        )
+        const constrained = clampCardPosition(newGlobalX, newGlobalY, this.dragState.dragTarget, appWidth, appHeight)
 
         this.dragState.dragTarget.position.set(constrained.x, constrained.y)
     }
@@ -111,15 +102,7 @@ export class CardDrag {
             card.y = this.dragState.originalPosition.y
         }
 
-        const constrained = constrainPosition(
-            card.x,
-            card.y,
-            card.width,
-            card.height,
-            appWidth,
-            appHeight,
-            STACK_HANDLE_TOP_CLEARANCE,
-        )
+        const constrained = clampCardPosition(card.x, card.y, card, appWidth, appHeight)
         card.x = constrained.x
         card.y = constrained.y
 

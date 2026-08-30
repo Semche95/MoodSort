@@ -2,7 +2,7 @@ import { Application, Container, FederatedPointerEvent } from 'pixi.js'
 import { Card } from '../../types/card.types'
 import { Position } from '../../types/position.types'
 import { StackOverlay } from './stack-overlay/stack-overlay'
-import { computeBoundingBox, findMergeTargets, STACK_HANDLE_TOP_CLEARANCE } from './stack'
+import { computeGroupClampOffset, findMergeTargets } from './stack'
 import { ActionHistory } from '../history/action-history'
 import { snapshotCards } from '../history/history'
 
@@ -100,29 +100,11 @@ export class StackDragManager {
             card.y = start.y + dy
         }
 
-        // The whole group moves as one rigid block, so clamping is done once
-        // against the group's bounding box (not per-card) to keep it fitted
-        // together. STACK_HANDLE_TOP_CLEARANCE keeps the drag handle itself
-        // (drawn above the box) fully on-canvas.
-        const box = computeBoundingBox(this._dragTarget)
-        const appWidth = this.app.screen.width
-        const appHeight = this.app.screen.height
-        let adjustX = 0
-        let adjustY = 0
-        if (box.x < 0) {
-            adjustX = -box.x
-        } else if (box.x + box.width > appWidth) {
-            adjustX = appWidth - (box.x + box.width)
-        }
-        if (box.y < STACK_HANDLE_TOP_CLEARANCE) {
-            adjustY = STACK_HANDLE_TOP_CLEARANCE - box.y
-        } else if (box.y + box.height > appHeight) {
-            adjustY = appHeight - (box.y + box.height)
-        }
-        if (adjustX !== 0 || adjustY !== 0) {
+        const offset = computeGroupClampOffset(this._dragTarget, this.app.screen.width, this.app.screen.height)
+        if (offset.x !== 0 || offset.y !== 0) {
             for (const card of this._dragTarget) {
-                card.x += adjustX
-                card.y += adjustY
+                card.x += offset.x
+                card.y += offset.y
             }
         }
 

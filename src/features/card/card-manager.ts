@@ -3,7 +3,7 @@ import { Card } from '../../types/card.types'
 import { AnimationTarget } from '../../types/animation.types'
 import { CardState } from '../../types/card-state.types'
 import { Position } from '../../types/position.types'
-import { constrainPosition } from '../../shared/utils/geometry'
+import { clampCardPosition } from '../stack/stack'
 
 /** Screen width (in px) at which cards render at native size */
 export const CARD_REFERENCE_WIDTH: number = 2560
@@ -80,23 +80,26 @@ export class CardManager {
     }
 
     placeCard(card: Card, savedPos?: Position): void {
+        let targetX: number
+        let targetY: number
         if (savedPos) {
-            card.x = savedPos.x
-            card.y = savedPos.y
+            targetX = savedPos.x
+            targetY = savedPos.y
         } else {
             const centerX = (this.app.screen.width - card.width) / 2
             const centerY = (this.app.screen.height - card.height) / 2
             const jitter = 25
-            card.x = centerX + (Math.random() * 2 - 1) * jitter
-            card.y = centerY + (Math.random() * 2 - 1) * jitter
+            targetX = centerX + (Math.random() * 2 - 1) * jitter
+            targetY = centerY + (Math.random() * 2 - 1) * jitter
         }
+        const constrained = clampCardPosition(targetX, targetY, card, this.app.screen.width, this.app.screen.height)
+        card.x = constrained.x
+        card.y = constrained.y
     }
 
     repositionForResize(card: Card, ratioX: number, ratioY: number, newWidth: number, newHeight: number): void {
         this.applyScale(card)
-        card.x = card.x * ratioX
-        card.y = card.y * ratioY
-        const constrained = constrainPosition(card.x, card.y, card.width, card.height, newWidth, newHeight)
+        const constrained = clampCardPosition(card.x * ratioX, card.y * ratioY, card, newWidth, newHeight)
         card.x = constrained.x
         card.y = constrained.y
     }
@@ -113,12 +116,19 @@ export class CardManager {
             const centerX = (this.app.screen.width - card.width) / 2
             const centerY = (this.app.screen.height - card.height) / 2
             const jitter = 25
+            const constrained = clampCardPosition(
+                centerX + (Math.random() * 2 - 1) * jitter,
+                centerY + (Math.random() * 2 - 1) * jitter,
+                card,
+                this.app.screen.width,
+                this.app.screen.height,
+            )
             targets.push({
                 card,
                 fromX: card.x,
                 fromY: card.y,
-                toX: centerX + (Math.random() * 2 - 1) * jitter,
-                toY: centerY + (Math.random() * 2 - 1) * jitter,
+                toX: constrained.x,
+                toY: constrained.y,
             })
         }
         return targets
@@ -136,12 +146,22 @@ export class CardManager {
         const centerY = topCard.y
         const jitter = 25
         for (const card of others) {
+            // Clamped the same way a drag would be: the jitter can otherwise land a
+            // card above the stack's handle clearance (or off another edge) when the
+            // stack sits near the canvas border, pushing the handle off-canvas.
+            const constrained = clampCardPosition(
+                centerX + (Math.random() * 2 - 1) * jitter,
+                centerY + (Math.random() * 2 - 1) * jitter,
+                card,
+                this.app.screen.width,
+                this.app.screen.height,
+            )
             targets.push({
                 card,
                 fromX: card.x,
                 fromY: card.y,
-                toX: centerX + (Math.random() * 2 - 1) * jitter,
-                toY: centerY + (Math.random() * 2 - 1) * jitter,
+                toX: constrained.x,
+                toY: constrained.y,
             })
         }
         return targets

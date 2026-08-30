@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import type { Application, Container } from 'pixi.js'
 import { CardManager } from '../features/card/card-manager'
+import { STACK_HANDLE_TOP_CLEARANCE } from '../features/stack/stack'
 import { Card } from '../types/card.types'
 import { AnimationTarget } from '../types/animation.types'
 
@@ -12,11 +13,12 @@ vi.mock('pixi.js', () => ({
 }))
 
 function makeCard(x: number, y: number, imageUrl: string): Card {
-    return { x, y, imageUrl } as unknown as Card
+    return { x, y, width: 100, height: 150, imageUrl } as unknown as Card
 }
 
 describe('CardManager.buildCompactTargets', () => {
-    const manager = new CardManager({} as Application, {} as Container)
+    const app = { screen: { width: 800, height: 600 } } as unknown as Application
+    const manager = new CardManager(app, {} as Container)
 
     it('does not include the top card in the returned targets', () => {
         const top = makeCard(500, 400, 'top')
@@ -55,5 +57,28 @@ describe('CardManager.buildCompactTargets', () => {
         const top = makeCard(500, 400, 'top')
 
         expect(manager.buildCompactTargets(top, [])).toEqual([])
+    })
+
+    it('keeps the dispersed target below the handle top clearance when the stack sits near the canvas top', () => {
+        const top = makeCard(500, STACK_HANDLE_TOP_CLEARANCE, 'top')
+        const others = [makeCard(10, 10, 'a')]
+        const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0)
+
+        const [target] = manager.buildCompactTargets(top, others)
+
+        randomSpy.mockRestore()
+        expect(target.toY).toBe(STACK_HANDLE_TOP_CLEARANCE)
+    })
+
+    it('keeps the dispersed target within the canvas when the stack sits near the right/bottom edge', () => {
+        const top = makeCard(780, 580, 'top')
+        const others = [makeCard(10, 10, 'a')]
+        const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(1)
+
+        const [target] = manager.buildCompactTargets(top, others)
+
+        randomSpy.mockRestore()
+        expect(target.toX).toBe(700) // appWidth (800) - card width (100)
+        expect(target.toY).toBe(450) // appHeight (600) - card height (150)
     })
 })

@@ -72,8 +72,8 @@ describe('StackDragManager', () => {
     })
 
     it('moves every dragged card by the pointer delta on stage pointermove', async () => {
-        const a = makeCard('a', 10, 10)
-        const b = makeCard('b', 20, 20)
+        const a = makeCard('a', 100, 100)
+        const b = makeCard('b', 110, 110)
         cardLayer.addChild(a)
         cardLayer.addChild(b)
         const onSpy = vi.spyOn(app.stage, 'on')
@@ -83,14 +83,16 @@ describe('StackDragManager', () => {
 
         moveHandler({ global: { x: 130, y: 90 } })
 
-        expect(a.x).toBe(40)
-        expect(a.y).toBe(STACK_HANDLE_TOP_CLEARANCE)
-        expect(b.x).toBe(50)
-        expect(b.y).toBe(STACK_HANDLE_TOP_CLEARANCE + 10)
+        expect(a.x).toBe(130)
+        expect(a.y).toBe(90)
+        expect(b.x).toBe(140)
+        expect(b.y).toBe(100)
         expect(overlay.showDragHighlights).toHaveBeenCalled()
     })
 
-    it('keeps the group bounding box below the handle top clearance when dragged toward the top', async () => {
+    // The clamp math itself (all four edges) is covered by computeGroupClampOffset's
+    // own tests; this just checks that handleMove actually applies its result.
+    it('clamps the dragged group to the canvas via computeGroupClampOffset', async () => {
         const a = makeCard('a', 10, 10)
         const b = makeCard('b', 20, 20)
         cardLayer.addChild(a)
@@ -104,23 +106,6 @@ describe('StackDragManager', () => {
 
         expect(a.y).toBe(STACK_HANDLE_TOP_CLEARANCE)
         expect(b.y).toBe(STACK_HANDLE_TOP_CLEARANCE + 10)
-    })
-
-    it('keeps the group bounding box within the canvas when dragged past the right/bottom edges', async () => {
-        const a = makeCard('a', 10, 10)
-        const b = makeCard('b', 20, 20)
-        cardLayer.addChild(a)
-        cardLayer.addChild(b)
-        const onSpy = vi.spyOn(app.stage, 'on')
-
-        manager.startDrag([a, b], [a, b], { x: 100, y: 100 })
-        const moveHandler = onSpy.mock.calls.find((call: unknown[]): boolean => call[0] === 'pointermove')?.[1] as (e: unknown) => void
-
-        moveHandler({ global: { x: 5000, y: 5000 } })
-
-        // Group bounding box (b is the bottom-right-most card) must not exceed the 800x600 canvas.
-        expect(b.x + b.width).toBe(800)
-        expect(b.y + b.height).toBe(600)
     })
 
     it('end records the after-snapshot, stops dragging and restores the overlay z-order', () => {

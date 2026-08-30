@@ -50,14 +50,8 @@ describe('constrainPosition', () => {
         expect(position.y).toBe(450) // appHeight - objectHeight
     })
 
-    it('should keep y at or below appHeight - height even when topMargin exceeds it', () => {
+    it('should clamp y to topMargin when dragged above it', () => {
         const position: Position = constrainPosition(200, -50, objectWidth, objectHeight, appWidth, appHeight, 31)
-
-        expect(position.y).toBe(31)
-    })
-
-    it('should not raise y above topMargin when dragged toward the top', () => {
-        const position: Position = constrainPosition(200, 10, objectWidth, objectHeight, appWidth, appHeight, 31)
 
         expect(position.y).toBe(31)
     })
