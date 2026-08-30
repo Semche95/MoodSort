@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { Application, Container } from 'pixi.js'
-import { StackDragManager } from '../controllers/stack-drag-manager'
-import { StackOverlay } from '../controllers/stack-overlay/stack-overlay'
-import { ActionHistory } from '../services/action-history'
+import { StackDragManager } from '../features/stack/stack-drag-manager'
+import { StackOverlay } from '../features/stack/stack-overlay/stack-overlay'
+import { ActionHistory } from '../features/history/action-history'
 import { InMemoryStore } from './in-memory-store'
 import { Card } from '../types/card.types'
 

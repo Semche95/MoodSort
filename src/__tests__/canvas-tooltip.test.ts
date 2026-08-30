@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { CanvasTooltip } from '../ui/canvas-tooltip'
+import { CanvasTooltip } from '../shared/ui/canvas-tooltip'
 
 const { pixi } = vi.hoisted(() => {
     class Container {

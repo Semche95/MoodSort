@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { Application, Container, FederatedPointerEvent } from 'pixi.js'
-import { DragHandler } from '../controllers/drag-handler'
-import { DragController } from '../controllers/drag-controller'
-import { ActionHistory } from '../services/action-history'
+import { DragHandler } from '../features/drag/drag-handler'
+import { CardDrag } from '../features/drag/card-drag'
+import { ActionHistory } from '../features/history/action-history'
 import { InMemoryStore } from './in-memory-store'
 import { Card } from '../types/card.types'
 
@@ -77,7 +77,7 @@ describe('DragHandler', () => {
         app = { stage: new MockContainer(), screen: { width: 800, height: 600 } } as unknown as Application
         actionHistory = new ActionHistory(new InMemoryStore(), vi.fn())
         onDragEnd = vi.fn()
-        dragHandler = new DragHandler(new DragController(), app, cardLayer, onDragEnd, actionHistory)
+        dragHandler = new DragHandler(new CardDrag(), app, cardLayer, onDragEnd, actionHistory)
     })
 
     it('is not dragging before a drag starts', () => {

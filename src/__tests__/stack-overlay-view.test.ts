@@ -11,7 +11,7 @@ import {
     drawMergeTargetBorder,
     drawSingleBox,
     drawSingleStack,
-} from '../controllers/stack-overlay/stack-overlay-view'
+} from '../features/stack/stack-overlay/stack-overlay-view'
 
 type Call = { method: string; args: unknown[] }
 

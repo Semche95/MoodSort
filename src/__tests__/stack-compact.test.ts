@@ -1,12 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { computeCompactButtonBox, findStackByCompactButtonAtPoint } from '../utils/stack'
-import { Card } from '../types/card.types'
 import {
+    computeCompactButtonBox,
+    findStackByCompactButtonAtPoint,
     STACK_HANDLE_HEIGHT,
     STACK_HIGHLIGHT_PADDING,
     STACK_COMPACT_BUTTON_SIZE,
     STACK_COMPACT_BUTTON_GAP,
-} from '../utils/constants'
+} from '../features/stack/stack'
+import { Card } from '../types/card.types'
 
 function makeCard(x: number, y: number, width: number, height: number, imageUrl: string): Card {
     return { x, y, width, height, imageUrl } as unknown as Card

@@ -1,9 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { Application, Container, Spritesheet, Texture } from 'pixi.js'
-import { CardManager, createCard } from '../controllers/card-manager'
+import { CardManager, createCard, CARD_REFERENCE_WIDTH } from '../features/card/card-manager'
 import { Card } from '../types/card.types'
 import { CardState } from '../types/card-state.types'
-import { CARD_REFERENCE_WIDTH } from '../utils/constants'
 
 vi.mock('pixi.js', () => {
     class MockContainer {

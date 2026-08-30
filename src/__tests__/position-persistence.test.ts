@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import type { Container } from 'pixi.js'
-import { PositionPersistence } from '../controllers/position-persistence'
-import { CardStateService } from '../services/card-state-service'
+import { PositionPersistence } from '../features/card/position-persistence'
+import { CardStateService } from '../features/card/card-state-service'
 import { InMemoryStore } from './in-memory-store'
 import { Card } from '../types/card.types'
 

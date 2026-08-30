@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import type { Application, Container } from 'pixi.js'
-import { CardManager } from '../controllers/card-manager'
+import { CardManager } from '../features/card/card-manager'
 import { Card } from '../types/card.types'
 import { AnimationTarget } from '../types/animation.types'
 

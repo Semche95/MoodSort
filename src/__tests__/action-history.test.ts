@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { ActionHistory } from '../services/action-history'
+import { ActionHistory } from '../features/history/action-history'
 import { InMemoryStore } from './in-memory-store'
 import { HistorySnapshot, HistoryData, HISTORY_KEY } from '../types/history.types'
 

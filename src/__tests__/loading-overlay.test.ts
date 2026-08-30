@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createLoadingOverlay } from '../ui/loading-overlay'
+import { createLoadingOverlay } from '../shared/ui/loading-overlay'
 
 describe('createLoadingOverlay', () => {
     it('builds an overlay containing a spinner and a loading message', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { constrainPosition } from '../utils/geometry'
+import { constrainPosition } from '../shared/utils/geometry'
 import { Position } from '../types/position.types'
 
 describe('constrainPosition', () => {

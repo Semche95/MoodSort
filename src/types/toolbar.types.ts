@@ -1,7 +1,7 @@
 import { Container } from 'pixi.js'
 
 /**
- * Minimal surface of CanvasController used by the toolbar, kept small so it can
+ * Minimal surface of CanvasScene used by the toolbar, kept small so it can
  * be stubbed in tests without instantiating the whole Pixi app.
  */
 export interface ToolbarHost {

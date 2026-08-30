@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { CardStateService } from '../services/card-state-service'
+import { CardStateService } from '../features/card/card-state-service'
 import { InMemoryStore } from './in-memory-store'
 
 describe('CardStateService', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { Store } from '../services/store'
+import { Store } from '../shared/utils/store'
 import { InMemoryStore } from './in-memory-store'
 
 // Mock localStorage for jsdom environment

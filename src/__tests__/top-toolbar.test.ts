@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Container, Texture } from 'pixi.js'
-import { initTopToolbar } from '../ui/top-toolbar/top-toolbar'
+import { initTopToolbar } from '../features/toolbar/top-toolbar'
 import type { ToolbarHost } from '../types/toolbar.types'
 
 const { pixi, ui, buttons } = vi.hoisted(() => {

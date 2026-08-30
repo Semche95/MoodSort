@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Texture } from 'pixi.js'
-import { ICON_NAMES, createHelpIcon, createIcon, loadIconTextures } from '../ui/icons'
+import { ICON_NAMES, createHelpIcon, createIcon, loadIconTextures } from '../shared/ui/icons'
 
 const { pixi } = vi.hoisted(() => {
     class Texture {

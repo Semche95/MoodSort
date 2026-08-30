@@ -31,16 +31,16 @@ pnpm install
 pnpm dev
 ```
 
-Runs at `http://localhost:5173`.
+Runs at `http://localhost:5170`.
 
 ## Scripts
 
-`pnpm dev` and `pnpm build` regenerate two things before starting: the card spritesheet atlas (`src/assets/atlas.webp` + `atlas.json`, built from `src/cards/`) and the toolbar icons (`src/assets/icons/`, rasterized from `lucide-static`). Both outputs are git-ignored.
+`pnpm dev` and `pnpm build` regenerate two things before starting: the card spritesheet atlas (`src/assets/atlas.webp` + `atlas.json`, built from `src/cards/`) and the app icons (`src/assets/icons/`, rasterized from `lucide-static`). Both outputs are git-ignored.
 
 | Command | Description |
 |---|---|
 | `pnpm atlas` | Regenerate the card atlas |
-| `pnpm icons` | Regenerate the toolbar icons |
+| `pnpm icons` | Regenerate the app icons |
 | `pnpm dev` | Start the dev server |
 | `pnpm build` | Type-check and build for production |
 | `pnpm preview` | Preview the production build |
@@ -56,11 +56,12 @@ scripts/       # Atlas and icon generation
 src/
   cards/        # 85 source card images
   assets/       # Generated atlas + icons (git-ignored)
-  controllers/  # Canvas orchestration, drag, stacks, persistence
-  types/        # Card, drag, and position types
-  utils/        # Card/stack helpers, canvas helpers, constants
-  services/     # Storage and undo/redo history
-  ui/           # Toolbar, tooltip, settings, onboarding, legal modal
+  app/          # Composition root: entry point, canvas scene
+  features/     # One folder per feature: card, drag, stack, history,
+                # toolbar, onboarding, settings, footer
+  shared/       # Cross-feature UI widgets and utilities: icons (used app-wide),
+                # tooltip, loading overlay, geometry, localStorage wrapper
+  types/        # One file per domain type (card, drag, stack, history, etc.)
   __tests__/
 ```
 
@@ -80,13 +81,13 @@ Dragging the handle (or the border) reparents the whole stack to the top of the 
 
 ### Drag and drop
 
-`DragController` handles the single-card lifecycle: reparent to stage, follow the cursor, clamp to the viewport, snap back if nothing moved, drop opacity to 50% while dragging. `DragHandler` wires it to the stage and captures undo history around each drag.
+`CardDrag` handles the single-card lifecycle: reparent to stage, follow the cursor, clamp to the viewport, snap back if nothing moved, drop opacity to 50% while dragging. `DragHandler` wires it to the stage and captures undo history around each drag.
 
 ### Persistence and history
 
 `Store` is a plain `localStorage` wrapper with no app knowledge. `CardStateService` uses it to persist positions, z-order, and onboarding status under one key. `PositionPersistence` reads positions off the stage and writes them back, and on first load transparently migrates the old Vite-hashed URL keys (e.g. `/assets/abandon-kDvhRWIr.webp`) to atlas frame names (e.g. `abandon`). Undo history is cleared if a migration happened, since old snapshots would reference stale keys.
 
-`ActionHistory` snapshots positions and z-index before/after each drag (one mousedown→mouseup = one action), keeping up to 15 undo entries plus a redo stack, both persisted. Any new action clears redo. Both `DragHandler` and `StackDragManager` feed it; `CanvasController` exposes `undo()`, `redo()`, `canUndo`/`canRedo`, and a history-change callback for the toolbar.
+`ActionHistory` snapshots positions and z-index before/after each drag (one mousedown→mouseup = one action), keeping up to 15 undo entries plus a redo stack, both persisted. Any new action clears redo. Both `DragHandler` and `StackDragManager` feed it; `CanvasScene` exposes `undo()`, `redo()`, `canUndo`/`canRedo`, and a history-change callback for the toolbar.
 
 ### Toolbar
 
@@ -94,7 +95,7 @@ Dragging the handle (or the border) reparents the whole stack to the top of the 
 
 ### Reset animation
 
-Reset shuffles the card order, computes new target positions, then `CanvasController.animateTargets` (also used by stack compacting) eases them there over 20 frames before saving and recomputing stacks.
+Reset shuffles the card order, computes new target positions, then `CanvasScene.animateTargets` (also used by stack compacting) eases them there over 20 frames before saving and recomputing stacks.
 
 ## License
 

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { CanvasTooltip } from '../ui/canvas-tooltip'
-import { createButton, createCircleView, createLogo, setButtonEnabled } from '../ui/top-toolbar/toolbar-view'
+import type { CanvasTooltip } from '../shared/ui/canvas-tooltip'
+import { createButton, createCircleView, createLogo, setButtonEnabled } from '../features/toolbar/toolbar-view'
 
 const { pixi, ui, buttons } = vi.hoisted(() => {
     class Container {

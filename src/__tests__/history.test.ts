@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { Container } from 'pixi.js'
-import { snapshotCards, applyHistoryEntry } from '../utils/history'
+import { snapshotCards, applyHistoryEntry } from '../features/history/history'
 import { Card } from '../types/card.types'
 import { CardActionEntry } from '../types/history.types'
 

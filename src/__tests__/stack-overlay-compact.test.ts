@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Application, Container } from 'pixi.js'
-import { StackOverlay } from '../controllers/stack-overlay/stack-overlay'
-import { computeCompactButtonBox } from '../utils/stack'
+import { StackOverlay } from '../features/stack/stack-overlay/stack-overlay'
+import { computeCompactButtonBox } from '../features/stack/stack'
 import { Card } from '../types/card.types'
 
 type Handler = (payload: unknown) => void

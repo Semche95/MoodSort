@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { DragController } from '../controllers/drag-controller'
+import { CardDrag, DRAGGING_OPACITY, DEFAULT_OPACITY } from '../features/drag/card-drag'
 import { Card } from '../types/card.types'
-import { DRAGGING_OPACITY, DEFAULT_OPACITY } from '../utils/constants'
 import { Container, FederatedPointerEvent, Sprite } from 'pixi.js'
 
 // Mock PixiJS objects
@@ -84,12 +83,12 @@ vi.mock('pixi.js', () => {
 })
 
 // Mock geometry.ts functions
-vi.mock('../utils/geometry', () => ({
+vi.mock('../shared/utils/geometry', () => ({
     constrainPosition: vi.fn((x: number, y: number) => ({ x, y })),
 }))
 
-describe('DragController', () => {
-    let controller: DragController
+describe('CardDrag', () => {
+    let cardDrag: CardDrag
     let mockCard: Card
     let mockStage: Container
     let mockCardLayer: Container
@@ -99,7 +98,7 @@ describe('DragController', () => {
     beforeEach(() => {
         vi.clearAllMocks()
 
-        controller = new DragController()
+        cardDrag = new CardDrag()
 
         mockCard = new Container() as Card
         mockCard.imageUrl = 'test.png'
@@ -146,19 +145,19 @@ describe('DragController', () => {
 
     describe('handleDragStart', () => {
         it('should set up the drag state correctly', () => {
-            controller.handleDragStart(mockEvent, mockStage, mockCardLayer, onDragMoveMock)
+            cardDrag.handleDragStart(mockEvent, mockStage, mockCardLayer, onDragMoveMock)
 
-            expect(controller.dragState.dragTarget).toBe(mockCard)
-            expect(controller.dragState.cardMoved).toBe(false)
+            expect(cardDrag.dragState.dragTarget).toBe(mockCard)
+            expect(cardDrag.dragState.cardMoved).toBe(false)
             expect(mockCard.alpha).toBe(DRAGGING_OPACITY)
             expect(vi.mocked(mockCardLayer.addChild)).toHaveBeenCalledWith(mockCard)
             expect(vi.mocked(mockStage.on)).toHaveBeenCalledWith('pointermove', onDragMoveMock)
         })
 
         it('should calculate the drag offset correctly', () => {
-            controller.handleDragStart(mockEvent, mockStage, mockCardLayer, onDragMoveMock)
+            cardDrag.handleDragStart(mockEvent, mockStage, mockCardLayer, onDragMoveMock)
 
-            expect(controller.dragState.dragOffset).toEqual({
+            expect(cardDrag.dragState.dragOffset).toEqual({
                 x: mockCard.getGlobalPosition().x - mockEvent.global.x,
                 y: mockCard.getGlobalPosition().y - mockEvent.global.y,
             })
@@ -167,44 +166,44 @@ describe('DragController', () => {
 
     describe('handleDragMove', () => {
         beforeEach(() => {
-            controller.dragState.dragTarget = mockCard
-            controller.dragState.dragOffset = { x: 10, y: 20 }
-            controller.dragState.originalParent = mockStage
-            controller.dragState.originalPosition = { x: 50, y: 60 }
+            cardDrag.dragState.dragTarget = mockCard
+            cardDrag.dragState.dragOffset = { x: 10, y: 20 }
+            cardDrag.dragState.originalParent = mockStage
+            cardDrag.dragState.originalPosition = { x: 50, y: 60 }
         })
 
         it('should update the card position based on the event and offset', () => {
-            controller.handleDragMove(mockEvent, 800, 600)
+            cardDrag.handleDragMove(mockEvent, 800, 600)
 
-            const expectedX: number = mockEvent.global.x + controller.dragState.dragOffset.x
-            const expectedY: number = mockEvent.global.y + controller.dragState.dragOffset.y
+            const expectedX: number = mockEvent.global.x + cardDrag.dragState.dragOffset.x
+            const expectedY: number = mockEvent.global.y + cardDrag.dragState.dragOffset.y
 
             expect(mockCard.position.set).toHaveBeenCalledWith(expectedX, expectedY)
-            expect(controller.dragState.cardMoved).toBe(true)
+            expect(cardDrag.dragState.cardMoved).toBe(true)
         })
 
         it('should do nothing if no card is being dragged', () => {
-            controller.dragState.dragTarget = null
+            cardDrag.dragState.dragTarget = null
 
-            controller.handleDragMove(mockEvent, 800, 600)
+            cardDrag.handleDragMove(mockEvent, 800, 600)
 
-            expect(controller.dragState.cardMoved).toBe(false)
+            expect(cardDrag.dragState.cardMoved).toBe(false)
         })
     })
 
     describe('handleDragEnd', () => {
         beforeEach(() => {
-            controller.dragState.dragTarget = mockCard
-            controller.dragState.dragOffset = { x: 10, y: 20 }
-            controller.dragState.originalParent = mockStage
-            controller.dragState.originalPosition = { x: 50, y: 60 }
-            controller.dragState.cardMoved = true
+            cardDrag.dragState.dragTarget = mockCard
+            cardDrag.dragState.dragOffset = { x: 10, y: 20 }
+            cardDrag.dragState.originalParent = mockStage
+            cardDrag.dragState.originalPosition = { x: 50, y: 60 }
+            cardDrag.dragState.cardMoved = true
         })
 
         it('should do nothing if no card is being dragged', () => {
-            controller.dragState.dragTarget = null
+            cardDrag.dragState.dragTarget = null
 
-            controller.handleDragEnd(mockStage, onDragMoveMock, 800, 600)
+            cardDrag.handleDragEnd(mockStage, onDragMoveMock, 800, 600)
 
             expect(vi.mocked(mockStage.off)).not.toHaveBeenCalled()
         })
@@ -212,29 +211,29 @@ describe('DragController', () => {
         it('should reset the card opacity and drag state', () => {
             mockCard.parent = mockStage
 
-            controller.handleDragEnd(mockStage, onDragMoveMock, 800, 600)
+            cardDrag.handleDragEnd(mockStage, onDragMoveMock, 800, 600)
 
             expect(mockCard.alpha).toBe(DEFAULT_OPACITY)
-            expect(controller.dragState.dragTarget).toBeNull()
-            expect(controller.dragState.originalParent).toBeNull()
+            expect(cardDrag.dragState.dragTarget).toBeNull()
+            expect(cardDrag.dragState.originalParent).toBeNull()
         })
 
         it('should return the card to its original position if it was not moved', () => {
-            controller.dragState.cardMoved = false
+            cardDrag.dragState.cardMoved = false
             mockCard.parent = mockStage
 
-            controller.handleDragEnd(mockStage, onDragMoveMock, 800, 600)
+            cardDrag.handleDragEnd(mockStage, onDragMoveMock, 800, 600)
 
             expect(mockCard.x).toBe(50)
             expect(mockCard.y).toBe(60)
             expect(mockCard.alpha).toBe(DEFAULT_OPACITY)
-            expect(controller.dragState.dragTarget).toBeNull()
+            expect(cardDrag.dragState.dragTarget).toBeNull()
         })
 
         it('should remove the pointermove listener from the stage', () => {
             mockCard.parent = mockStage
 
-            controller.handleDragEnd(mockStage, onDragMoveMock, 800, 600)
+            cardDrag.handleDragEnd(mockStage, onDragMoveMock, 800, 600)
 
             expect(vi.mocked(mockStage.off)).toHaveBeenCalledWith('pointermove', onDragMoveMock)
         })
