@@ -2,21 +2,34 @@ import { Graphics } from 'pixi.js'
 import { Card } from '../../../types/card.types'
 import { computeBoundingBox, computeCompactButtonBox, STACK_HIGHLIGHT_PADDING, STACK_HANDLE_HEIGHT } from '../stack'
 
+function paddedBox(
+    box: { x: number; y: number; width: number; height: number },
+    pad: number = STACK_HIGHLIGHT_PADDING,
+): { x: number; y: number; width: number; height: number } {
+    return {
+        x: box.x - pad,
+        y: box.y - pad,
+        width: box.width + pad * 2,
+        height: box.height + pad * 2,
+    }
+}
+
+function drawOutlineRect(g: Graphics, rect: { x: number; y: number; width: number; height: number }): void {
+    g.rect(rect.x, rect.y, rect.width, rect.height)
+    g.fill({ color: 0x000000, alpha: 0.001 })
+    g.rect(rect.x, rect.y, rect.width, rect.height)
+    g.stroke({ color: 0x333333, width: 2, alpha: 0.6 })
+}
+
 export function drawSingleBox(
     box: { x: number; y: number; width: number; height: number },
     border: Graphics,
     handle: Graphics,
 ): void {
-    const pad = STACK_HIGHLIGHT_PADDING
-    const bx = box.x - pad
-    const by = box.y - pad
-    const bw = box.width + pad * 2
-    const bh = box.height + pad * 2
+    const rect = paddedBox(box)
+    const { x: bx, y: by, width: bw } = rect
 
-    border.rect(bx, by, bw, bh)
-    border.fill({ color: 0x000000, alpha: 0.001 })
-    border.rect(bx, by, bw, bh)
-    border.stroke({ color: 0x333333, width: 2, alpha: 0.6 })
+    drawOutlineRect(border, rect)
 
     const handleWidth = Math.min(bw, 80)
     const hx = bx + (bw - handleWidth) / 2
@@ -108,25 +121,12 @@ export function drawArrow(
 }
 
 export function drawMergeTargetBorder(stack: Card[], mergeIndicator: Graphics): void {
-    const box = computeBoundingBox(stack)
-    const bx = box.x - STACK_HIGHLIGHT_PADDING
-    const by = box.y - STACK_HIGHLIGHT_PADDING
-    const bw = box.width + STACK_HIGHLIGHT_PADDING * 2
-    const bh = box.height + STACK_HIGHLIGHT_PADDING * 2
-
-    mergeIndicator.rect(bx, by, bw, bh)
-    mergeIndicator.fill({ color: 0x000000, alpha: 0.001 })
-    mergeIndicator.rect(bx, by, bw, bh)
-    mergeIndicator.stroke({ color: 0x333333, width: 2, alpha: 0.6 })
+    drawOutlineRect(mergeIndicator, paddedBox(computeBoundingBox(stack)))
 }
 
 export function drawMergeDim(stack: Card[], mergeIndicator: Graphics): void {
-    const box = computeBoundingBox(stack)
-    const bx = box.x - STACK_HIGHLIGHT_PADDING
-    const by = box.y - STACK_HIGHLIGHT_PADDING
-    const bw = box.width + STACK_HIGHLIGHT_PADDING * 2
-    const bh = box.height + STACK_HIGHLIGHT_PADDING * 2
-    mergeIndicator.rect(bx, by, bw, bh)
+    const rect = paddedBox(computeBoundingBox(stack))
+    mergeIndicator.rect(rect.x, rect.y, rect.width, rect.height)
     mergeIndicator.fill({ color: 0x000000, alpha: 0.15 })
 }
 

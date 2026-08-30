@@ -125,8 +125,12 @@ export class CanvasScene {
         return this.actionHistory.canRedo
     }
 
+    private get isBusy(): boolean {
+        return this.dragHandler.isDragging || this.stackDragManager.isDragging || this.isCompacting
+    }
+
     undo(): void {
-        if (this.dragHandler.isDragging || this.stackDragManager.isDragging || this.isCompacting) {
+        if (this.isBusy) {
             return
         }
         const entry = this.actionHistory.undo()
@@ -138,7 +142,7 @@ export class CanvasScene {
     }
 
     redo(): void {
-        if (this.dragHandler.isDragging || this.stackDragManager.isDragging || this.isCompacting) {
+        if (this.isBusy) {
             return
         }
         const entry = this.actionHistory.redo()
@@ -199,7 +203,7 @@ export class CanvasScene {
     }
 
     private handleCompactButtonPointerDown: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void => {
-        if (this.dragHandler.isDragging || this.stackDragManager.isDragging || this.isCompacting) {
+        if (this.isBusy) {
             return
         }
         const point: Position = { x: e.global.x, y: e.global.y }

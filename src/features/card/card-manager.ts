@@ -8,6 +8,15 @@ import { clampCardPosition } from '../stack/stack'
 /** Screen width (in px) at which cards render at native size */
 export const CARD_REFERENCE_WIDTH: number = 2560
 
+const JITTER: number = 25
+
+function jitteredPosition(centerX: number, centerY: number): Position {
+    return {
+        x: centerX + (Math.random() * 2 - 1) * JITTER,
+        y: centerY + (Math.random() * 2 - 1) * JITTER,
+    }
+}
+
 export function createCard(
     frameName: string,
     texture: Texture,
@@ -88,9 +97,9 @@ export class CardManager {
         } else {
             const centerX = (this.app.screen.width - card.width) / 2
             const centerY = (this.app.screen.height - card.height) / 2
-            const jitter = 25
-            targetX = centerX + (Math.random() * 2 - 1) * jitter
-            targetY = centerY + (Math.random() * 2 - 1) * jitter
+            const jittered = jitteredPosition(centerX, centerY)
+            targetX = jittered.x
+            targetY = jittered.y
         }
         const constrained = clampCardPosition(targetX, targetY, card, this.app.screen.width, this.app.screen.height)
         card.x = constrained.x
@@ -115,10 +124,10 @@ export class CardManager {
             this.applyScale(card)
             const centerX = (this.app.screen.width - card.width) / 2
             const centerY = (this.app.screen.height - card.height) / 2
-            const jitter = 25
+            const jittered = jitteredPosition(centerX, centerY)
             const constrained = clampCardPosition(
-                centerX + (Math.random() * 2 - 1) * jitter,
-                centerY + (Math.random() * 2 - 1) * jitter,
+                jittered.x,
+                jittered.y,
                 card,
                 this.app.screen.width,
                 this.app.screen.height,
@@ -144,14 +153,14 @@ export class CardManager {
         const targets: AnimationTarget[] = []
         const centerX = topCard.x
         const centerY = topCard.y
-        const jitter = 25
         for (const card of others) {
+            const jittered = jitteredPosition(centerX, centerY)
             // Clamped the same way a drag would be: the jitter can otherwise land a
             // card above the stack's handle clearance (or off another edge) when the
             // stack sits near the canvas border, pushing the handle off-canvas.
             const constrained = clampCardPosition(
-                centerX + (Math.random() * 2 - 1) * jitter,
-                centerY + (Math.random() * 2 - 1) * jitter,
+                jittered.x,
+                jittered.y,
                 card,
                 this.app.screen.width,
                 this.app.screen.height,
