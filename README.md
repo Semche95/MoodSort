@@ -33,6 +33,25 @@ pnpm dev
 
 Runs at `http://localhost:5170`.
 
+## Docker
+
+Pull and run the published image:
+
+```bash
+docker run -p 8080:8080 ghcr.io/semche95/moodsort:latest
+```
+
+`latest` tracks the most recent release. A specific version also works, e.g. `ghcr.io/semche95/moodsort:1.0.0`.
+
+Or build it from source:
+
+```bash
+docker build -t moodsort .
+docker run -p 8080:8080 moodsort
+```
+
+Either way it runs at `http://localhost:8080`.
+
 ## Scripts
 
 `pnpm dev` and `pnpm build` regenerate two things before starting: the card spritesheet atlas (`src/assets/atlas.webp` + `atlas.json`, built from `src/cards/`) and the app icons (`src/assets/icons/`, rasterized from `lucide-static`). Both outputs are git-ignored.
