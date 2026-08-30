@@ -18,6 +18,11 @@
 - `shared/`: code used by two or more features — cross-feature UI widgets in `shared/ui/`, stateless utility functions in `shared/utils/`. Don't move something here preemptively; wait until a second feature actually needs it.
 - `types/`: one type or interface per file, named `<concept>.types.ts`. Only group declarations when inseparable in practice (e.g. `card-state.types.ts` pairs `CardState` with the storage-key constants it's always used with). No interface lives inline in `app/`, `features/`, or `shared/`.
 
+# Consistency check on every code change
+- After any code modification, verify that the tests touched or added are pertinent: no redundant tests, no misleading titles, each test targeting what it claims to target.
+- After any code modification, verify that README.md still accurately reflects the current behavior and structure of the project; update it if it has drifted.
+- Any code touching card or stack positioning (drag, drop, load, resize, shuffle, compact, merge, or any future placement logic) must keep the stack drag handle fully on-canvas. The handle is drawn above a stack's bounding box, so a card or stack must never be positioned closer to the canvas top edge than `STACK_HANDLE_TOP_CLEARANCE` (see `features/stack/stack.ts`); use `clampCardPosition`/`computeGroupClampOffset` (or extend them) rather than clamping positions directly against the raw canvas bounds.
+
 # Test coverage
 - Every new file that exports a class or a function must ship with its own dedicated test(s) in the same change, covering that class or function directly, not just incidentally through some other test.
 - Every new function or method added to an existing file must get its own test(s) too, even if the file already has a test suite for other parts of it.
