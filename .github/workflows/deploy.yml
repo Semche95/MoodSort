@@ -1,0 +1,59 @@
+# Deploys dist/ to OVH mutualized hosting over SFTP when a GitHub release is published,
+# or manually via the Actions tab (choose the branch/tag to deploy there).
+#
+# One-time bootstrap required before the first release triggers this workflow, because
+# removeExtraFilesOnServer only cleans up files this action already tracks (via a
+# .sftp_upload_action_hashes file it creates in the remote dir). Files already present
+# on the server before the first run are untracked and never get cleaned up automatically.
+# Before the first release:
+#   - either manually empty the remote target directory on OVH,
+#   - or run a first deploy with forceUpload: true (and no removeExtraFilesOnServer) so
+#     the action adopts the existing files, then switch back to this workflow for all
+#     subsequent releases.
+# Never delete .sftp_upload_action_hashes on the server: it is required for smart-skip
+# and for cleaning up old files.
+#
+# Required repo secrets (Settings -> Secrets and variables -> Actions):
+#   OVH_SFTP_HOST
+#   OVH_SFTP_USERNAME
+#   OVH_SFTP_PASSWORD
+
+name: Deploy to OVH
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref }}
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+      - name: Deploy via SFTP
+        uses: wangyucode/sftp-upload-action@v3
+        with:
+          host: ${{ secrets.OVH_SFTP_HOST }}
+          port: 22
+          username: ${{ secrets.OVH_SFTP_USERNAME }}
+          password: ${{ secrets.OVH_SFTP_PASSWORD }}
+          localDir: 'dist'
+          remoteDir: '/home/${{ secrets.OVH_SFTP_USERNAME }}/www'
+          exclude: '.htaccess'
+          removeExtraFilesOnServer: true
+          concurrency: 10

@@ -22,6 +22,7 @@
 - After any code modification, verify that the tests touched or added are pertinent: no redundant tests, no misleading titles, each test targeting what it claims to target.
 - After any code modification, verify that README.md still accurately reflects the current behavior and structure of the project; update it if it has drifted.
 - Any code touching card or stack positioning (drag, drop, load, resize, shuffle, compact, merge, or any future placement logic) must keep the stack drag handle fully on-canvas. The handle is drawn above a stack's bounding box, so a card or stack must never be positioned closer to the canvas top edge than `STACK_HANDLE_TOP_CLEARANCE` (see `features/stack/stack.ts`); use `clampCardPosition`/`computeGroupClampOffset` (or extend them) rather than clamping positions directly against the raw canvas bounds.
+- All GitHub Actions workflow files (`.github/workflows/*.yml`) must use the same `node-version` in every `actions/setup-node` step, and the same `pnpm/action-setup` action version and `version` (pnpm version) in every `pnpm/action-setup` step. When adding or editing a workflow, check the others and match the existing versions rather than picking new ones.
 
 # Test coverage
 - Every new file that exports a class or a function must ship with its own dedicated test(s) in the same change, covering that class or function directly, not just incidentally through some other test.

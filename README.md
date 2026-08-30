@@ -52,6 +52,14 @@ docker run -p 8080:8080 moodsort
 
 Either way it runs at `http://localhost:8080`.
 
+## Deployment
+
+Publishing a GitHub release triggers `.github/workflows/deploy.yml`, which builds the app and uploads `dist/` to an OVH mutualized hosting account over SFTP. It can also be run manually from the Actions tab.
+
+Required repo secrets (`Settings -> Secrets and variables -> Actions`): `OVH_SFTP_HOST`, `OVH_SFTP_USERNAME`, `OVH_SFTP_PASSWORD`.
+
+See the comments at the top of `deploy.yml` for the one-time bootstrap step needed before the first release.
+
 ## Scripts
 
 `pnpm dev` and `pnpm build` regenerate two things before starting: the card spritesheet atlas (`src/assets/atlas.webp` + `atlas.json`, built from `src/cards/`) and the app icons (`src/assets/icons/`, rasterized from `lucide-static`). Both outputs are git-ignored.
