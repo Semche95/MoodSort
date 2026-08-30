@@ -13,6 +13,13 @@ export const STACK_COMPACT_BUTTON_SIZE: number = 22
 /** Gap (in px) between the stack drag handle and the compact button */
 export const STACK_COMPACT_BUTTON_GAP: number = 16
 
+/**
+ * Minimum distance (in px) a stack's bounding box top must keep from the
+ * canvas top edge, so its drag handle (which is drawn above the box) always
+ * stays fully on-canvas and clickable.
+ */
+export const STACK_HANDLE_TOP_CLEARANCE: number = STACK_HIGHLIGHT_PADDING + STACK_HANDLE_HEIGHT / 2
+
 function cardsOverlap(a: Card, b: Card): boolean {
     return (
         a.x < b.x + b.width &&

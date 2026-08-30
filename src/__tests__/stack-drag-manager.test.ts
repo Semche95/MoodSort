@@ -3,6 +3,7 @@ import type { Application, Container } from 'pixi.js'
 import { StackDragManager } from '../features/stack/stack-drag-manager'
 import { StackOverlay } from '../features/stack/stack-overlay/stack-overlay'
 import { ActionHistory } from '../features/history/action-history'
+import { STACK_HANDLE_TOP_CLEARANCE } from '../features/stack/stack'
 import { InMemoryStore } from './in-memory-store'
 import { Card } from '../types/card.types'
 
@@ -41,7 +42,7 @@ describe('StackDragManager', () => {
     beforeEach(async () => {
         const { Container: MockContainer } = await import('pixi.js')
         cardLayer = new MockContainer() as unknown as Container
-        app = { stage: new MockContainer() } as unknown as Application
+        app = { stage: new MockContainer(), screen: { width: 800, height: 600 } } as unknown as Application
         overlay = { restoreZOrder: vi.fn(), showDragHighlights: vi.fn() } as unknown as StackOverlay
         actionHistory = new ActionHistory(new InMemoryStore(), vi.fn())
         manager = new StackDragManager(app, cardLayer, overlay, () => [], actionHistory)
@@ -83,10 +84,43 @@ describe('StackDragManager', () => {
         moveHandler({ global: { x: 130, y: 90 } })
 
         expect(a.x).toBe(40)
-        expect(a.y).toBe(0)
+        expect(a.y).toBe(STACK_HANDLE_TOP_CLEARANCE)
         expect(b.x).toBe(50)
-        expect(b.y).toBe(10)
+        expect(b.y).toBe(STACK_HANDLE_TOP_CLEARANCE + 10)
         expect(overlay.showDragHighlights).toHaveBeenCalled()
+    })
+
+    it('keeps the group bounding box below the handle top clearance when dragged toward the top', async () => {
+        const a = makeCard('a', 10, 10)
+        const b = makeCard('b', 20, 20)
+        cardLayer.addChild(a)
+        cardLayer.addChild(b)
+        const onSpy = vi.spyOn(app.stage, 'on')
+
+        manager.startDrag([a, b], [a, b], { x: 100, y: 100 })
+        const moveHandler = onSpy.mock.calls.find((call: unknown[]): boolean => call[0] === 'pointermove')?.[1] as (e: unknown) => void
+
+        moveHandler({ global: { x: 100, y: -1000 } })
+
+        expect(a.y).toBe(STACK_HANDLE_TOP_CLEARANCE)
+        expect(b.y).toBe(STACK_HANDLE_TOP_CLEARANCE + 10)
+    })
+
+    it('keeps the group bounding box within the canvas when dragged past the right/bottom edges', async () => {
+        const a = makeCard('a', 10, 10)
+        const b = makeCard('b', 20, 20)
+        cardLayer.addChild(a)
+        cardLayer.addChild(b)
+        const onSpy = vi.spyOn(app.stage, 'on')
+
+        manager.startDrag([a, b], [a, b], { x: 100, y: 100 })
+        const moveHandler = onSpy.mock.calls.find((call: unknown[]): boolean => call[0] === 'pointermove')?.[1] as (e: unknown) => void
+
+        moveHandler({ global: { x: 5000, y: 5000 } })
+
+        // Group bounding box (b is the bottom-right-most card) must not exceed the 800x600 canvas.
+        expect(b.x + b.width).toBe(800)
+        expect(b.y + b.height).toBe(600)
     })
 
     it('end records the after-snapshot, stops dragging and restores the overlay z-order', () => {

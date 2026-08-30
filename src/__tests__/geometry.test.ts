@@ -49,4 +49,22 @@ describe('constrainPosition', () => {
         expect(position.x).toBe(700) // appWidth - objectWidth
         expect(position.y).toBe(450) // appHeight - objectHeight
     })
+
+    it('should keep y at or below appHeight - height even when topMargin exceeds it', () => {
+        const position: Position = constrainPosition(200, -50, objectWidth, objectHeight, appWidth, appHeight, 31)
+
+        expect(position.y).toBe(31)
+    })
+
+    it('should not raise y above topMargin when dragged toward the top', () => {
+        const position: Position = constrainPosition(200, 10, objectWidth, objectHeight, appWidth, appHeight, 31)
+
+        expect(position.y).toBe(31)
+    })
+
+    it('should leave y untouched when already below topMargin', () => {
+        const position: Position = constrainPosition(200, 300, objectWidth, objectHeight, appWidth, appHeight, 31)
+
+        expect(position.y).toBe(300)
+    })
 })

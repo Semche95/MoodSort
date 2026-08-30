@@ -3,6 +3,7 @@ import { Card } from '../../types/card.types'
 import { CardDragState } from '../../types/drag.types'
 import { Position } from '../../types/position.types'
 import { constrainPosition } from '../../shared/utils/geometry'
+import { STACK_HANDLE_TOP_CLEARANCE } from '../stack/stack'
 
 /** Opacity of a card while it is being dragged */
 export const DRAGGING_OPACITY: number = 0.5
@@ -75,6 +76,7 @@ export class CardDrag {
             this.dragState.dragTarget.height,
             appWidth,
             appHeight,
+            STACK_HANDLE_TOP_CLEARANCE,
         )
 
         this.dragState.dragTarget.position.set(constrained.x, constrained.y)
@@ -116,6 +118,7 @@ export class CardDrag {
             card.height,
             appWidth,
             appHeight,
+            STACK_HANDLE_TOP_CLEARANCE,
         )
         card.x = constrained.x
         card.y = constrained.y
