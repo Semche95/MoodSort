@@ -7,6 +7,7 @@ import {
     findStackByNameButtonAtPoint,
     computeLabelAnchorPoint,
     resolveNameSplits,
+    resolveNameMerges,
     STACK_NAME_BUTTON_SIZE,
     STACK_NAME_BUTTON_GAP,
     STACK_HANDLE_HEIGHT,
@@ -221,5 +222,50 @@ describe('resolveNameSplits', () => {
         resolveNameSplits([[x, y]], [[x], [y]], cardLayer, stackNames)
 
         expect(stackNames).toEqual({ x: 'Joie', y: 'Colère' })
+    })
+
+    it('never overwrites an existing name on the winning group\'s anchor: lands the reassigned name on an unnamed member instead', () => {
+        // a's stack [a, b, c] loses c, which lands on the already-named d, forming [c, d].
+        // [a, b] and [c, d] tie in size, and d has the lower z-order, so [c, d] wins - but
+        // its anchor (d) is already named 'Colère': the reassigned 'Joie' must not clobber it.
+        const a = makeCard(0, 0, 100, 100, 'a')
+        const b = makeCard(0, 0, 100, 100, 'b')
+        const c = makeCard(0, 0, 100, 100, 'c')
+        const d = makeCard(0, 0, 100, 100, 'd')
+        const cardLayer = makeCardLayer([d, a, b, c])
+        const stackNames: Record<string, string> = { a: 'Joie', d: 'Colère' }
+
+        resolveNameSplits([[a, b, c], [d]], [[a, b], [c, d]], cardLayer, stackNames)
+
+        expect(stackNames).toEqual({ d: 'Colère', c: 'Joie' })
+    })
+})
+
+describe('resolveNameMerges', () => {
+    it('fuses two named cards into a single " + "-joined entry on the lowest z-order one', () => {
+        const x = makeCard(0, 0, 100, 100, 'x')
+        const y = makeCard(0, 0, 100, 100, 'y')
+        const cardLayer = makeCardLayer([x, y])
+        const stackNames: Record<string, string> = { x: 'Joie', y: 'Colère' }
+
+        const result = resolveNameMerges([[x, y]], cardLayer, stackNames)
+
+        expect(stackNames).toEqual({ x: 'Joie + Colère' })
+        expect(result).toEqual({
+            before: { x: 'Joie', y: 'Colère' },
+            after: { x: 'Joie + Colère', y: null },
+        })
+    })
+
+    it('does nothing to a stack with zero or one named card', () => {
+        const x = makeCard(0, 0, 100, 100, 'x')
+        const y = makeCard(0, 0, 100, 100, 'y')
+        const cardLayer = makeCardLayer([x, y])
+        const stackNames: Record<string, string> = { x: 'Joie' }
+
+        const result = resolveNameMerges([[x, y]], cardLayer, stackNames)
+
+        expect(stackNames).toEqual({ x: 'Joie' })
+        expect(result).toEqual({ before: {}, after: {} })
     })
 })

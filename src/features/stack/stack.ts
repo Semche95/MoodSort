@@ -25,6 +25,14 @@ export const STACK_NAME_BUTTON_GAP: number = 16
 export const STACK_LABEL_HANDLE_GAP: number = 4
 
 /**
+ * Max width (in px) of both the persistent stack label and the inline name
+ * editor, shared so the editor never grows wider than the stack's own frame
+ * (the label truncates with an ellipsis past this width; the editor scrolls
+ * its text like a native input instead, since it must stay fully editable).
+ */
+export const STACK_NAME_MAX_WIDTH: number = 325
+
+/**
  * Minimum distance (in px) a stack's bounding box top must keep from the
  * canvas top edge, so its drag handle (which is drawn above the box) always
  * stays fully on-canvas and clickable.
@@ -252,10 +260,47 @@ export function findNameAnchor(stack: Card[], cardLayer: Container, stackNames: 
     return firstNamed ?? getStackAnchor(stack, cardLayer)
 }
 
-/** Before/after values (by imageUrl) for each stackNames slot a split reassigned, for bundling into an undo/redo history entry. */
+/** Before/after values (by imageUrl) for each stackNames slot a split or merge touched, for bundling into an undo/redo history entry. */
 export interface NameReassignment {
     before: Record<string, string | null>
     after: Record<string, string | null>
+}
+
+/**
+ * Whenever a stack ends up with two or more named cards (two named piles
+ * were merged by dragging one onto the other), their names are fused into a
+ * single stackNames entry - the same " + "-joined string computeStackLabel
+ * already displays - kept on the lowest z-order named card. Without this,
+ * the label would show both names concatenated while the rename button,
+ * which only ever edits one card's entry, could only ever reach the first.
+ */
+export function resolveNameMerges(
+    stacks: Card[][],
+    cardLayer: Container,
+    stackNames: Record<string, string>,
+): NameReassignment {
+    const before: Record<string, string | null> = {}
+    const after: Record<string, string | null> = {}
+    for (const group of stacks) {
+        const namedCards = sortedNamedCards(group, cardLayer, stackNames)
+        if (namedCards.length < 2) {
+            continue
+        }
+        const mergedName = namedCards.map((card: Card): string => stackNames[card.imageUrl]).join(' + ')
+        const [anchor] = namedCards
+        for (const card of namedCards) {
+            before[card.imageUrl] = stackNames[card.imageUrl]
+        }
+        for (const card of namedCards) {
+            if (card !== anchor) {
+                delete stackNames[card.imageUrl]
+                after[card.imageUrl] = null
+            }
+        }
+        stackNames[anchor.imageUrl] = mergedName
+        after[anchor.imageUrl] = mergedName
+    }
+    return { before, after }
 }
 
 /**
@@ -325,7 +370,15 @@ export function resolveNameSplits(
             continue
         }
         const name = stackNames[namedCard.imageUrl]
-        const newAnchor = getStackAnchor(winner, cardLayer)
+        // Prefer an unnamed member of the winning group: if that group already has its own
+        // named anchor (it just absorbed a card from another named stack in the same drag),
+        // writing there would clobber that name instead of leaving the two to be fused by
+        // resolveNameMerges right after. Only degenerate groups (every card already named,
+        // which shouldn't happen given resolveNameMerges keeps groups to at most one name)
+        // fall back to the plain anchor.
+        const newAnchor = [...winner]
+            .sort((x: Card, y: Card): number => cardLayer.children.indexOf(x) - cardLayer.children.indexOf(y))
+            .find((card: Card): boolean => !stackNames[card.imageUrl]) ?? getStackAnchor(winner, cardLayer)
         delete stackNames[namedCard.imageUrl]
         stackNames[newAnchor.imageUrl] = name
         before[namedCard.imageUrl] = name

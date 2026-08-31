@@ -113,6 +113,8 @@ vi.mock('pixi.js', () => {
         fill(): this { return this }
         stroke(): this { return this }
         clear(): this { return this }
+        moveTo(): this { return this }
+        lineTo(): this { return this }
         filters: unknown[] = []
     }
 
@@ -337,7 +339,7 @@ describe('CanvasScene stack naming', () => {
         expect(testable.stackNames).toEqual({ 'card-b': 'Joie' })
     })
 
-    it('shows both names concatenated in z-order when two named stacks merge, and splits them back apart', async () => {
+    it('fuses both names into one string when two named stacks merge, and keeps that fused name intact once they split back apart', async () => {
         const store = seedStore(
             { 'card-x': { x: 100, y: 100 }, 'card-y': { x: 500, y: 250 } },
             ['card-x', 'card-y'],
@@ -351,13 +353,14 @@ describe('CanvasScene stack naming', () => {
 
         dragCardTo(testable, y, 100, 100)
 
-        expect(testable.stackNames).toEqual({ 'card-x': 'Joie', 'card-y': 'Colère' })
+        expect(testable.stackNames).toEqual({ 'card-x': 'Joie + Colère' })
         expect(computeStackLabel([x, y], testable.cardLayer as unknown as Container, testable.stackNames)).toBe('Joie + Colère')
 
         dragCardTo(testable, y, 500, 250)
 
-        expect(computeStackLabel([x], testable.cardLayer as unknown as Container, testable.stackNames)).toBe('Joie')
-        expect(computeStackLabel([y], testable.cardLayer as unknown as Container, testable.stackNames)).toBe('Colère')
+        expect(testable.stackNames).toEqual({ 'card-x': 'Joie + Colère' })
+        expect(computeStackLabel([x], testable.cardLayer as unknown as Container, testable.stackNames)).toBe('Joie + Colère')
+        expect(computeStackLabel([y], testable.cardLayer as unknown as Container, testable.stackNames)).toBe('')
     })
 
     it('rename button targets whichever card the name was reassigned to, even after several splits and a re-merge', async () => {

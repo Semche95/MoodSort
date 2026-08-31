@@ -19,6 +19,7 @@ import {
     findNameAnchor,
     computeLabelAnchorPoint,
     resolveNameSplits,
+    resolveNameMerges,
 } from '../features/stack/stack'
 import { snapshotCards, applyHistoryEntry, applyStackNameChanges } from '../features/history/history'
 
@@ -146,15 +147,19 @@ export class CanvasScene {
     /**
      * Recomputes `this.stacks` from current card positions and, comparing
      * against the stacks as they were just before, reassigns any name that a
-     * split just orphaned (see resolveNameSplits). That reassignment is
-     * recorded as its own undo/redo entry, separate from whatever caused the
-     * split (a drag's own position entry, if any), since it wasn't known
-     * until the split was actually detected here.
+     * split just orphaned (see resolveNameSplits), then fuses into one
+     * string any two names that a merge just brought together (see
+     * resolveNameMerges). Both are recorded as their own undo/redo entry,
+     * separate from whatever caused the split/merge (a drag's own position
+     * entry, if any), since neither was known until detected here.
      */
     private recomputeStacks(): void {
         const previousStacks = this.stacks
         const newStacks = computeStacks(this.cards)
-        const { before, after } = resolveNameSplits(previousStacks, newStacks, this.cardLayer, this.stackNames)
+        const splits = resolveNameSplits(previousStacks, newStacks, this.cardLayer, this.stackNames)
+        const merges = resolveNameMerges(newStacks, this.cardLayer, this.stackNames)
+        const before = { ...merges.before, ...splits.before }
+        const after = { ...splits.after, ...merges.after }
         if (Object.keys(after).length > 0) {
             this.actionHistory.captureBefore([], before)
             this.actionHistory.recordAfter([], after)
@@ -322,8 +327,8 @@ export class CanvasScene {
             return
         }
         this.stackDragManager.end()
+        this.recomputeStacks()
         this.positionPersistence.saveFromStage(this.cardLayer, this.stackNames)
-        this.stacks = computeStacks(this.cards)
     }
 
     resetPositions(): void {

@@ -11,6 +11,7 @@ import {
     findStackByNameButtonAtPoint,
     computeLabelAnchorPoint,
     computeStackLabel,
+    STACK_NAME_MAX_WIDTH,
 } from '../stack'
 import { DRAGGING_OPACITY } from '../../drag/card-drag'
 import { CanvasTooltip } from '../../../shared/ui/canvas-tooltip'
@@ -24,10 +25,9 @@ const NAMED_TOOLTIP_LABEL = 'Renommer le tas'
 const UNNAMED_TOOLTIP_LABEL = 'Nommer le tas'
 const LABEL_FONT_FAMILY = 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif'
 const LABEL_FONT_SIZE = 20
-// Wide enough for one full-length name (the editor caps input around 24 chars) without
-// truncating, but narrow enough to still truncate a "Nom1 + Nom2" concatenation that
-// would otherwise overflow even though each half respects the input's own cap.
-const LABEL_MAX_WIDTH = 260
+// Shared with the inline editor's own max width (STACK_NAME_MAX_WIDTH), so a name never
+// reads wider once committed as a label than it did while being typed.
+const LABEL_MAX_WIDTH = STACK_NAME_MAX_WIDTH
 const LABEL_ELLIPSIS = '…'
 
 /**

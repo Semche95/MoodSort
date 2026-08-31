@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { StackNameEditor } from '../features/stack/stack-overlay/stack-name-editor'
+import { STACK_NAME_MAX_WIDTH } from '../features/stack/stack'
 
 const { pixi } = vi.hoisted(() => {
     class Container {
@@ -10,6 +11,8 @@ const { pixi } = vi.hoisted(() => {
         height: number = 16
         visible: boolean = true
         eventMode: string = 'auto'
+        cursor: string = 'default'
+        hitArea: unknown = null
         children: unknown[] = []
         position: { set(x: number, y: number): void } = {
             set: (x: number, y: number): void => {
@@ -21,6 +24,9 @@ const { pixi } = vi.hoisted(() => {
             this.children.push(child)
             return child
         }
+        on(): this {
+            return this
+        }
     }
 
     class Graphics extends Container {
@@ -30,13 +36,21 @@ const { pixi } = vi.hoisted(() => {
         rect(...args: unknown[]): this { this.calls.push({ method: 'rect', args }); return this }
         fill(...args: unknown[]): this { this.calls.push({ method: 'fill', args }); return this }
         stroke(...args: unknown[]): this { this.calls.push({ method: 'stroke', args }); return this }
+        moveTo(...args: unknown[]): this { this.calls.push({ method: 'moveTo', args }); return this }
+        lineTo(...args: unknown[]): this { this.calls.push({ method: 'lineTo', args }); return this }
     }
 
     class Text extends Container {
-        text: string
+        private _text: string
         constructor(options: { text?: string } = {}) {
             super()
-            this.text = options.text ?? ''
+            this._text = options.text ?? ''
+            this.width = this._text.length * 10
+        }
+        get text(): string { return this._text }
+        set text(value: string) {
+            this._text = value
+            this.width = value.length * 10
         }
     }
 
@@ -63,7 +77,6 @@ function type(editor: StackNameEditor, text: string): void {
         const start = input.selectionStart ?? input.value.length
         const end = input.selectionEnd ?? input.value.length
         const next = input.value.slice(0, start) + ch + input.value.slice(end)
-        if (next.length > input.maxLength) { continue }
         input.value = next
         input.setSelectionRange(start + 1, start + 1)
         input.dispatchEvent(new Event('input', { bubbles: true }))
@@ -180,13 +193,81 @@ describe('StackNameEditor', () => {
         expect(editor.value).toBe('Joie')
     })
 
-    it('stops accepting characters past the 24-character cap', () => {
+    it('allows editing a name that is already longer than a single-name cap (e.g. a fused "A + B")', () => {
+        const fused = `${'a'.repeat(30)} + ${'b'.repeat(30)}`
+        const editor = new StackNameEditor()
+        editor.open(0, 0, fused, vi.fn(), vi.fn())
+
+        pressBackspace(editor)
+        type(editor, 'c')
+
+        expect(editor.value).toBe(`${'a'.repeat(30)} + ${'b'.repeat(29)}c`)
+    })
+
+    it('empties the field when the clear button is clicked, without committing or closing the editor, and keeps it focused so typing still works right after', async () => {
+        const onCommit = vi.fn()
+        const editor = new StackNameEditor()
+        editor.open(0, 0, 'Joie', onCommit, vi.fn())
+        await new Promise<void>((resolve: () => void): void => { setTimeout(resolve, 0) })
+        const input = getInput(editor)
+
+        const clearButton = editor['clearButton'] as { eventMode: string }
+        expect(clearButton.eventMode).toBe('static')
+        const stopPropagation = vi.fn()
+        ;(editor['handleClearClick'] as (e: { stopPropagation: () => void }) => void)({ stopPropagation })
+
+        expect(stopPropagation).toHaveBeenCalled()
+        expect(editor.value).toBe('')
+        expect(editor.isOpen).toBe(true)
+        expect(onCommit).not.toHaveBeenCalled()
+
+        // Simulates the browser's own default pointerdown handling blurring the hidden input
+        // right as this handler returns, between now and the deferred re-focus below.
+        input?.blur()
+        await new Promise<void>((resolve: () => void): void => { setTimeout(resolve, 0) })
+
+        expect(document.activeElement).toBe(input)
+        type(editor, 'X')
+        expect(editor.value).toBe('X')
+    })
+
+    it('has nothing to clear (and nothing to click) once the field is already empty', () => {
         const editor = new StackNameEditor()
         editor.open(0, 0, '', vi.fn(), vi.fn())
 
-        type(editor, 'a'.repeat(30))
+        const clearButton = editor['clearButton'] as { eventMode: string }
+        expect(clearButton.eventMode).toBe('none')
+    })
 
-        expect(editor.value).toBe('a'.repeat(24))
+    it('caps the box width at STACK_NAME_MAX_WIDTH instead of growing past the stack\'s frame', () => {
+        const editor = new StackNameEditor()
+        editor.open(0, 0, '', vi.fn(), vi.fn())
+
+        type(editor, 'a'.repeat(50))
+
+        const bg = editor['bg'] as unknown as { calls: Array<{ method: string; args: unknown[] }> }
+        const lastRoundRect = bg.calls.filter((call: { method: string }): boolean => call.method === 'roundRect').pop()
+        expect(lastRoundRect?.args[2]).toBe(STACK_NAME_MAX_WIDTH)
+    })
+
+    it('keeps the caret in sync while an arrow key is held (key-repeat), not just once it is released', async () => {
+        const editor = new StackNameEditor()
+        editor.open(0, 0, 'Joie', vi.fn(), vi.fn())
+        // Lets open()'s own deferred focus/selection settle first, exactly as it would have
+        // long before a real user starts holding a key, so it doesn't race the assertion below.
+        await new Promise<void>((resolve: () => void): void => { setTimeout(resolve, 0) })
+        const input = getInput(editor)
+
+        // Simulates the browser's own default action moving the native caret as part of this
+        // keydown, which jsdom doesn't do for us; the production code must pick it up without
+        // waiting for a `keyup` that a held-down key doesn't fire until release.
+        input?.setSelectionRange(3, 3)
+        input?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', repeat: true, bubbles: true }))
+        await new Promise<void>((resolve: () => void): void => { setTimeout(resolve, 0) })
+
+        type(editor, 'X')
+
+        expect(editor.value).toBe('JoiXe')
     })
 
     it('removes the last character on Backspace', () => {
