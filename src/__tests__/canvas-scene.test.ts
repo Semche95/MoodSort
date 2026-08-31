@@ -146,6 +146,7 @@ function seedStore(): CardStateService {
         positions: { 'card-a': { x: 100, y: 100 }, 'card-b': { x: 400, y: 100 } },
         order: ['card-a', 'card-b'],
         onboardingDismissed: false,
+        stackNames: {},
     })
     return store
 }

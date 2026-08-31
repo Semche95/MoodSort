@@ -1,5 +1,5 @@
 import { CardStateService } from '../card/card-state-service'
-import { POSITIONS_KEY, ORDER_KEY, ONBOARDING_KEY } from '../../types/card-state.types'
+import { POSITIONS_KEY, ORDER_KEY, ONBOARDING_KEY, STACK_NAMES_KEY } from '../../types/card-state.types'
 
 export function isOnboardingDismissed(store: CardStateService): boolean {
     return store.load(ONBOARDING_KEY)
@@ -10,6 +10,7 @@ export function dismissOnboarding(store: CardStateService): void {
         positions: store.load(POSITIONS_KEY),
         order: store.load(ORDER_KEY),
         onboardingDismissed: true,
+        stackNames: store.load(STACK_NAMES_KEY),
     })
 }
 

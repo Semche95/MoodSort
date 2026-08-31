@@ -11,8 +11,16 @@ import { StackDragManager } from '../features/stack/stack-drag-manager'
 import { CardStateService } from '../features/card/card-state-service'
 import { ActionHistory } from '../features/history/action-history'
 import { IStore } from '../types/store.types'
-import { computeStacks, findStackAtPoint, findStackByCompactButtonAtPoint } from '../features/stack/stack'
-import { snapshotCards, applyHistoryEntry } from '../features/history/history'
+import {
+    computeStacks,
+    findStackAtPoint,
+    findStackByCompactButtonAtPoint,
+    findStackByNameButtonAtPoint,
+    findNameAnchor,
+    computeLabelAnchorPoint,
+    resolveNameSplits,
+} from '../features/stack/stack'
+import { snapshotCards, applyHistoryEntry, applyStackNameChanges } from '../features/history/history'
 
 export class CanvasScene {
     private app: Application
@@ -26,6 +34,7 @@ export class CanvasScene {
     private actionHistory: ActionHistory
     private isCompacting: boolean
     private stacks: Card[][]
+    private stackNames: Record<string, string>
     private onHistoryChange: () => void
     private onResize: () => void
 
@@ -34,6 +43,7 @@ export class CanvasScene {
         this.cardLayer = new Container()
         this.cardLayer.label = 'card-layer'
         this.cards = []
+        this.stackNames = {}
         this.onHistoryChange = (): void => {}
         this.onResize = (): void => {}
         this.positionPersistence = new PositionPersistence(store)
@@ -43,10 +53,10 @@ export class CanvasScene {
         })
         this.isCompacting = false
         this.dragHandler = new DragHandler(new CardDrag(), this.app, this.cardLayer, (): void => {
-            this.positionPersistence.saveFromStage(this.cardLayer)
-            this.stacks = computeStacks(this.cards)
+            this.recomputeStacks()
+            this.positionPersistence.saveFromStage(this.cardLayer, this.stackNames)
         }, this.actionHistory)
-        this.overlay = new StackOverlay(this.app, this.cardLayer)
+        this.overlay = new StackOverlay(this.app, this.cardLayer, (): Record<string, string> => this.stackNames)
         this.stackDragManager = new StackDragManager(
             this.app,
             this.cardLayer,
@@ -57,6 +67,7 @@ export class CanvasScene {
         this.stacks = []
         this.overlay.initHandle(this.handleDragHandlePointerDown)
         this.overlay.initCompactButton(this.handleCompactButtonPointerDown)
+        this.overlay.initNameButton(this.handleNameButtonPointerDown)
     }
 
     setOnHistoryChange(callback: () => void): void {
@@ -95,10 +106,12 @@ export class CanvasScene {
 
         const saved = this.positionPersistence.load()
         const ordered = this.cardManager.resolveOrder(frameNames, saved)
+        this.stackNames = saved.stackNames
         this.positionPersistence.save({
             positions: saved.positions,
             order: ordered,
             onboardingDismissed: saved.onboardingDismissed,
+            stackNames: saved.stackNames,
         })
 
         this.cards = this.cardManager.loadCards(ordered, saved.positions, this.handleCardPointerDown, spritesheet)
@@ -113,6 +126,7 @@ export class CanvasScene {
         this.app.stage.on('pointerout', this.handlePointerOut)
         this.app.stage.on('pointerup', this.handleStackDragEnd)
         this.app.stage.on('pointerupoutside', this.handleStackDragEnd)
+        this.app.stage.on('pointerdown', this.handleStagePointerDown)
         window.addEventListener('resize', this.handleResize)
         document.body.appendChild(this.app.canvas)
     }
@@ -129,15 +143,36 @@ export class CanvasScene {
         return this.dragHandler.isDragging || this.stackDragManager.isDragging || this.isCompacting
     }
 
+    /**
+     * Recomputes `this.stacks` from current card positions and, comparing
+     * against the stacks as they were just before, reassigns any name that a
+     * split just orphaned (see resolveNameSplits). That reassignment is
+     * recorded as its own undo/redo entry, separate from whatever caused the
+     * split (a drag's own position entry, if any), since it wasn't known
+     * until the split was actually detected here.
+     */
+    private recomputeStacks(): void {
+        const previousStacks = this.stacks
+        const newStacks = computeStacks(this.cards)
+        const { before, after } = resolveNameSplits(previousStacks, newStacks, this.cardLayer, this.stackNames)
+        if (Object.keys(after).length > 0) {
+            this.actionHistory.captureBefore([], before)
+            this.actionHistory.recordAfter([], after)
+        }
+        this.stacks = newStacks
+    }
+
     undo(): void {
         if (this.isBusy) {
             return
         }
+        this.overlay.commitNameEditorIfOpen()
         const entry = this.actionHistory.undo()
         if (entry) {
             applyHistoryEntry(entry, this.cards, this.cardLayer, true)
+            applyStackNameChanges(entry, this.stackNames, true)
         }
-        this.positionPersistence.saveFromStage(this.cardLayer)
+        this.positionPersistence.saveFromStage(this.cardLayer, this.stackNames)
         this.stacks = computeStacks(this.cards)
     }
 
@@ -145,18 +180,25 @@ export class CanvasScene {
         if (this.isBusy) {
             return
         }
+        this.overlay.commitNameEditorIfOpen()
         const entry = this.actionHistory.redo()
         if (entry) {
             applyHistoryEntry(entry, this.cards, this.cardLayer, false)
+            applyStackNameChanges(entry, this.stackNames, false)
         }
-        this.positionPersistence.saveFromStage(this.cardLayer)
+        this.positionPersistence.saveFromStage(this.cardLayer, this.stackNames)
         this.stacks = computeStacks(this.cards)
+    }
+
+    private handleStagePointerDown: () => void = (): void => {
+        this.overlay.commitNameEditorIfOpen()
     }
 
     private handleCardPointerDown: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void => {
         if (this.isCompacting) {
             return
         }
+        this.overlay.commitNameEditorIfOpen()
         this.dragHandler.handleDragStart(e)
     }
 
@@ -195,6 +237,7 @@ export class CanvasScene {
         if (!stack) {
             return
         }
+        this.overlay.commitNameEditorIfOpen()
         this.stackDragManager.startDrag(
             stack,
             stack,
@@ -211,7 +254,47 @@ export class CanvasScene {
         if (!stack) {
             return
         }
+        this.overlay.commitNameEditorIfOpen()
         this.compactStack(stack)
+    }
+
+    private handleNameButtonPointerDown: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void => {
+        if (this.isBusy) {
+            return
+        }
+        const point: Position = { x: e.global.x, y: e.global.y }
+        const stack = findStackByNameButtonAtPoint(this.stacks, point)
+        if (!stack) {
+            return
+        }
+        this.overlay.commitNameEditorIfOpen()
+        const anchor = findNameAnchor(stack, this.cardLayer, this.stackNames)
+        const currentName = this.stackNames[anchor.imageUrl] ?? null
+        const labelPoint = computeLabelAnchorPoint(stack)
+        this.actionHistory.captureBefore([], { [anchor.imageUrl]: currentName })
+        this.overlay.openNameEditor(
+            labelPoint.x,
+            labelPoint.y,
+            currentName ?? '',
+            (value: string): void => this.commitStackName(anchor, value),
+            (): void => this.cancelStackNameEdit(),
+        )
+    }
+
+    private commitStackName(anchor: Card, value: string): void {
+        const trimmed = value.trim()
+        if (trimmed.length > 0) {
+            this.stackNames[anchor.imageUrl] = trimmed
+        } else {
+            delete this.stackNames[anchor.imageUrl]
+        }
+        this.actionHistory.recordAfter([], { [anchor.imageUrl]: trimmed.length > 0 ? trimmed : null })
+        this.positionPersistence.saveFromStage(this.cardLayer, this.stackNames)
+        this.stacks = computeStacks(this.cards)
+    }
+
+    private cancelStackNameEdit(): void {
+        this.actionHistory.recordAfter([], {})
     }
 
     private compactStack(stack: Card[]): void {
@@ -228,7 +311,7 @@ export class CanvasScene {
         this.isCompacting = true
         this.animateTargets(targets, 20, (): void => {
             this.actionHistory.recordAfter(snapshotCards(others, this.cardLayer))
-            this.positionPersistence.saveFromStage(this.cardLayer)
+            this.positionPersistence.saveFromStage(this.cardLayer, this.stackNames)
             this.stacks = computeStacks(this.cards)
             this.isCompacting = false
         })
@@ -239,7 +322,7 @@ export class CanvasScene {
             return
         }
         this.stackDragManager.end()
-        this.positionPersistence.saveFromStage(this.cardLayer)
+        this.positionPersistence.saveFromStage(this.cardLayer, this.stackNames)
         this.stacks = computeStacks(this.cards)
     }
 
@@ -247,11 +330,13 @@ export class CanvasScene {
         if (this.isCompacting) {
             return
         }
+        this.overlay.commitNameEditorIfOpen()
         this.actionHistory.clear()
         this.positionPersistence.clear()
+        this.stackNames = {}
         const targets = this.cardManager.shuffleAndBuildTargets(this.cards)
         this.animateTargets(targets, 20, (): void => {
-            this.positionPersistence.saveFromStage(this.cardLayer)
+            this.positionPersistence.saveFromStage(this.cardLayer, this.stackNames)
             this.stacks = computeStacks(this.cards)
         })
     }
@@ -289,7 +374,7 @@ export class CanvasScene {
             this.cardManager.repositionForResize(card, ratioX, ratioY, newWidth, newHeight)
         }
 
-        this.positionPersistence.saveFromStage(this.cardLayer)
+        this.positionPersistence.saveFromStage(this.cardLayer, this.stackNames)
         this.onResize()
     }
 }

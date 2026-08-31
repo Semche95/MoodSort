@@ -207,7 +207,7 @@ describe('StackOverlay compact button', () => {
         tick()
 
         const compactButton = overlay.stackCompactButton as unknown as { emit(event: string, payload: unknown): void }
-        const tooltipView = cardLayer.children[cardLayer.children.length - 1] as {
+        const tooltipView = overlay['compactTooltip'].view as unknown as {
             visible: boolean
             children: Array<{ text?: string }>
         }

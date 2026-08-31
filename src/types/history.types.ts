@@ -17,6 +17,14 @@ export interface CardActionEntry {
         toY: number
         toIndex: number
     }>
+    /**
+     * Stack name changes, keyed by the imageUrl of the card whose name slot
+     * changed. Can be bundled into the same undo step as the card moves
+     * above, though in practice a rename via the name button carries no
+     * position changes of its own (empty `cards`). A `null` side means "no
+     * name" (either newly named, or cleared).
+     */
+    stackNameChanges?: Record<string, { from: string | null; to: string | null }>
 }
 
 export interface HistoryData {

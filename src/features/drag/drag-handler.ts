@@ -4,6 +4,13 @@ import { CardDrag } from './card-drag'
 import { ActionHistory } from '../history/action-history'
 import { snapshotCards } from '../history/history'
 
+/**
+ * Only moves the dragged card and records its own before/after position in
+ * history; never touches stackNames itself. A drag can still end up causing
+ * a name to change owner (e.g. dragging a card off a named pile), but that's
+ * detected and recorded separately by whatever runs after onDragEnd, once
+ * the resulting stacks are known.
+ */
 export class DragHandler {
     private cardDrag: CardDrag
     private app: Application
@@ -58,7 +65,8 @@ export class DragHandler {
             this.app.screen.height,
         )
         if (this.lastDraggedCard) {
-            this.actionHistory.recordAfter(snapshotCards([this.lastDraggedCard], this.cardLayer))
+            const card = this.lastDraggedCard
+            this.actionHistory.recordAfter(snapshotCards([card], this.cardLayer))
             this.lastDraggedCard = null
         }
         this.onDragEnd()

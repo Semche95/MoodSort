@@ -54,7 +54,7 @@ function makeCard(imageUrl: string, x: number, y: number, width: number = 200, h
 }
 
 function makeState(order: string[]): CardState {
-    return { positions: {}, order, onboardingDismissed: false }
+    return { positions: {}, order, onboardingDismissed: false, stackNames: {} }
 }
 
 type Listener = { event: string; handler: (...args: unknown[]) => void }

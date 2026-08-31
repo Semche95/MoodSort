@@ -85,14 +85,14 @@ describe('ActionHistory', () => {
         expect(history.canRedo).toBe(false)
     })
 
-    it('caps the undo stack at 15 entries, dropping the oldest', () => {
-        for (let i = 0; i < 16; i++) {
+    it('caps the undo stack at 50 entries, dropping the oldest', () => {
+        for (let i = 0; i < 51; i++) {
             history.captureBefore([snap('a', i, i, 0)])
             history.recordAfter([snap('a', i + 1, i + 1, 0)])
         }
 
         const undoStack = store.load<HistoryData>(HISTORY_KEY)?.undoStack
-        expect(undoStack).toHaveLength(15)
+        expect(undoStack).toHaveLength(50)
         expect(undoStack?.[0].cards.a.fromX).toBe(1)
     })
 
@@ -131,6 +131,46 @@ describe('ActionHistory', () => {
 
         expect(entry).toBeUndefined()
         expect(onUpdate).not.toHaveBeenCalled()
+    })
+
+    it('pushes an undo entry for a pure name change, with no card position deltas', () => {
+        history.captureBefore([], { anchor: null })
+        history.recordAfter([], { anchor: 'Joie' })
+
+        expect(history.canUndo).toBe(true)
+        expect(store.load<HistoryData>(HISTORY_KEY)?.undoStack).toEqual([
+            { cards: {}, stackNameChanges: { anchor: { from: null, to: 'Joie' } } },
+        ])
+    })
+
+    it('records nothing when the name snapshot is unchanged', () => {
+        history.captureBefore([], { anchor: 'Joie' })
+        history.recordAfter([], { anchor: 'Joie' })
+
+        expect(history.canUndo).toBe(false)
+        expect(onUpdate).not.toHaveBeenCalled()
+    })
+
+    it('bundles a card move and a name change into a single undo entry', () => {
+        history.captureBefore([snap('a', 10, 10, 0)], { a: 'Joie', b: null })
+        history.recordAfter([snap('a', 50, 60, 1)], { a: null, b: 'Joie' })
+
+        expect(history.canUndo).toBe(true)
+        expect(store.load<HistoryData>(HISTORY_KEY)?.undoStack).toEqual([
+            {
+                cards: { a: { fromX: 10, fromY: 10, fromIndex: 0, toX: 50, toY: 60, toIndex: 1 } },
+                stackNameChanges: { a: { from: 'Joie', to: null }, b: { from: null, to: 'Joie' } },
+            },
+        ])
+    })
+
+    it('treats a missing name key in the before-snapshot as unnamed', () => {
+        history.captureBefore([], {})
+        history.recordAfter([], { anchor: 'Joie' })
+
+        expect(store.load<HistoryData>(HISTORY_KEY)?.undoStack).toEqual([
+            { cards: {}, stackNameChanges: { anchor: { from: null, to: 'Joie' } } },
+        ])
     })
 
     it('clear resets both stacks and persists the empty state', () => {

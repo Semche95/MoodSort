@@ -52,6 +52,25 @@ export function applyHistoryEntry(
     restoreCardZIndices(stage, affected)
 }
 
+/** Applies the stack-name side of a history entry (if any) back onto a live stackNames map: `reverse` picks the "from" side, otherwise the "to" side. */
+export function applyStackNameChanges(
+    entry: CardActionEntry,
+    stackNames: Record<string, string>,
+    reverse: boolean,
+): void {
+    if (!entry.stackNameChanges) {
+        return
+    }
+    for (const [id, change] of Object.entries(entry.stackNameChanges)) {
+        const value = reverse ? change.from : change.to
+        if (value === null) {
+            delete stackNames[id]
+        } else {
+            stackNames[id] = value
+        }
+    }
+}
+
 function restoreCardZIndices(
     stage: Container,
     entries: Array<{ card: Card; index: number }>,

@@ -166,6 +166,7 @@ function seedStore(historyStore: InMemoryStore, priorEntry?: CardActionEntry): C
         },
         order: ['card-a', 'card-b', 'card-top', 'card-other'],
         onboardingDismissed: false,
+        stackNames: {},
     })
     if (priorEntry) {
         historyStore.save<HistoryData>(HISTORY_KEY, { undoStack: [priorEntry], redoStack: [] })

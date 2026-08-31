@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { Container } from 'pixi.js'
-import { snapshotCards, applyHistoryEntry } from '../features/history/history'
+import { snapshotCards, applyHistoryEntry, applyStackNameChanges } from '../features/history/history'
 import { Card } from '../types/card.types'
 import { CardActionEntry } from '../types/history.types'
 
@@ -118,5 +118,58 @@ describe('applyHistoryEntry', () => {
 
         expect(b.x).toBe(300)
         expect(b.y).toBe(400)
+    })
+})
+
+describe('applyStackNameChanges', () => {
+    it('does nothing when the entry carries no name changes', () => {
+        const stackNames = { a: 'Joie' }
+
+        applyStackNameChanges({ cards: {} }, stackNames, false)
+
+        expect(stackNames).toEqual({ a: 'Joie' })
+    })
+
+    it('applies the "to" side when reverse is false', () => {
+        const stackNames: Record<string, string> = {}
+        const entry: CardActionEntry = {
+            cards: {},
+            stackNameChanges: { anchor: { from: null, to: 'Joie' } },
+        }
+
+        applyStackNameChanges(entry, stackNames, false)
+
+        expect(stackNames).toEqual({ anchor: 'Joie' })
+    })
+
+    it('applies the "from" side when reverse is true, deleting the key if it was null', () => {
+        const stackNames: Record<string, string> = { anchor: 'Joie' }
+        const entry: CardActionEntry = {
+            cards: {},
+            stackNameChanges: { anchor: { from: null, to: 'Joie' } },
+        }
+
+        applyStackNameChanges(entry, stackNames, true)
+
+        expect(stackNames).toEqual({})
+    })
+
+    it('reassigns a name from one key to another in a single call', () => {
+        const stackNames: Record<string, string> = { a: 'Joie' }
+        const entry: CardActionEntry = {
+            cards: {},
+            stackNameChanges: {
+                a: { from: 'Joie', to: null },
+                b: { from: null, to: 'Joie' },
+            },
+        }
+
+        applyStackNameChanges(entry, stackNames, false)
+
+        expect(stackNames).toEqual({ b: 'Joie' })
+
+        applyStackNameChanges(entry, stackNames, true)
+
+        expect(stackNames).toEqual({ a: 'Joie' })
     })
 })

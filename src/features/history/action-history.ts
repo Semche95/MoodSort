@@ -1,7 +1,7 @@
 import { CardActionEntry, HistoryData, HistorySnapshot, HISTORY_KEY } from '../../types/history.types'
 import { IStore } from '../../types/store.types'
 
-const MAX_HISTORY = 15
+const MAX_HISTORY = 50
 
 /** Has no knowledge of how entities are rendered: callers hand it plain snapshots and get plain entries back to apply themselves. */
 export class ActionHistory {
@@ -9,12 +9,14 @@ export class ActionHistory {
     private undoStack: CardActionEntry[]
     private redoStack: CardActionEntry[]
     private beforeSnapshot: Map<string, HistorySnapshot> | null
+    private beforeNameSnapshot: Record<string, string | null>
     private onUpdate: () => void
 
     constructor(store: IStore, onUpdate: () => void) {
         this.store = store
         this.onUpdate = onUpdate
         this.beforeSnapshot = null
+        this.beforeNameSnapshot = {}
         const saved = this.store.load<HistoryData>(HISTORY_KEY)
         this.undoStack = saved?.undoStack ?? []
         this.redoStack = saved?.redoStack ?? []
@@ -28,11 +30,22 @@ export class ActionHistory {
         return this.redoStack.length > 0
     }
 
-    captureBefore(snapshots: HistorySnapshot[]): void {
+    /**
+     * `nameSnapshot` records the pre-action name (or null) for any stack-name
+     * slot that this action might change, keyed by anchor imageUrl. Most
+     * callers only move cards and can omit it.
+     */
+    captureBefore(snapshots: HistorySnapshot[], nameSnapshot: Record<string, string | null> = {}): void {
         this.beforeSnapshot = new Map(snapshots.map((s: HistorySnapshot): [string, HistorySnapshot] => [s.id, s]))
+        this.beforeNameSnapshot = nameSnapshot
     }
 
-    recordAfter(snapshots: HistorySnapshot[]): void {
+    /**
+     * `nameSnapshotAfter` is the post-action value for the same slots passed
+     * to captureBefore's nameSnapshot; a slot present here but absent from
+     * captureBefore's snapshot is treated as having been unnamed before.
+     */
+    recordAfter(snapshots: HistorySnapshot[], nameSnapshotAfter: Record<string, string | null> = {}): void {
         if (!this.beforeSnapshot) {
             return
         }
@@ -59,7 +72,20 @@ export class ActionHistory {
             }
         }
 
+        const nameChanges: Record<string, { from: string | null; to: string | null }> = {}
+        for (const [id, to] of Object.entries(nameSnapshotAfter)) {
+            const from = this.beforeNameSnapshot[id] ?? null
+            if (from !== to) {
+                changed = true
+                nameChanges[id] = { from, to }
+            }
+        }
+        if (Object.keys(nameChanges).length > 0) {
+            entry.stackNameChanges = nameChanges
+        }
+
         this.beforeSnapshot = null
+        this.beforeNameSnapshot = {}
 
         if (!changed) {
             return
@@ -100,6 +126,7 @@ export class ActionHistory {
         this.undoStack = []
         this.redoStack = []
         this.beforeSnapshot = null
+        this.beforeNameSnapshot = {}
         this.persist()
         this.onUpdate()
     }

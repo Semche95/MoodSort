@@ -1,6 +1,6 @@
 import { Graphics } from 'pixi.js'
 import { Card } from '../../../types/card.types'
-import { computeBoundingBox, computeCompactButtonBox, STACK_HIGHLIGHT_PADDING, STACK_HANDLE_HEIGHT } from '../stack'
+import { computeBoundingBox, computeCompactButtonBox, computeNameButtonBox, STACK_HIGHLIGHT_PADDING, STACK_HANDLE_HEIGHT } from '../stack'
 
 function paddedBox(
     box: { x: number; y: number; width: number; height: number },
@@ -81,10 +81,13 @@ export function drawCompactIcon(
         x: rect.x + px * scaleX,
         y: rect.y + py * scaleY,
     })
-    const thickness = 2 * Math.min(scaleX, scaleY)
+    const thickness = 2.6 * Math.min(scaleX, scaleY)
 
-    drawArrow(compactButton, toWorld(18, 6), toWorld(13, 11), thickness)
-    drawArrow(compactButton, toWorld(6, 18), toWorld(11, 13), thickness)
+    // Arrows reach almost to the button's corners so they read at the same
+    // visual size as the handle's grip icon, instead of a small mark
+    // floating in the middle of the button.
+    drawArrow(compactButton, toWorld(21, 3), toWorld(13, 11), thickness)
+    drawArrow(compactButton, toWorld(3, 21), toWorld(11, 13), thickness)
 }
 
 export function drawArrow(
@@ -118,6 +121,57 @@ export function drawArrow(
     icon.lineTo(shaftEndX - px * halfHeadWidth, shaftEndY - py * halfHeadWidth)
     icon.closePath()
     icon.fill({ color: 0xaaaaaa, alpha: 0.9 })
+}
+
+export function drawNameButton(stack: Card[], nameButton: Graphics): void {
+    const rect = computeNameButtonBox(stack)
+    nameButton.roundRect(rect.x, rect.y, rect.width, rect.height, 6)
+    nameButton.fill({ color: 0x444444, alpha: 0.75 })
+    drawNameIcon(rect, nameButton)
+}
+
+/**
+ * Simple pencil icon (shaft + tip), the standard "rename" metaphor. Drawn on
+ * a 24x24 reference grid scaled to the button's actual size, mirroring how
+ * drawCompactIcon scales its own arrows.
+ */
+export function drawNameIcon(
+    rect: { x: number; y: number; width: number; height: number },
+    nameButton: Graphics,
+): void {
+    const scale = Math.min(rect.width / 24, rect.height / 24)
+    const toWorld = (px: number, py: number): { x: number; y: number } => ({
+        x: rect.x + px * (rect.width / 24),
+        y: rect.y + py * (rect.height / 24),
+    })
+    const halfWidth = 2 * scale
+
+    // Shaft stretches from near the bottom-left corner to near the top-right
+    // one, so the pencil fills the button the same way the handle's grip
+    // icon fills the handle, rather than sitting small in the middle.
+    const from = toWorld(4, 20)
+    const to = toWorld(15, 9)
+    const dx = to.x - from.x
+    const dy = to.y - from.y
+    const length = Math.sqrt(dx * dx + dy * dy)
+    const ux = dx / length
+    const uy = dy / length
+    const px = -uy * halfWidth
+    const py = ux * halfWidth
+
+    nameButton.moveTo(from.x + px, from.y + py)
+    nameButton.lineTo(to.x + px, to.y + py)
+    nameButton.lineTo(to.x - px, to.y - py)
+    nameButton.lineTo(from.x - px, from.y - py)
+    nameButton.closePath()
+    nameButton.fill({ color: 0xaaaaaa, alpha: 0.9 })
+
+    const tip = toWorld(20, 4)
+    nameButton.moveTo(to.x + px, to.y + py)
+    nameButton.lineTo(tip.x, tip.y)
+    nameButton.lineTo(to.x - px, to.y - py)
+    nameButton.closePath()
+    nameButton.fill({ color: 0xaaaaaa, alpha: 0.9 })
 }
 
 export function drawMergeTargetBorder(stack: Card[], mergeIndicator: Graphics): void {
