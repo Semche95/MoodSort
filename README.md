@@ -16,13 +16,15 @@ This app is in French, made for a French-speaking audience.
 - Positions and history are saved to `localStorage` and restored on the next visit
 - Cards reposition proportionally when the window is resized
 - Reset animates cards back to the center
+- Named stack labels: click a stack's name button to open an inline editor (native paste/IME support, a clear button, width-capped with horizontal scrolling); names merge when stacks merge and follow the right group when a stack splits
+- Screen sharing over peer-to-peer WebRTC: toggle it from the toolbar to get a shareable room link, no signup or account needed
 - First-time onboarding overlay
 - Footer link to a legal notices modal (LCEN)
-- Everything stays in the browser: nothing is sent or stored externally
+- Everything except an active screen share stays in the browser: nothing else is sent or stored externally
 
 ## Tech stack
 
-TypeScript (strict), PixiJS 8 for rendering, `@pixi/ui` for the toolbar buttons, Vite for dev/build, Vitest for tests. `sharp` generates the card atlas and toolbar icons at build time.
+TypeScript (strict), PixiJS 8 for rendering, `@pixi/ui` for the toolbar buttons, Vite for dev/build, Vitest for tests, Trystero for peer-to-peer WebRTC screen sharing. `sharp` generates the card atlas and toolbar icons at build time.
 
 ## Getting started
 
@@ -85,7 +87,7 @@ src/
   assets/       # Generated atlas + icons (git-ignored)
   app/          # Composition root: entry point, canvas scene
   features/     # One folder per feature: card, drag, stack, history,
-                # toolbar, onboarding, settings, footer
+                # toolbar, onboarding, settings, footer, screen-share
   shared/       # Cross-feature UI widgets and utilities: icons (used app-wide),
                 # tooltip, loading overlay, geometry, localStorage wrapper
   types/        # One file per domain type (card, drag, stack, history, etc.)
@@ -106,6 +108,8 @@ Hovering a stack draws a highlight border (padded 20px) and a handle bar above i
 
 Dragging the handle (or the border) reparents the whole stack to the top of the stage, in the z-order the user already established by clicking individual cards. While dragging, `findMergeTargets` checks AABB overlap against every other stack and highlights all matches at once (dark overlay, border, `+` marker), with the dragged cards always rendered on top. On release, stacks are recomputed and positions saved.
 
+Each stack can also carry a name. A dedicated button next to the drag handle opens `StackNameEditor`, drawn entirely in Pixi (text, caret, selection, a clear button) but backed by a hidden native `<input>` so typing, native copy/paste, and IME composition work as expected. Names are capped by pixel width rather than character count, with the text clipped and scrolled horizontally to keep the caret visible. Names are keyed to the stack's lowest z-order card and persisted alongside positions. When two named stacks merge, their names are fused into one `" + "`-joined string; when a named stack splits, the name follows whichever resulting group contains the originally-named card.
+
 ### Drag and drop
 
 `CardDrag` handles the single-card lifecycle: reparent to stage, follow the cursor, clamp to the viewport, snap back if nothing moved, drop opacity to 50% while dragging. `DragHandler` wires it to the stage and captures undo history around each drag.
@@ -123,6 +127,12 @@ Dragging the handle (or the border) reparents the whole stack to the top of the 
 ### Reset animation
 
 Reset shuffles the card order, computes new target positions, then `CanvasScene.animateTargets` (also used by stack compacting) eases them there over 20 frames before saving and recomputing stacks.
+
+### Screen sharing
+
+A toolbar toggle opens a modal to start or stop sharing. Starting a share generates a random room code, embeds it in a shareable URL hash, and connects host and viewer peer-to-peer over WebRTC via Trystero (no custom signaling server, no account). Only one host and one viewer are allowed per room; a second viewer is rejected. A room with no connected peer for 10 minutes is torn down automatically. The host's room code and sharing state are kept in their own `localStorage` entries, separate from card positions, so resetting the canvas doesn't end an active share, and a page refresh can silently resume it.
+
+By default WebRTC connections rely on STUN only, which can fail on restrictive networks. To add a TURN relay, set `VITE_TURN_URL`, `VITE_TURN_USERNAME`, and `VITE_TURN_CREDENTIAL` (all three are required together) as environment variables at build time.
 
 ## License
 
