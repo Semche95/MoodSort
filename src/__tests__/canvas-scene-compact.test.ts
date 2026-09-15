@@ -130,7 +130,7 @@ vi.mock('pixi.js', () => {
     }
 
     return {
-        Application: vi.fn(() => mockApp),
+        Application: vi.fn(function MockApplication() { return mockApp }),
         Container: MockContainer,
         Graphics: MockGraphics,
         Sprite: MockSprite,
