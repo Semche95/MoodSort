@@ -14,6 +14,7 @@ const { pixi, ui, buttons } = vi.hoisted(() => {
         y: number = 0
         width: number = 0
         height: number = 0
+        alpha: number = 1
         parent: unknown = null
         children: unknown[] = []
         position: { x: number; y: number; set(x: number, y: number): void } = {
@@ -24,9 +25,17 @@ const { pixi, ui, buttons } = vi.hoisted(() => {
                 this.y = y
             },
         }
-        addChild(child: unknown): unknown {
-            this.children.push(child)
-            return child
+        scale: { x: number; y: number; set(x: number, y: number): void } = {
+            x: 1,
+            y: 1,
+            set(x: number, y: number): void {
+                this.x = x
+                this.y = y
+            },
+        }
+        addChild(...children: unknown[]): unknown {
+            this.children.push(...children)
+            return children[0]
         }
     }
 
@@ -55,7 +64,6 @@ const { pixi, ui, buttons } = vi.hoisted(() => {
             set: (): void => {},
         }
         tint: number = 0
-        alpha: number = 1
     }
 
     class Text extends Container {
@@ -106,6 +114,8 @@ const { pixi, ui, buttons } = vi.hoisted(() => {
         y: number = 0
         iconView: unknown = null
         options: Record<string, unknown>
+        children: unknown[] = []
+        innerView: Container = new Container()
         private onPressCallback: (() => void) | null = null
         private onHoverCallback: (() => void) | null = null
         private onOutCallback: (() => void) | null = null
@@ -134,6 +144,10 @@ const { pixi, ui, buttons } = vi.hoisted(() => {
             this.options = options
             this.iconView = options.icon
             buttons.push(this)
+        }
+        addChild(...children: unknown[]): unknown {
+            this.children.push(...children)
+            return children[0]
         }
         press(): void {
             if (this.onPressCallback !== null) {
@@ -195,6 +209,7 @@ function createHost(initial: { width?: number } = {}): TestHost {
             return state.width
         },
         screenHeight: 600,
+        canvasElement: document.createElement('canvas'),
         get canUndo(): boolean {
             return state.canUndo
         },
@@ -239,6 +254,7 @@ function createTextures(): Record<string, Texture> {
         'undo-2': new pixi.Texture() as unknown as Texture,
         'redo-2': new pixi.Texture() as unknown as Texture,
         'sliders-horizontal': new pixi.Texture() as unknown as Texture,
+        'screen-share': new pixi.Texture() as unknown as Texture,
     }
 }
 
@@ -248,21 +264,22 @@ describe('TopToolbar', () => {
         buttons.length = 0
     })
 
-    it('should add the toolbar container to the host stage with logo and four buttons', () => {
+    it('should add the toolbar container to the host stage with logo and five buttons', () => {
         const host = createHost()
         initTopToolbar(host, vi.fn(), createTextures())
 
         expect(host.stage.children).toHaveLength(1)
-        expect(buttons).toHaveLength(4)
+        expect(buttons).toHaveLength(5)
         expect(buttons.map((button: { label: string }): string => button.label)).toEqual([
             'toolbar-undobutton',
             'toolbar-redobutton',
             'toolbar-helpbutton',
             'toolbar-settingsbutton',
+            'toolbar-sharebutton',
         ])
     })
 
-    it('should pin the buttons to the right edge on construction', () => {
+    it('should pin undo/redo/help/settings to the right edge on construction, with settings closest to the edge', () => {
         const host = createHost()
         initTopToolbar(host, vi.fn(), createTextures())
 
@@ -272,7 +289,15 @@ describe('TopToolbar', () => {
         expect(help.x).toBe(800 - 16 - 24 - 56)
         expect(settings.x).toBe(800 - 16 - 24)
         expect(undo.y).toBe(40)
-        expect(settings.y).toBe(40)
+    })
+
+    it('should center the share button horizontally at the top of the screen', () => {
+        const host = createHost()
+        initTopToolbar(host, vi.fn(), createTextures())
+
+        const [, , , , share] = buttons
+        expect(share.x).toBe(400)
+        expect(share.y).toBe(40)
     })
 
     it('should render the mask emoji logo aligned with the MoodSort title', () => {
@@ -299,12 +324,15 @@ describe('TopToolbar', () => {
         const host = createHost()
         initTopToolbar(host, vi.fn(), createTextures())
 
-        const [undo, redo, help, settings] = buttons
+        const [undo, redo, help, settings, share] = buttons
         for (const button of [undo, redo, settings]) {
             expect((button as unknown as { options: Record<string, unknown> }).options.defaultIconScale)
                 .toBeCloseTo(22 / 64)
         }
         expect((help as unknown as { options: Record<string, unknown> }).options.defaultIconScale).toBe(1)
+
+        const shareIcon = (share.iconView as { children: Array<{ scale: { x: number } }> }).children[0]
+        expect(shareIcon.scale.x).toBeCloseTo(22 / 64)
     })
 
     it('should render the help button icon as a plain question mark text', () => {
@@ -370,16 +398,17 @@ describe('TopToolbar', () => {
         expect(buttons[0].enabled).toBe(false)
     })
 
-    it('should re-anchor the buttons to the right edge on resize', () => {
+    it('should re-anchor the buttons to the right edge on resize, keeping the share button centered', () => {
         const host = createHost({ width: 800 })
         initTopToolbar(host, vi.fn(), createTextures())
 
         host.setWidth(1200)
         host.resize()
 
-        const [undo, , , settings] = buttons
+        const [undo, , , settings, share] = buttons
         expect(undo.x).toBe(1200 - 16 - 24 - 3 * 56)
         expect(settings.x).toBe(1200 - 16 - 24)
+        expect(share.x).toBe(1200 / 2)
 
         const toolbar = host.stage.children[0] as { children: unknown[] }
         const logo = toolbar.children[0] as { x: number; y: number }
@@ -428,5 +457,54 @@ describe('TopToolbar', () => {
         expect(tooltip.visible).toBe(true)
         host.resize()
         expect(tooltip.visible).toBe(false)
+    })
+
+    it('should disable the share button and explain why when the browser lacks screen-share support', () => {
+        const host = createHost()
+        initTopToolbar(host, vi.fn(), createTextures())
+
+        const share = buttons[4]
+        expect(share.enabled).toBe(false)
+        expect((share.iconView as { alpha: number }).alpha).toBe(0.35)
+
+        share.hover()
+        const toolbar = host.stage.children[0] as { children: unknown[] }
+        const tooltip = toolbar.children[toolbar.children.length - 1] as { children: Array<{ text?: unknown }> }
+        expect(tooltip.children[1].text).toBe("Partage d'écran non supporté par ce navigateur")
+    })
+
+    it('should render hidden active and viewer indicator dots overlaid on the share button by default', () => {
+        const host = createHost()
+        initTopToolbar(host, vi.fn(), createTextures())
+
+        const share = buttons[4] as unknown as { innerView: { children: Array<{ label: string; visible: boolean }> } }
+        const activeIndicator = share.innerView.children.find((child: { label: string }): boolean => child.label === 'toolbar-share-active-indicator')
+        const viewerIndicator = share.innerView.children.find((child: { label: string }): boolean => child.label === 'toolbar-share-viewer-indicator')
+        expect(activeIndicator).toBeDefined()
+        expect(activeIndicator?.visible).toBe(false)
+        expect(viewerIndicator).toBeDefined()
+        expect(viewerIndicator?.visible).toBe(false)
+    })
+
+    it('should open the screen share modal when the share button is pressed', () => {
+        const host = createHost()
+        initTopToolbar(host, vi.fn(), createTextures())
+
+        buttons[4].press()
+
+        const overlay = document.querySelector('.screen-share-overlay')
+        expect(overlay).not.toBeNull()
+        overlay?.remove()
+    })
+
+    it('should not open a second screen share modal while one is already open', () => {
+        const host = createHost()
+        initTopToolbar(host, vi.fn(), createTextures())
+
+        buttons[4].press()
+        buttons[4].press()
+
+        expect(document.querySelectorAll('.screen-share-overlay')).toHaveLength(1)
+        document.querySelector('.screen-share-overlay')?.remove()
     })
 })

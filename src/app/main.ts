@@ -9,10 +9,12 @@ import { loadIconTextures } from '../shared/ui/icons'
 import { createFooter } from '../features/footer/footer'
 import { createLoadingOverlay } from '../shared/ui/loading-overlay'
 import { CardStateService } from '../features/card/card-state-service'
+import { getRoomCodeFromHash } from '../features/screen-share/screen-share-url'
+import { initScreenShareViewer } from '../features/screen-share/screen-share-viewer'
 import atlasData from '../assets/atlas.json'
 import atlasImageUrl from '../assets/atlas.webp?url'
 
-(async (): Promise<void> => {
+async function bootApp(): Promise<void> {
     const overlay = createLoadingOverlay()
     document.body.appendChild(overlay)
 
@@ -36,4 +38,25 @@ import atlasImageUrl from '../assets/atlas.webp?url'
 
     const iconTextures = await loadIconTextures()
     initTopToolbar(scene, (): void => { dismissOnboarding(cardStateService) }, iconTextures)
+}
+
+(async (): Promise<void> => {
+    const initialRoomCode = getRoomCodeFromHash(window.location.hash)
+
+    window.addEventListener('hashchange', (): void => {
+        const roomCode = getRoomCodeFromHash(window.location.hash)
+        if (roomCode && roomCode !== initialRoomCode) {
+            window.location.reload()
+        }
+    })
+
+    if (initialRoomCode) {
+        initScreenShareViewer(initialRoomCode, (): void => {
+            window.location.hash = ''
+            void bootApp()
+        })
+        return
+    }
+
+    await bootApp()
 })()

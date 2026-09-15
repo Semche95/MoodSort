@@ -258,6 +258,251 @@ body {
     background: #a93226;
 }
 
+/* Screen share modal (host) */
+.screen-share-overlay {
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
+}
+
+.screen-share-modal {
+    background: #fff;
+    color: #222;
+    border-radius: 16px;
+    padding: 0;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+.screen-share-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 0;
+}
+
+.screen-share-header h1 {
+    font-size: 1.3rem;
+}
+
+.screen-share-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+    padding: 0 4px;
+}
+
+.screen-share-close:hover {
+    color: #000;
+}
+
+.screen-share-body {
+    padding: 16px 24px 24px;
+}
+
+.screen-share-body p {
+    font-size: 0.9rem;
+    color: #555;
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
+.screen-share-activate {
+    display: block;
+    width: 100%;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    border: none;
+    border-radius: 8px;
+    background: #2563eb;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.screen-share-activate:hover {
+    background: #1d4ed8;
+}
+
+.screen-share-activate:disabled {
+    background: #93c5fd;
+    cursor: default;
+}
+
+/* The class rule above sets `display: block` with the same specificity as the
+ * browser's built-in `[hidden] { display: none }` rule, and author styles
+ * always win over user-agent styles regardless of specificity - so without
+ * this override, setting the `hidden` attribute in JS has no visible effect
+ * and the button never actually disappears once sharing starts. */
+.screen-share-activate[hidden] {
+    display: none;
+}
+
+.screen-share-live {
+    display: none;
+}
+
+.screen-share-live--visible {
+    display: block;
+}
+
+.screen-share-stop {
+    display: block;
+    width: 100%;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    border: none;
+    border-radius: 8px;
+    background: #dc2626;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.screen-share-stop:hover {
+    background: #b91c1c;
+}
+
+.screen-share-stop[hidden] {
+    display: none;
+}
+
+.screen-share-url-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.screen-share-url {
+    flex: 1;
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: #222;
+    background: #f9f9f9;
+}
+
+.screen-share-copy {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 8px;
+    background: #333;
+    color: #fff;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.screen-share-copy:hover {
+    background: #555;
+}
+
+.screen-share-regenerate {
+    display: block;
+    width: 100%;
+    padding: 8px 14px;
+    margin-bottom: 8px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+    color: #333;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.screen-share-regenerate:hover {
+    background: #f5f5f5;
+}
+
+.screen-share-copy-feedback {
+    font-size: 0.85rem;
+    color: #555;
+    min-height: 1.2em;
+    margin-bottom: 8px;
+}
+
+.screen-share-copy-feedback--error {
+    color: #c0392b;
+}
+
+.screen-share-status {
+    font-size: 0.85rem;
+    color: #333;
+    font-weight: 600;
+    min-height: 1.2em;
+}
+
+/* Screen share viewer (spectator, full page, read-only) */
+.screen-share-viewer {
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.screen-share-viewer-video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.screen-share-viewer-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.screen-share-viewer-close:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.screen-share-viewer-status {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 16px;
+    text-align: center;
+    color: #fff;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
+    font-size: 0.95rem;
+    background: rgba(0, 0, 0, 0.6);
+    display: none;
+}
+
+.screen-share-viewer-status--visible {
+    display: block;
+}
+
 /* Footer */
 .app-footer {
     position: fixed;

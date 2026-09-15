@@ -2,8 +2,9 @@ import { Assets, Sprite, Text, Texture } from 'pixi.js'
 import undoIconUrl from '../../assets/icons/undo-2.webp?url'
 import redoIconUrl from '../../assets/icons/redo-2.webp?url'
 import settingsIconUrl from '../../assets/icons/sliders-horizontal.webp?url'
+import screenShareIconUrl from '../../assets/icons/screen-share.webp?url'
 
-export const ICON_NAMES = ['undo-2', 'redo-2', 'sliders-horizontal'] as const
+export const ICON_NAMES = ['undo-2', 'redo-2', 'sliders-horizontal', 'screen-share'] as const
 
 export type IconName = (typeof ICON_NAMES)[number]
 
@@ -15,6 +16,7 @@ export async function loadIconTextures(): Promise<Record<string, Texture>> {
         'undo-2': undoIconUrl,
         'redo-2': redoIconUrl,
         'sliders-horizontal': settingsIconUrl,
+        'screen-share': screenShareIconUrl,
     }
     const textures: Record<string, Texture> = {}
     for (const name of ICON_NAMES) {

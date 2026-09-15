@@ -91,6 +91,10 @@ export class CanvasScene {
         return this.app.screen.height
     }
 
+    get canvasElement(): HTMLCanvasElement {
+        return this.app.canvas
+    }
+
     async init(frameNames: string[], spritesheet: Spritesheet): Promise<void> {
         if (frameNames.length === 0) {
             throw new Error('No images found')

@@ -10,6 +10,7 @@ export interface ToolbarHost {
     readonly screenHeight: number
     readonly canUndo: boolean
     readonly canRedo: boolean
+    readonly canvasElement: HTMLCanvasElement
     undo(): void
     redo(): void
     resetPositions(): void
