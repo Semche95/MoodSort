@@ -56,7 +56,7 @@ function createToolbarState(host: ToolbarHost, onDismissOnboarding: () => void, 
         tooltip,
         createIcon(iconTextures['screen-share']),
         (): void => openScreenShare(state),
-        shareSupported ? "Partager l'écran" : "Partage d'écran non supporté par ce navigateur",
+        shareSupported ? 'Partager la disposition' : 'Partage de la disposition non supporté par ce navigateur',
     )
     state.shareButton = share.button
     state.shareIcon = share.content

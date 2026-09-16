@@ -470,7 +470,7 @@ describe('TopToolbar', () => {
         share.hover()
         const toolbar = host.stage.children[0] as { children: unknown[] }
         const tooltip = toolbar.children[toolbar.children.length - 1] as { children: Array<{ text?: unknown }> }
-        expect(tooltip.children[1].text).toBe("Partage d'écran non supporté par ce navigateur")
+        expect(tooltip.children[1].text).toBe('Partage de la disposition non supporté par ce navigateur')
     })
 
     it('should render hidden active and viewer indicator dots overlaid on the share button by default', () => {

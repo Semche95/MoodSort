@@ -40,7 +40,10 @@ export function createOnboarding(onDismiss: () => void): HTMLDivElement {
             <ul>
                 <li>Chaque carte représente une émotion.</li>
                 <li>Déplacez les cartes pour représenter ce qui vous correspond aujourd'hui.</li>
+                <li>Superposez des cartes pour former un tas, nommez-le et déplacez les cartes ensemble.</li>
+                <li>Annulez ou refaites vos dernières actions, ou réinitialisez les positions.</li>
                 <li>Votre disposition est sauvegardée automatiquement.</li>
+                <li>Partagez la disposition de vos cartes avec quelqu'un.</li>
             </ul>
             <p>
                 Il n'y a pas de bonne ou de mauvaise façon de placer les cartes.
@@ -48,7 +51,8 @@ export function createOnboarding(onDismiss: () => void): HTMLDivElement {
             </p>
             <p>
                 🔒 <strong>Vos données restent privées :</strong> tout ce que vous faites dans MoodSort
-                reste sur votre appareil. Rien n'est envoyé ni stocké ailleurs.
+                reste sur votre appareil et rien n'est envoyé ni stocké ailleurs, sauf si vous activez le
+                partage de la disposition : la personne qui vous rejoint voit alors la disposition de vos cartes.
             </p>
             <button class="onboarding-dismiss">Commencer</button>
         </div>

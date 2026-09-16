@@ -8,7 +8,7 @@ function describeStatus(status: SharingStatus): string {
         case 'inactive':
             return ''
         case 'waiting':
-            return "En attente d'un spectateur..."
+            return 'En attente d\'un spectateur...'
         case 'connected':
             return 'Spectateur connecté.'
         case 'stopped':
@@ -25,11 +25,11 @@ export function createScreenShareModal(canvas: HTMLCanvasElement): HTMLDivElemen
 
     modal.innerHTML = `
         <div class="screen-share-header">
-            <h1>Partager l'écran</h1>
+            <h1>Partager la disposition</h1>
             <button class="screen-share-close">&times;</button>
         </div>
         <div class="screen-share-body">
-            <p>Activez le partage pour laisser une autre personne suivre l'espace de travail en direct, en lecture seule.</p>
+            <p>Activez le partage pour laisser une autre personne suivre la disposition de vos cartes en direct, en lecture seule.</p>
             <button class="screen-share-activate">Activer le partage</button>
             <button class="screen-share-stop" hidden>Arrêter le partage</button>
             <div class="screen-share-live">
@@ -83,7 +83,7 @@ export function createScreenShareModal(canvas: HTMLCanvasElement): HTMLDivElemen
     copyBtn.addEventListener('click', (): void => {
         if (!navigator.clipboard) {
             copyFeedback.classList.add('screen-share-copy-feedback--error')
-            copyFeedback.textContent = "La copie automatique n'est pas disponible dans ce navigateur. Copiez le lien manuellement."
+            copyFeedback.textContent = 'La copie automatique n\'est pas disponible dans ce navigateur. Copiez le lien manuellement.'
             return
         }
         navigator.clipboard.writeText(urlInput.value).then((): void => {
@@ -97,7 +97,7 @@ export function createScreenShareModal(canvas: HTMLCanvasElement): HTMLDivElemen
 
     if (!isScreenShareHostSupported()) {
         activateBtn.disabled = true
-        statusEl.textContent = "Votre navigateur ne supporte pas le partage d'écran."
+        statusEl.textContent = 'Votre navigateur ne supporte pas le partage de la disposition.'
     } else {
         unsubscribe = subscribeToSharing(canvas, render)
         render(getSharingState(canvas))

@@ -17,7 +17,8 @@ This app is in French, made for a French-speaking audience.
 - Cards reposition proportionally when the window is resized
 - Reset animates cards back to the center
 - Named stack labels: click a stack's name button to open an inline editor (native paste/IME support, a clear button, width-capped with horizontal scrolling); names merge when stacks merge and follow the right group when a stack splits
-- Screen sharing over peer-to-peer WebRTC: toggle it from the toolbar to get a shareable room link, no signup or account needed
+- Canvas sharing over peer-to-peer WebRTC: toggle it from the toolbar to get a shareable room link, no signup or account needed. This streams the app's canvas only, not the viewer's whole screen
+- Settings modal (toolbar button) with a confirmation-gated "reset positions" action
 - First-time onboarding overlay
 - Footer link to a legal notices modal (LCEN)
 - Everything except an active screen share stays in the browser: nothing else is sent or stored externally
@@ -45,6 +46,8 @@ docker run -p 8080:8080 ghcr.io/semche95/moodsort:latest
 
 `latest` tracks the most recent release. A specific version also works, e.g. `ghcr.io/semche95/moodsort:1.0.0`.
 
+`.github/workflows/docker-publish.yml` builds and pushes this image automatically whenever a GitHub release is published (tagging `latest`, the release's semver, and the short SHA), or on demand via manual `workflow_dispatch`.
+
 Or build it from source:
 
 ```bash
@@ -53,6 +56,10 @@ docker run -p 8080:8080 moodsort
 ```
 
 Either way it runs at `http://localhost:8080`.
+
+## CI
+
+`.github/workflows/ci.yml` runs on every push to `main` and every pull request: install dependencies, regenerate the atlas and icons, typecheck, lint, and run the test suite.
 
 ## Deployment
 
@@ -122,7 +129,7 @@ Each stack can also carry a name. A dedicated button next to the drag handle ope
 
 ### Toolbar
 
-`TopToolbar` renders directly on the Pixi canvas rather than as HTML: a logo on the left, and undo/redo/help/settings buttons on the right that stay pinned on resize. Hovering a button shows a `CanvasTooltip`, a small reusable rounded label. Keyboard shortcuts (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, Ctrl/Cmd+Y) are wired independently in `initHistoryShortcuts`.
+`TopToolbar` renders directly on the Pixi canvas rather than as HTML: a logo on the left, and undo/redo/help/settings buttons on the right that stay pinned on resize. Hovering a button shows a `CanvasTooltip`, a small reusable rounded label. Keyboard shortcuts (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, Ctrl/Cmd+Y) are wired independently in `initHistoryShortcuts`. The settings button opens a modal (`createSettingsModal`) whose only action is resetting all card positions, gated behind a confirmation step.
 
 ### Reset animation
 
@@ -130,7 +137,7 @@ Reset shuffles the card order, computes new target positions, then `CanvasScene.
 
 ### Screen sharing
 
-A toolbar toggle opens a modal to start or stop sharing. Starting a share generates a random room code, embeds it in a shareable URL hash, and connects host and viewer peer-to-peer over WebRTC via Trystero (no custom signaling server, no account). Only one host and one viewer are allowed per room; a second viewer is rejected. A room with no connected peer for 10 minutes is torn down automatically. The host's room code and sharing state are kept in their own `localStorage` entries, separate from card positions, so resetting the canvas doesn't end an active share, and a page refresh can silently resume it.
+A toolbar toggle opens a modal to start or stop sharing. The stream comes from `canvas.captureStream()` on the app's own Pixi canvas, not the browser's `getDisplayMedia` screen picker, so only the card canvas is sent, never the rest of the host's screen. Starting a share generates a random room code, embeds it in a shareable URL hash, and connects host and viewer peer-to-peer over WebRTC via Trystero (no custom signaling server, no account). Only one host and one viewer are allowed per room; a second viewer is rejected. A room with no connected peer for 10 minutes is torn down automatically. The host's room code and sharing state are kept in their own `localStorage` entries, separate from card positions, so resetting the canvas doesn't end an active share, and a page refresh can silently resume it.
 
 By default WebRTC connections rely on STUN only, which can fail on restrictive networks. To add a TURN relay, set `VITE_TURN_URL`, `VITE_TURN_USERNAME`, and `VITE_TURN_CREDENTIAL` (all three are required together) as environment variables at build time.
 

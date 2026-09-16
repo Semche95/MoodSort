@@ -57,15 +57,15 @@ export class ScreenShareViewer {
 function describeStatus(status: ConnectionStatus): string {
     switch (status) {
         case 'waiting':
-            return "En attente de la connexion à l'hôte..."
+            return 'En attente de la connexion à l\'hôte...'
         case 'connected':
             return ''
         case 'stopped':
-            return "Connexion perdue avec l'hôte. Demandez un nouveau lien de partage."
+            return 'Connexion perdue avec l\'hôte. Demandez un nouveau lien de partage.'
     }
 }
 
-const ROOM_BUSY_MESSAGE = "Ce partage est déjà suivi par quelqu'un d'autre. Réessayez plus tard."
+const ROOM_BUSY_MESSAGE = 'Ce partage est déjà suivi par quelqu\'un d\'autre. Réessayez plus tard.'
 
 // Bootstraps the read-only spectator page: a fullscreen <video> element plus a status banner.
 export function initScreenShareViewer(roomCode: string, onClose: () => void): void {
@@ -75,7 +75,7 @@ export function initScreenShareViewer(roomCode: string, onClose: () => void): vo
     const closeBtn = document.createElement('button')
     closeBtn.className = 'screen-share-viewer-close'
     closeBtn.textContent = '×'
-    closeBtn.setAttribute('aria-label', 'Fermer le partage et revenir à l\'espace de travail')
+    closeBtn.setAttribute('aria-label', 'Fermer le partage et revenir à la disposition des cartes')
 
     const video = document.createElement('video')
     video.className = 'screen-share-viewer-video'
@@ -85,7 +85,7 @@ export function initScreenShareViewer(roomCode: string, onClose: () => void): vo
 
     const status = document.createElement('div')
     status.className = 'screen-share-viewer-status screen-share-viewer-status--visible'
-    status.textContent = "Connexion à l'hôte..."
+    status.textContent = 'Connexion à l\'hôte...'
 
     container.appendChild(closeBtn)
     container.appendChild(video)
@@ -101,7 +101,7 @@ export function initScreenShareViewer(roomCode: string, onClose: () => void): vo
     })
 
     if (!isWebRtcSupported()) {
-        status.textContent = "Votre navigateur ne supporte pas le partage d'écran (WebRTC indisponible)."
+        status.textContent = 'Votre navigateur ne supporte pas le partage de la disposition (WebRTC indisponible).'
         return
     }
 
