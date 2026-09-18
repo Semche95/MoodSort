@@ -1,0 +1,87 @@
+{
+    "toolbar": {
+        "undo": "Undo",
+        "redo": "Redo",
+        "help": "Help",
+        "settings": "Settings",
+        "share": "Share",
+        "shareTooltip": "Share the layout",
+        "shareTooltipUnsupported": "Sharing the layout is not supported by this browser",
+        "languageTooltip": "Choose language"
+    },
+    "stack": {
+        "compactTooltip": "Compact the stack",
+        "nameTooltipNamed": "Rename the stack",
+        "nameTooltipUnnamed": "Name the stack"
+    },
+    "onboarding": {
+        "title": "Welcome to MoodSort",
+        "intro": "MoodSort is a visual tool to help you explore your emotions.",
+        "howItWorksTitle": "How does it work&nbsp;?",
+        "step1": "Each card represents an emotion.",
+        "step2": "Move the cards around to represent what matches how you feel today.",
+        "step3": "Stack cards on top of each other to form a pile, name it, and move the cards together.",
+        "step4": "Undo or redo your latest actions, or reset the positions.",
+        "step5": "Your layout is saved automatically.",
+        "step6": "Share the layout of your cards with someone.",
+        "outro": "There is no right or wrong way to place the cards. Group them however helps you explore your emotions.",
+        "privacy": "🔒 <strong>Your data stays private:</strong> everything you do in MoodSort stays on your device and nothing is ever sent or stored elsewhere, unless you turn on layout sharing: the person who joins you can then see the layout of your cards.",
+        "dismissButton": "Get started"
+    },
+    "settings": {
+        "title": "Settings",
+        "closeAriaLabel": "Close settings",
+        "cardsSection": "Cards",
+        "resetPositionsDescription": "Reset the layout of all cards to the center of the screen.",
+        "resetPositionsButton": "Reset positions",
+        "confirmResetTitle": "Reset positions?",
+        "confirmResetMessage": "All cards will return to the center.",
+        "confirmCancel": "Cancel",
+        "confirmOk": "Confirm"
+    },
+    "legal": {
+        "title": "Legal notice",
+        "closeAriaLabel": "Close legal notice",
+        "lastUpdated": "Last updated: July 15, 2026",
+        "editionTitle": "Site publisher",
+        "editionText1": "This site is a personal, non-commercial project published by an individual.",
+        "editionText2": "In accordance with Article 6-III of French law n° 2004-575 of June 21, 2004 for Confidence in the Digital Economy (LCEN), the publisher, a private individual acting in a non-professional capacity, has chosen not to make their personal contact details public. These details have been communicated to the site's host, in accordance with the law.",
+        "hostingTitle": "Hosting",
+        "contactTitle": "Contact",
+        "contactText": "For any question, comment, or report concerning the site, you can contact the publisher at the following address:<br><strong>contact@moodsort.fr</strong>",
+        "privacyTitle": "Data protection and privacy",
+        "privacyText1": "MoodSort does not collect, transmit, or store any data on a remote server. All the information you create in the application (card positions, action history) stays saved directly on your device, in your browser. Nothing is sent to the publisher, the host, or any third party.",
+        "privacyText2": "The site uses no tracking cookies, no audience analytics tool, and no advertising tracker.",
+        "liabilityTitle": "Limitation of liability",
+        "liabilityText1": "MoodSort is an experimental tool provided \"as is\", without warranty of any kind, express or implied. It is not a medical device and does not in any way replace the advice, diagnosis, or care of a qualified healthcare professional.",
+        "liabilityText2": "The author cannot be held responsible for a clinical or therapeutic use of the tool, nor for any loss of data stored locally in the user's browser (for example in the event of local storage being cleared, or a change of device or browser)."
+    },
+    "footer": {
+        "legalLink": "Legal notice"
+    },
+    "screenShare": {
+        "title": "Share the layout",
+        "closeAriaLabel": "Close sharing",
+        "description": "Turn on sharing to let another person follow the layout of your cards live, in read-only mode.",
+        "activateButton": "Turn on sharing",
+        "stopButton": "Stop sharing",
+        "shareLinkPrompt": "Share this link with the person you want to invite:",
+        "copyButton": "Copy link",
+        "regenerateButton": "Generate a new code",
+        "copyUnsupported": "Automatic copying is not available in this browser. Copy the link manually.",
+        "copySuccess": "Link copied to clipboard.",
+        "copyError": "Failed to copy the link.",
+        "unsupported": "Your browser does not support layout sharing.",
+        "statusWaiting": "Waiting for a viewer...",
+        "statusConnected": "Viewer connected.",
+        "statusStopped": "Sharing stopped: no one connected in time. Click \"Turn on sharing\" to try again."
+    },
+    "screenShareViewer": {
+        "closeAriaLabel": "Close the shared view and return to the card layout",
+        "connecting": "Connecting to the host...",
+        "unsupported": "Your browser does not support layout sharing (WebRTC unavailable).",
+        "statusWaiting": "Waiting for connection to the host...",
+        "statusStopped": "Connection to the host lost. Ask for a new sharing link.",
+        "roomBusy": "This shared session is already being followed by someone else. Please try again later."
+    }
+}

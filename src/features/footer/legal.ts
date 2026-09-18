@@ -1,3 +1,13 @@
+import { I18n } from '../../i18n/I18n'
+
+/**
+ * OVH's registered address is a legal identifier, not app content, so it
+ * stays in French in every locale rather than being translated like the
+ * surrounding legal notice text.
+ */
+const OVH_HOSTING_NOTICE =
+    '<strong>OVH SAS</strong><br>Société par actions simplifiée au capital de 50 000 000 €<br>RCS Lille Métropole 424 761 419 00045<br>Siège social : 2 rue Kellermann, 59100 Roubaix, France'
+
 export function createLegalModal(): HTMLDivElement {
     const overlay = document.createElement('div')
     overlay.className = 'legal-overlay'
@@ -7,33 +17,29 @@ export function createLegalModal(): HTMLDivElement {
 
     modal.innerHTML = `
         <div class="legal-header">
-            <h1>Mentions légales</h1>
-            <button class="legal-close">&times;</button>
+            <h1>${I18n.t('legal.title')}</h1>
+            <button class="legal-close" aria-label="${I18n.t('legal.closeAriaLabel')}">&times;</button>
         </div>
         <div class="legal-body">
-            <p class="legal-date">Dernière mise à jour : 15 juillet 2026</p>
+            <p class="legal-date">${I18n.t('legal.lastUpdated')}</p>
 
-            <h2>Édition du site</h2>
-            <p>Le présent site est un projet personnel, à but non commercial, édité par un particulier.</p>
-            <p>Conformément à l'article 6-III de la loi n° 2004-575 du 21 juin 2004 pour la Confiance dans l'Économie Numérique (LCEN), l'éditeur, personne physique agissant à titre non professionnel, a choisi de ne pas rendre publiques ses coordonnées personnelles. Celles-ci ont été communiquées à l'hébergeur du site, conformément à la loi.</p>
+            <h2>${I18n.t('legal.editionTitle')}</h2>
+            <p>${I18n.t('legal.editionText1')}</p>
+            <p>${I18n.t('legal.editionText2')}</p>
 
-            <h2>Hébergement</h2>
-            <p><strong>OVH SAS</strong><br>
-            Société par actions simplifiée au capital de 50 000 000 €<br>
-            RCS Lille Métropole 424 761 419 00045<br>
-            Siège social : 2 rue Kellermann, 59100 Roubaix, France</p>
+            <h2>${I18n.t('legal.hostingTitle')}</h2>
+            <p>${OVH_HOSTING_NOTICE}</p>
 
-            <h2>Contact</h2>
-            <p>Pour toute question, remarque ou signalement concernant le site, vous pouvez contacter l'éditeur à l'adresse suivante :<br>
-            <strong>contact@moodsort.fr</strong></p>
+            <h2>${I18n.t('legal.contactTitle')}</h2>
+            <p>${I18n.t('legal.contactText')}</p>
 
-            <h2>Protection des données et confidentialité</h2>
-            <p>MoodSort ne collecte, ne transmet et ne stocke aucune donnée sur un serveur distant. Toutes les informations que vous créez dans l'application (positions des cartes, historique des actions) restent enregistrées directement sur votre appareil, dans votre navigateur. Rien n'est envoyé à l'éditeur, à l'hébergeur ou à un tiers.</p>
-            <p>Le site n'utilise aucun cookie de suivi, aucun outil d'analyse d'audience et aucun traceur publicitaire.</p>
+            <h2>${I18n.t('legal.privacyTitle')}</h2>
+            <p>${I18n.t('legal.privacyText1')}</p>
+            <p>${I18n.t('legal.privacyText2')}</p>
 
-            <h2>Limitation de responsabilité</h2>
-            <p>MoodSort est un outil expérimental fourni « en l'état », sans garantie d'aucune sorte, explicite ou implicite. Ce n'est pas un dispositif médical et il ne remplace en aucun cas un avis, un diagnostic ou un suivi par un professionnel de santé qualifié.</p>
-            <p>L'auteur ne saurait être tenu responsable d'une utilisation clinique ou thérapeutique de l'outil, ni d'une éventuelle perte des données enregistrées localement dans le navigateur de l'utilisateur (par exemple en cas de suppression du stockage local, de changement d'appareil ou de navigateur).</p>
+            <h2>${I18n.t('legal.liabilityTitle')}</h2>
+            <p>${I18n.t('legal.liabilityText1')}</p>
+            <p>${I18n.t('legal.liabilityText2')}</p>
         </div>
     `
 

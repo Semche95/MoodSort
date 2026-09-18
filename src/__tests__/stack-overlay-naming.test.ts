@@ -4,6 +4,7 @@ import { StackOverlay, truncateLabel } from '../features/stack/stack-overlay/sta
 import { computeNameButtonBox } from '../features/stack/stack'
 import { DRAGGING_OPACITY } from '../features/drag/card-drag'
 import { Card } from '../types/card.types'
+import { I18n } from '../i18n/I18n'
 
 type Handler = (payload: unknown) => void
 
@@ -225,7 +226,7 @@ describe('StackOverlay name label and button', () => {
         nameButton.emit('pointerover', { global: point })
 
         expect(nameTooltip.visible).toBe(true)
-        expect(nameTooltip.children[1].text).toBe('Renommer le tas')
+        expect(nameTooltip.children[1].text).toBe(I18n.t('stack.nameTooltipNamed'))
 
         nameButton.emit('pointerout', {})
         expect(nameTooltip.visible).toBe(false)

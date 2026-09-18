@@ -6,7 +6,7 @@
 
 A visual emotion exploration tool. Arrange emotion cards on a canvas to identify and express what you're feeling.
 
-This app is in French, made for a French-speaking audience.
+The interface is available in French and English, auto-detected from the browser on first launch and switchable from the toolbar's globe button (more languages may be added later).
 
 ## Features
 
@@ -22,6 +22,7 @@ This app is in French, made for a French-speaking audience.
 - First-time onboarding overlay
 - Footer link to a legal notices modal (LCEN)
 - Everything except an active screen share stays in the browser: nothing else is sent or stored externally
+- Multi-language UI with browser auto-detection and a toolbar language picker; the choice is persisted across sessions
 
 ## Tech stack
 
@@ -71,7 +72,7 @@ See the comments at the top of `deploy.yml` for the one-time bootstrap step need
 
 ## Scripts
 
-`pnpm dev` and `pnpm build` regenerate two things before starting: the card spritesheet atlas (`src/assets/atlas.fr.webp` + `atlas.fr.json`, built from `src/cards/`, plus an `atlas.en.*` pair with English labels that isn't loaded by the app) and the app icons (`src/assets/icons/`, rasterized from `lucide-static`). Both outputs are git-ignored.
+`pnpm dev` and `pnpm build` regenerate two things before starting: the card spritesheet atlas (one `atlas.<locale>.webp` + `atlas.<locale>.json` pair per language in `LANGUAGES`, in `scripts/generate-atlas.mjs`, built from `src/cards/`) and the app icons (`src/assets/icons/`, rasterized from `lucide-static`). Both outputs are git-ignored.
 
 | Command | Description |
 |---|---|
@@ -105,7 +106,7 @@ src/
 
 ### Cards
 
-A `Card` is a Pixi `Container` with an image sprite and a blurred drop-shadow layer. All cards are cut from a single pre-built atlas (`atlas.fr.webp` + `atlas.fr.json`), loaded once in `main.ts` and handed to `CardManager` as frame names + textures. No per-card loading at runtime. Scaling is proportional to a 2560px reference width.
+A `Card` is a Pixi `Container` with an image sprite and a blurred drop-shadow layer. All cards are cut from a single pre-built atlas for the resolved locale (`atlas.<locale>.webp` + `atlas.<locale>.json`), loaded once in `bootstrap.ts` and handed to `CardManager` as frame names + textures. No per-card loading at runtime. Scaling is proportional to a 2560px reference width.
 
 ### Stacks
 
@@ -130,6 +131,10 @@ Each stack can also carry a name. A dedicated button next to the drag handle ope
 ### Toolbar
 
 `TopToolbar` renders directly on the Pixi canvas rather than as HTML: a logo on the left, and undo/redo/help/settings buttons on the right that stay pinned on resize. Hovering a button shows a `CanvasTooltip`, a small reusable rounded label. Keyboard shortcuts (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, Ctrl/Cmd+Y) are wired independently in `initHistoryShortcuts`. The settings button opens a modal (`createSettingsModal`) whose only action is resetting all card positions, gated behind a confirmation step.
+
+### Localization
+
+`src/i18n/locales.ts` is the single source of truth for the app's supported locales; adding one means adding its dictionary, its atlas assets, and an entry there. On startup, `resolveLocale` (`src/i18n/locale-resolution.ts`) picks a locale from `localStorage` if one was saved, otherwise from the browser's language list, falling back to English if none of the browser's languages match a supported locale. The `I18n` singleton (`src/i18n/I18n.ts`) holds the active locale and resolves translation keys against the matching JSON dictionary in `src/i18n/locales/`. The toolbar's globe button (`locale-menu.ts`) lets the user switch locale directly; since the app renders text onto the canvas rather than into the DOM, switching persists the new locale and reloads the page.
 
 ### Reset animation
 

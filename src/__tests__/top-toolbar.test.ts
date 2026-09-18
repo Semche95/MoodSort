@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Container, Texture } from 'pixi.js'
 import { initTopToolbar } from '../features/toolbar/top-toolbar'
 import type { ToolbarHost } from '../types/toolbar.types'
+import { I18n } from '../i18n/I18n'
 
 const { pixi, ui, buttons } = vi.hoisted(() => {
     class Texture {
@@ -255,6 +256,7 @@ function createTextures(): Record<string, Texture> {
         'redo-2': new pixi.Texture() as unknown as Texture,
         'sliders-horizontal': new pixi.Texture() as unknown as Texture,
         'screen-share': new pixi.Texture() as unknown as Texture,
+        globe: new pixi.Texture() as unknown as Texture,
     }
 }
 
@@ -262,32 +264,45 @@ describe('TopToolbar', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         buttons.length = 0
+        I18n.setLocale('fr')
     })
 
-    it('should add the toolbar container to the host stage with logo and five buttons', () => {
+    afterEach(() => {
+        for (const select of document.querySelectorAll('.toolbar-locale-select')) {
+            select.remove()
+        }
+    })
+
+    it('should add the toolbar container to the host stage with logo, six buttons, and a hidden native locale select', () => {
         const host = createHost()
         initTopToolbar(host, vi.fn(), createTextures())
 
         expect(host.stage.children).toHaveLength(1)
-        expect(buttons).toHaveLength(5)
+        expect(buttons).toHaveLength(6)
         expect(buttons.map((button: { label: string }): string => button.label)).toEqual([
             'toolbar-undobutton',
             'toolbar-redobutton',
             'toolbar-helpbutton',
             'toolbar-settingsbutton',
             'toolbar-sharebutton',
+            'toolbar-localebutton',
         ])
+
+        const select = document.querySelector('.toolbar-locale-select') as HTMLSelectElement
+        expect(select).not.toBeNull()
+        expect(Array.from(select.options).map((option: HTMLOptionElement): string => option.value)).toEqual(['fr', 'en'])
     })
 
-    it('should pin undo/redo/help/settings to the right edge on construction, with settings closest to the edge', () => {
+    it('should pin undo/redo/help/settings/locale to the right edge on construction, with settings closest to the edge', () => {
         const host = createHost()
         initTopToolbar(host, vi.fn(), createTextures())
 
-        const [undo, redo, help, settings] = buttons
-        expect(undo.x).toBe(800 - 16 - 24 - 3 * 56)
-        expect(redo.x).toBe(800 - 16 - 24 - 2 * 56)
-        expect(help.x).toBe(800 - 16 - 24 - 56)
+        const [undo, redo, help, settings, , locale] = buttons
         expect(settings.x).toBe(800 - 16 - 24)
+        expect(locale.x).toBe(800 - 16 - 24 - 56)
+        expect(help.x).toBe(800 - 16 - 24 - 2 * 56)
+        expect(redo.x).toBe(800 - 16 - 24 - 3 * 56)
+        expect(undo.x).toBe(800 - 16 - 24 - 4 * 56)
         expect(undo.y).toBe(40)
     })
 
@@ -298,6 +313,35 @@ describe('TopToolbar', () => {
         const [, , , , share] = buttons
         expect(share.x).toBe(400)
         expect(share.y).toBe(40)
+    })
+
+    it('should open the native locale picker when the locale button is pressed', () => {
+        const host = createHost()
+        initTopToolbar(host, vi.fn(), createTextures())
+
+        const localeButton = buttons.find((button: { label: string }): boolean => button.label === 'toolbar-localebutton')!
+        const select = document.querySelector('.toolbar-locale-select') as HTMLSelectElement & { showPicker: () => void }
+        const showPicker = vi.fn()
+        select.showPicker = showPicker
+
+        localeButton.press()
+
+        expect(showPicker).toHaveBeenCalledOnce()
+    })
+
+    it('should switch locale and reload the page when a locale is picked from the native select', () => {
+        const host = createHost()
+        initTopToolbar(host, vi.fn(), createTextures())
+
+        const select = document.querySelector('.toolbar-locale-select') as HTMLSelectElement
+        const reload = vi.fn()
+        Object.defineProperty(window, 'location', { value: { reload }, writable: true })
+
+        select.value = 'en'
+        select.dispatchEvent(new Event('change'))
+
+        expect(I18n.getLocale()).toBe('en')
+        expect(reload).toHaveBeenCalledOnce()
     })
 
     it('should render the mask emoji logo aligned with the MoodSort title', () => {
@@ -406,7 +450,7 @@ describe('TopToolbar', () => {
         host.resize()
 
         const [undo, , , settings, share] = buttons
-        expect(undo.x).toBe(1200 - 16 - 24 - 3 * 56)
+        expect(undo.x).toBe(1200 - 16 - 24 - 4 * 56)
         expect(settings.x).toBe(1200 - 16 - 24)
         expect(share.x).toBe(1200 / 2)
 
@@ -432,7 +476,7 @@ describe('TopToolbar', () => {
         }
         expect(tooltip.visible).toBe(true)
         expect(tooltip.x).toBe(undo.x)
-        expect(tooltip.children[1].text).toBe('Annuler')
+        expect(tooltip.children[1].text).toBe(I18n.t('toolbar.undo'))
     })
 
     it('should hide the tooltip on pointer out, on press, and on resize', () => {
@@ -470,7 +514,7 @@ describe('TopToolbar', () => {
         share.hover()
         const toolbar = host.stage.children[0] as { children: unknown[] }
         const tooltip = toolbar.children[toolbar.children.length - 1] as { children: Array<{ text?: unknown }> }
-        expect(tooltip.children[1].text).toBe('Partage de la disposition non supporté par ce navigateur')
+        expect(tooltip.children[1].text).toBe(I18n.t('toolbar.shareTooltipUnsupported'))
     })
 
     it('should render hidden active and viewer indicator dots overlaid on the share button by default', () => {

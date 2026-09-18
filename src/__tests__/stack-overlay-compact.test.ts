@@ -3,6 +3,7 @@ import type { Application, Container } from 'pixi.js'
 import { StackOverlay } from '../features/stack/stack-overlay/stack-overlay'
 import { computeCompactButtonBox } from '../features/stack/stack'
 import { Card } from '../types/card.types'
+import { I18n } from '../i18n/I18n'
 
 type Handler = (payload: unknown) => void
 
@@ -217,7 +218,7 @@ describe('StackOverlay compact button', () => {
         compactButton.emit('pointerover', { global: point })
 
         expect(tooltipView.visible).toBe(true)
-        expect(tooltipView.children[1].text).toBe('Compacter le tas')
+        expect(tooltipView.children[1].text).toBe(I18n.t('stack.compactTooltip'))
 
         compactButton.emit('pointerout', {})
         expect(tooltipView.visible).toBe(false)

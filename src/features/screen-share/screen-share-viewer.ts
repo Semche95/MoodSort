@@ -4,6 +4,7 @@ import type { ConnectionStatus } from '../../types/screen-share.types'
 import { buildRoomConfig, ROOM_BUSY_ACTION, SCREEN_SHARE_GRACE_TIMEOUT_MS } from './room-config'
 import { isWebRtcSupported } from './compat'
 import { GraceTimeout } from './grace-timeout'
+import { I18n } from '../../i18n/I18n'
 
 // Spectator side of a screen-share session; only receives the host's video stream, never renders Pixi.
 // Stays in the same signaling room across a host disconnect, waiting again for `onPeerStream`
@@ -57,15 +58,13 @@ export class ScreenShareViewer {
 function describeStatus(status: ConnectionStatus): string {
     switch (status) {
         case 'waiting':
-            return 'En attente de la connexion à l\'hôte...'
+            return I18n.t('screenShareViewer.statusWaiting')
         case 'connected':
             return ''
         case 'stopped':
-            return 'Connexion perdue avec l\'hôte. Demandez un nouveau lien de partage.'
+            return I18n.t('screenShareViewer.statusStopped')
     }
 }
-
-const ROOM_BUSY_MESSAGE = 'Ce partage est déjà suivi par quelqu\'un d\'autre. Réessayez plus tard.'
 
 // Bootstraps the read-only spectator page: a fullscreen <video> element plus a status banner.
 export function initScreenShareViewer(roomCode: string, onClose: () => void): void {
@@ -75,7 +74,7 @@ export function initScreenShareViewer(roomCode: string, onClose: () => void): vo
     const closeBtn = document.createElement('button')
     closeBtn.className = 'screen-share-viewer-close'
     closeBtn.textContent = '×'
-    closeBtn.setAttribute('aria-label', 'Fermer le partage et revenir à la disposition des cartes')
+    closeBtn.setAttribute('aria-label', I18n.t('screenShareViewer.closeAriaLabel'))
 
     const video = document.createElement('video')
     video.className = 'screen-share-viewer-video'
@@ -85,7 +84,7 @@ export function initScreenShareViewer(roomCode: string, onClose: () => void): vo
 
     const status = document.createElement('div')
     status.className = 'screen-share-viewer-status screen-share-viewer-status--visible'
-    status.textContent = 'Connexion à l\'hôte...'
+    status.textContent = I18n.t('screenShareViewer.connecting')
 
     container.appendChild(closeBtn)
     container.appendChild(video)
@@ -101,7 +100,7 @@ export function initScreenShareViewer(roomCode: string, onClose: () => void): vo
     })
 
     if (!isWebRtcSupported()) {
-        status.textContent = 'Votre navigateur ne supporte pas le partage de la disposition (WebRTC indisponible).'
+        status.textContent = I18n.t('screenShareViewer.unsupported')
         return
     }
 
@@ -117,7 +116,7 @@ export function initScreenShareViewer(roomCode: string, onClose: () => void): vo
         },
         undefined,
         (): void => {
-            status.textContent = ROOM_BUSY_MESSAGE
+            status.textContent = I18n.t('screenShareViewer.roomBusy')
             status.classList.add('screen-share-viewer-status--visible')
         },
     )

@@ -12,7 +12,7 @@ const LUCIDE_DIR = resolve(
 )
 
 // Toolbar icons, one file per icon. No atlas needed: each is rendered once.
-const ICON_NAMES = ['undo-2', 'redo-2', 'sliders-horizontal', 'screen-share']
+const ICON_NAMES = ['undo-2', 'redo-2', 'sliders-horizontal', 'screen-share', 'globe']
 // Source resolution keeps the icons crisp on retina displays even though they
 // are rendered at ~20-24px in the buttons.
 const ICON_SIZE = 64

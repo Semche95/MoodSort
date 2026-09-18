@@ -17,12 +17,10 @@ import { DRAGGING_OPACITY } from '../../drag/card-drag'
 import { CanvasTooltip } from '../../../shared/ui/canvas-tooltip'
 import { StackNameEditor } from './stack-name-editor'
 import { drawCompactButton, drawNameButton, drawMergeDim, drawMergePlus, drawMergeTargetBorder, drawSingleBox, drawSingleStack } from './stack-overlay-view'
+import { I18n } from '../../../i18n/I18n'
 
-const COMPACT_TOOLTIP_LABEL = 'Compacter le tas'
 const COMPACT_TOOLTIP_GAP = 6
 const NAME_TOOLTIP_GAP = 6
-const NAMED_TOOLTIP_LABEL = 'Renommer le tas'
-const UNNAMED_TOOLTIP_LABEL = 'Nommer le tas'
 const LABEL_FONT_FAMILY = 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif'
 const LABEL_FONT_SIZE = 20
 // Shared with the inline editor's own max width (STACK_NAME_MAX_WIDTH), so a name never
@@ -453,7 +451,7 @@ export class StackOverlay {
         this.compactTooltip.show(
             rect.x + rect.width / 2,
             rect.y + rect.height + COMPACT_TOOLTIP_GAP,
-            COMPACT_TOOLTIP_LABEL,
+            I18n.t('stack.compactTooltip'),
         )
     }
 
@@ -474,7 +472,7 @@ export class StackOverlay {
         this.nameTooltip.show(
             rect.x + rect.width / 2,
             rect.y + rect.height + NAME_TOOLTIP_GAP,
-            hasName ? NAMED_TOOLTIP_LABEL : UNNAMED_TOOLTIP_LABEL,
+            hasName ? I18n.t('stack.nameTooltipNamed') : I18n.t('stack.nameTooltipUnnamed'),
         )
     }
 

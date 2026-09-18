@@ -1,3 +1,5 @@
+import { I18n } from '../../i18n/I18n'
+
 export function createSettingsModal(options: {
     onResetPositions: () => void
 }): HTMLDivElement {
@@ -9,14 +11,14 @@ export function createSettingsModal(options: {
 
     modal.innerHTML = `
         <div class="settings-header">
-            <h1>Réglages</h1>
-            <button class="settings-close">&times;</button>
+            <h1>${I18n.t('settings.title')}</h1>
+            <button class="settings-close" aria-label="${I18n.t('settings.closeAriaLabel')}">&times;</button>
         </div>
         <div class="settings-body">
             <section class="settings-section">
-                <h2>Cartes</h2>
-                <p>Réinitialiser la disposition de toutes les cartes au centre de l'écran.</p>
-                <button class="settings-reset-positions">Réinitialiser les positions</button>
+                <h2>${I18n.t('settings.cardsSection')}</h2>
+                <p>${I18n.t('settings.resetPositionsDescription')}</p>
+                <button class="settings-reset-positions">${I18n.t('settings.resetPositionsButton')}</button>
             </section>
         </div>
     `
@@ -34,7 +36,7 @@ export function createSettingsModal(options: {
 
     const resetBtn = modal.querySelector<HTMLButtonElement>('.settings-reset-positions')!
     resetBtn.addEventListener('click', (): void => {
-        showConfirmation(modal, 'Réinitialiser les positions ?', 'Toutes les cartes reviendront au centre.', (): void => {
+        showConfirmation(modal, I18n.t('settings.confirmResetTitle'), I18n.t('settings.confirmResetMessage'), (): void => {
             options.onResetPositions()
             overlay.remove()
         })
@@ -57,8 +59,8 @@ function showConfirmation(
         <p><strong>${title}</strong></p>
         <p>${message}</p>
         <div class="settings-confirm-actions">
-            <button class="settings-confirm-cancel">Annuler</button>
-            <button class="settings-confirm-ok">Confirmer</button>
+            <button class="settings-confirm-cancel">${I18n.t('settings.confirmCancel')}</button>
+            <button class="settings-confirm-ok">${I18n.t('settings.confirmOk')}</button>
         </div>
     `
 

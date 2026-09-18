@@ -5,6 +5,7 @@ import { ICON_COLOR, ICON_SIZE } from '../../shared/ui/icons'
 
 export const BUTTON_SIZE = 48
 export const LOGO_EMOJI_SIZE = 28
+export const FONT_FAMILY = 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif'
 const ICON_SOURCE_SIZE = 64
 const TITLE_COLOR = 0x3a3a3a
 const DISABLED_ICON_ALPHA = 0.35
@@ -37,7 +38,7 @@ export function createLogo(): Container {
     const emoji = new Text({
         text: '🎭',
         style: {
-            fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
+            fontFamily: FONT_FAMILY,
             fontSize: LOGO_EMOJI_SIZE,
             fill: ICON_COLOR,
         },
@@ -48,7 +49,7 @@ export function createLogo(): Container {
     const title = new Text({
         text: 'MoodSort',
         style: {
-            fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
+            fontFamily: FONT_FAMILY,
             fontSize: 20,
             fontWeight: '700',
             fill: TITLE_COLOR,
@@ -73,6 +74,20 @@ export function setButtonEnabled(button: FancyButton, icon: Container, enabled: 
     }
 }
 
+/** Wires the press/hover/out behavior shared by every toolbar button: run the click handler and hide the tooltip on press, show it on hover, hide it on out. */
+function attachTooltipBehavior(button: FancyButton, tooltip: CanvasTooltip, onClick: () => void, tooltipLabel: string): void {
+    button.accessible = true
+    button.accessibleTitle = tooltipLabel
+    button.onPress.connect((): void => {
+        onClick()
+        tooltip.hide()
+    })
+    button.onHover.connect((): void => {
+        tooltip.show(button.x, button.y + BUTTON_SIZE / 2 + TOOLTIP_GAP, tooltipLabel)
+    })
+    button.onOut.connect((): void => { tooltip.hide() })
+}
+
 export function createButton(tooltip: CanvasTooltip, icon: Container, onClick: () => void, label: string, tooltipLabel: string, iconScale: number = ICON_SIZE / ICON_SOURCE_SIZE): FancyButton {
     const button = new FancyButton({
         defaultView: createCircleView(0xffffff, 0.85),
@@ -88,14 +103,7 @@ export function createButton(tooltip: CanvasTooltip, icon: Container, onClick: (
         },
     })
     button.label = label
-    button.onPress.connect((): void => {
-        onClick()
-        tooltip.hide()
-    })
-    button.onHover.connect((): void => {
-        tooltip.show(button.x, button.y + BUTTON_SIZE / 2 + TOOLTIP_GAP, tooltipLabel)
-    })
-    button.onOut.connect((): void => { tooltip.hide() })
+    attachTooltipBehavior(button, tooltip, onClick, tooltipLabel)
     return button
 }
 
@@ -106,21 +114,35 @@ function createPillView(fill: number, width: number): Graphics {
     return view
 }
 
-// Pill-shaped blue CTA button (icon + "Partager" label), reading as the primary action.
+// Pill-shaped blue CTA button (icon + share label), reading as the primary action.
 // Two dots over its top-right corner: amber when sharing is active, green once a viewer is connected.
 export function setShareIndicators(activeIndicator: Graphics, viewerIndicator: Graphics, status: 'inactive' | 'waiting' | 'connected' | 'stopped'): void {
     activeIndicator.visible = status === 'waiting' || status === 'connected'
     viewerIndicator.visible = status === 'connected'
 }
 
-export function createShareButton(tooltip: CanvasTooltip, icon: Sprite, onClick: () => void, tooltipLabel: string): { button: FancyButton; content: Container; activeIndicator: Graphics; viewerIndicator: Graphics } {
+/** A small dot with a soft shadow, used to flag share-button status (active / has a viewer) at a given x offset from the pill's center-top. */
+function createShareIndicatorDot(label: string, color: number, x: number): Graphics {
+    const dot = new Graphics()
+    dot.label = label
+    dot.circle(SHARE_INDICATOR_SHADOW_OFFSET, SHARE_INDICATOR_SHADOW_OFFSET, SHARE_INDICATOR_RADIUS)
+    dot.fill({ color: SHARE_INDICATOR_SHADOW_COLOR, alpha: SHARE_INDICATOR_SHADOW_ALPHA })
+    dot.circle(0, 0, SHARE_INDICATOR_RADIUS)
+    dot.fill({ color })
+    dot.stroke({ width: SHARE_INDICATOR_STROKE_WIDTH, color: SHARE_INDICATOR_STROKE_COLOR })
+    dot.position.set(x, -BUTTON_SIZE / 2 + SHARE_INDICATOR_RADIUS + 2)
+    dot.visible = false
+    return dot
+}
+
+export function createShareButton(tooltip: CanvasTooltip, icon: Sprite, onClick: () => void, tooltipLabel: string, buttonLabel: string): { button: FancyButton; content: Container; activeIndicator: Graphics; viewerIndicator: Graphics } {
     icon.scale.set(ICON_SIZE / ICON_SOURCE_SIZE)
     icon.tint = SHARE_LABEL_COLOR
 
     const label = new Text({
-        text: 'Partager',
+        text: buttonLabel,
         style: {
-            fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
+            fontFamily: FONT_FAMILY,
             fontSize: 15,
             fontWeight: '600',
             fill: SHARE_LABEL_COLOR,
@@ -156,37 +178,14 @@ export function createShareButton(tooltip: CanvasTooltip, icon: Sprite, onClick:
         },
     })
     button.label = 'toolbar-sharebutton'
-    button.onPress.connect((): void => {
-        onClick()
-        tooltip.hide()
-    })
-    button.onHover.connect((): void => {
-        tooltip.show(button.x, button.y + BUTTON_SIZE / 2 + TOOLTIP_GAP, tooltipLabel)
-    })
-    button.onOut.connect((): void => { tooltip.hide() })
+    attachTooltipBehavior(button, tooltip, onClick, tooltipLabel)
 
     // Added to `innerView` (not the button's root container) since that's where FancyButton
     // shifts the actual visuals to; adding indicators to the root would offset them off the pill.
-    const viewerIndicator = new Graphics()
-    viewerIndicator.label = 'toolbar-share-viewer-indicator'
-    viewerIndicator.circle(SHARE_INDICATOR_SHADOW_OFFSET, SHARE_INDICATOR_SHADOW_OFFSET, SHARE_INDICATOR_RADIUS)
-    viewerIndicator.fill({ color: SHARE_INDICATOR_SHADOW_COLOR, alpha: SHARE_INDICATOR_SHADOW_ALPHA })
-    viewerIndicator.circle(0, 0, SHARE_INDICATOR_RADIUS)
-    viewerIndicator.fill({ color: SHARE_VIEWER_INDICATOR_COLOR })
-    viewerIndicator.stroke({ width: SHARE_INDICATOR_STROKE_WIDTH, color: SHARE_INDICATOR_STROKE_COLOR })
-    viewerIndicator.position.set(buttonWidth / 2 - SHARE_INDICATOR_RADIUS - 2, -BUTTON_SIZE / 2 + SHARE_INDICATOR_RADIUS + 2)
-    viewerIndicator.visible = false
+    const viewerIndicator = createShareIndicatorDot('toolbar-share-viewer-indicator', SHARE_VIEWER_INDICATOR_COLOR, buttonWidth / 2 - SHARE_INDICATOR_RADIUS - 2)
     button.innerView.addChild(viewerIndicator)
 
-    const activeIndicator = new Graphics()
-    activeIndicator.label = 'toolbar-share-active-indicator'
-    activeIndicator.circle(SHARE_INDICATOR_SHADOW_OFFSET, SHARE_INDICATOR_SHADOW_OFFSET, SHARE_INDICATOR_RADIUS)
-    activeIndicator.fill({ color: SHARE_INDICATOR_SHADOW_COLOR, alpha: SHARE_INDICATOR_SHADOW_ALPHA })
-    activeIndicator.circle(0, 0, SHARE_INDICATOR_RADIUS)
-    activeIndicator.fill({ color: SHARE_ACTIVE_INDICATOR_COLOR })
-    activeIndicator.stroke({ width: SHARE_INDICATOR_STROKE_WIDTH, color: SHARE_INDICATOR_STROKE_COLOR })
-    activeIndicator.position.set(buttonWidth / 2 - SHARE_INDICATOR_RADIUS * 3 - SHARE_INDICATOR_GAP - 2, -BUTTON_SIZE / 2 + SHARE_INDICATOR_RADIUS + 2)
-    activeIndicator.visible = false
+    const activeIndicator = createShareIndicatorDot('toolbar-share-active-indicator', SHARE_ACTIVE_INDICATOR_COLOR, buttonWidth / 2 - SHARE_INDICATOR_RADIUS * 3 - SHARE_INDICATOR_GAP - 2)
     button.innerView.addChild(activeIndicator)
 
     return { button, content, activeIndicator, viewerIndicator }

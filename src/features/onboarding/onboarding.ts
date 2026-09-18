@@ -1,5 +1,6 @@
 import { CardStateService } from '../card/card-state-service'
 import { POSITIONS_KEY, ORDER_KEY, ONBOARDING_KEY, STACK_NAMES_KEY } from '../../types/card-state.types'
+import { I18n } from '../../i18n/I18n'
 
 export function isOnboardingDismissed(store: CardStateService): boolean {
     return store.load(ONBOARDING_KEY)
@@ -32,29 +33,26 @@ export function createOnboarding(onDismiss: () => void): HTMLDivElement {
 
     overlay.innerHTML = `
         <div class="onboarding-card">
-            <h1>Bienvenue sur MoodSort</h1>
+            <h1>${I18n.t('onboarding.title')}</h1>
             <p>
-                MoodSort est un support visuel pour vous aider à explorer vos émotions.
+                ${I18n.t('onboarding.intro')}
             </p>
-            <h2>Comment ça marche&nbsp;?</h2>
+            <h2>${I18n.t('onboarding.howItWorksTitle')}</h2>
             <ul>
-                <li>Chaque carte représente une émotion.</li>
-                <li>Déplacez les cartes pour représenter ce qui vous correspond aujourd'hui.</li>
-                <li>Superposez des cartes pour former un tas, nommez-le et déplacez les cartes ensemble.</li>
-                <li>Annulez ou refaites vos dernières actions, ou réinitialisez les positions.</li>
-                <li>Votre disposition est sauvegardée automatiquement.</li>
-                <li>Partagez la disposition de vos cartes avec quelqu'un.</li>
+                <li>${I18n.t('onboarding.step1')}</li>
+                <li>${I18n.t('onboarding.step2')}</li>
+                <li>${I18n.t('onboarding.step3')}</li>
+                <li>${I18n.t('onboarding.step4')}</li>
+                <li>${I18n.t('onboarding.step5')}</li>
+                <li>${I18n.t('onboarding.step6')}</li>
             </ul>
             <p>
-                Il n'y a pas de bonne ou de mauvaise façon de placer les cartes.
-                Regroupez-les de la manière qui vous aide à explorer vos émotions.
+                ${I18n.t('onboarding.outro')}
             </p>
             <p>
-                🔒 <strong>Vos données restent privées :</strong> tout ce que vous faites dans MoodSort
-                reste sur votre appareil et rien n'est envoyé ni stocké ailleurs, sauf si vous activez le
-                partage de la disposition : la personne qui vous rejoint voit alors la disposition de vos cartes.
+                ${I18n.t('onboarding.privacy')}
             </p>
-            <button class="onboarding-dismiss">Commencer</button>
+            <button class="onboarding-dismiss">${I18n.t('onboarding.dismissButton')}</button>
         </div>
     `
 

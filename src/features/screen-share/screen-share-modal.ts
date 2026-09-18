@@ -2,17 +2,18 @@ import { buildRoomUrl } from './screen-share-url'
 import { isScreenShareHostSupported } from './compat'
 import { activateSharing, getSharingState, regenerateSharingCode, stopSharing, subscribeToSharing } from './screen-share-session'
 import type { SharingState, SharingStatus } from '../../types/screen-share.types'
+import { I18n } from '../../i18n/I18n'
 
 function describeStatus(status: SharingStatus): string {
     switch (status) {
         case 'inactive':
             return ''
         case 'waiting':
-            return 'En attente d\'un spectateur...'
+            return I18n.t('screenShare.statusWaiting')
         case 'connected':
-            return 'Spectateur connecté.'
+            return I18n.t('screenShare.statusConnected')
         case 'stopped':
-            return 'Partage arrêté : personne ne s\'est connecté à temps. Cliquez sur "Activer le partage" pour réessayer.'
+            return I18n.t('screenShare.statusStopped')
     }
 }
 
@@ -25,21 +26,21 @@ export function createScreenShareModal(canvas: HTMLCanvasElement): HTMLDivElemen
 
     modal.innerHTML = `
         <div class="screen-share-header">
-            <h1>Partager la disposition</h1>
-            <button class="screen-share-close">&times;</button>
+            <h1>${I18n.t('screenShare.title')}</h1>
+            <button class="screen-share-close" aria-label="${I18n.t('screenShare.closeAriaLabel')}">&times;</button>
         </div>
         <div class="screen-share-body">
-            <p>Activez le partage pour laisser une autre personne suivre la disposition de vos cartes en direct, en lecture seule.</p>
-            <button class="screen-share-activate">Activer le partage</button>
-            <button class="screen-share-stop" hidden>Arrêter le partage</button>
+            <p>${I18n.t('screenShare.description')}</p>
+            <button class="screen-share-activate">${I18n.t('screenShare.activateButton')}</button>
+            <button class="screen-share-stop" hidden>${I18n.t('screenShare.stopButton')}</button>
             <div class="screen-share-live">
-                <p>Partagez ce lien avec la personne à inviter :</p>
+                <p>${I18n.t('screenShare.shareLinkPrompt')}</p>
                 <div class="screen-share-url-row">
                     <input class="screen-share-url" type="text" readonly>
-                    <button class="screen-share-copy">Copier le lien</button>
+                    <button class="screen-share-copy">${I18n.t('screenShare.copyButton')}</button>
                 </div>
                 <p class="screen-share-copy-feedback"></p>
-                <button class="screen-share-regenerate">Générer un nouveau code</button>
+                <button class="screen-share-regenerate">${I18n.t('screenShare.regenerateButton')}</button>
                 <p class="screen-share-status"></p>
             </div>
         </div>
@@ -83,21 +84,21 @@ export function createScreenShareModal(canvas: HTMLCanvasElement): HTMLDivElemen
     copyBtn.addEventListener('click', (): void => {
         if (!navigator.clipboard) {
             copyFeedback.classList.add('screen-share-copy-feedback--error')
-            copyFeedback.textContent = 'La copie automatique n\'est pas disponible dans ce navigateur. Copiez le lien manuellement.'
+            copyFeedback.textContent = I18n.t('screenShare.copyUnsupported')
             return
         }
         navigator.clipboard.writeText(urlInput.value).then((): void => {
             copyFeedback.classList.remove('screen-share-copy-feedback--error')
-            copyFeedback.textContent = 'Lien copié dans le presse-papier.'
+            copyFeedback.textContent = I18n.t('screenShare.copySuccess')
         }).catch((): void => {
             copyFeedback.classList.add('screen-share-copy-feedback--error')
-            copyFeedback.textContent = 'Échec de la copie du lien.'
+            copyFeedback.textContent = I18n.t('screenShare.copyError')
         })
     })
 
     if (!isScreenShareHostSupported()) {
         activateBtn.disabled = true
-        statusEl.textContent = 'Votre navigateur ne supporte pas le partage de la disposition.'
+        statusEl.textContent = I18n.t('screenShare.unsupported')
     } else {
         unsubscribe = subscribeToSharing(canvas, render)
         render(getSharingState(canvas))

@@ -1,0 +1,87 @@
+{
+    "toolbar": {
+        "undo": "Annuler",
+        "redo": "Rétablir",
+        "help": "Aide",
+        "settings": "Réglages",
+        "share": "Partager",
+        "shareTooltip": "Partager la disposition",
+        "shareTooltipUnsupported": "Partage de la disposition non supporté par ce navigateur",
+        "languageTooltip": "Choisir la langue"
+    },
+    "stack": {
+        "compactTooltip": "Compacter le tas",
+        "nameTooltipNamed": "Renommer le tas",
+        "nameTooltipUnnamed": "Nommer le tas"
+    },
+    "onboarding": {
+        "title": "Bienvenue sur MoodSort",
+        "intro": "MoodSort est un support visuel pour vous aider à explorer vos émotions.",
+        "howItWorksTitle": "Comment ça marche&nbsp;?",
+        "step1": "Chaque carte représente une émotion.",
+        "step2": "Déplacez les cartes pour représenter ce qui vous correspond aujourd'hui.",
+        "step3": "Superposez des cartes pour former un tas, nommez-le et déplacez les cartes ensemble.",
+        "step4": "Annulez ou refaites vos dernières actions, ou réinitialisez les positions.",
+        "step5": "Votre disposition est sauvegardée automatiquement.",
+        "step6": "Partagez la disposition de vos cartes avec quelqu'un.",
+        "outro": "Il n'y a pas de bonne ou de mauvaise façon de placer les cartes. Regroupez-les de la manière qui vous aide à explorer vos émotions.",
+        "privacy": "🔒 <strong>Vos données restent privées :</strong> tout ce que vous faites dans MoodSort reste sur votre appareil et rien n'est envoyé ni stocké ailleurs, sauf si vous activez le partage de la disposition : la personne qui vous rejoint voit alors la disposition de vos cartes.",
+        "dismissButton": "Commencer"
+    },
+    "settings": {
+        "title": "Réglages",
+        "closeAriaLabel": "Fermer les réglages",
+        "cardsSection": "Cartes",
+        "resetPositionsDescription": "Réinitialiser la disposition de toutes les cartes au centre de l'écran.",
+        "resetPositionsButton": "Réinitialiser les positions",
+        "confirmResetTitle": "Réinitialiser les positions ?",
+        "confirmResetMessage": "Toutes les cartes reviendront au centre.",
+        "confirmCancel": "Annuler",
+        "confirmOk": "Confirmer"
+    },
+    "legal": {
+        "title": "Mentions légales",
+        "closeAriaLabel": "Fermer les mentions légales",
+        "lastUpdated": "Dernière mise à jour : 15 juillet 2026",
+        "editionTitle": "Édition du site",
+        "editionText1": "Le présent site est un projet personnel, à but non commercial, édité par un particulier.",
+        "editionText2": "Conformément à l'article 6-III de la loi n° 2004-575 du 21 juin 2004 pour la Confiance dans l'Économie Numérique (LCEN), l'éditeur, personne physique agissant à titre non professionnel, a choisi de ne pas rendre publiques ses coordonnées personnelles. Celles-ci ont été communiquées à l'hébergeur du site, conformément à la loi.",
+        "hostingTitle": "Hébergement",
+        "contactTitle": "Contact",
+        "contactText": "Pour toute question, remarque ou signalement concernant le site, vous pouvez contacter l'éditeur à l'adresse suivante :<br><strong>contact@moodsort.fr</strong>",
+        "privacyTitle": "Protection des données et confidentialité",
+        "privacyText1": "MoodSort ne collecte, ne transmet et ne stocke aucune donnée sur un serveur distant. Toutes les informations que vous créez dans l'application (positions des cartes, historique des actions) restent enregistrées directement sur votre appareil, dans votre navigateur. Rien n'est envoyé à l'éditeur, à l'hébergeur ou à un tiers.",
+        "privacyText2": "Le site n'utilise aucun cookie de suivi, aucun outil d'analyse d'audience et aucun traceur publicitaire.",
+        "liabilityTitle": "Limitation de responsabilité",
+        "liabilityText1": "MoodSort est un outil expérimental fourni « en l'état », sans garantie d'aucune sorte, explicite ou implicite. Ce n'est pas un dispositif médical et il ne remplace en aucun cas un avis, un diagnostic ou un suivi par un professionnel de santé qualifié.",
+        "liabilityText2": "L'auteur ne saurait être tenu responsable d'une utilisation clinique ou thérapeutique de l'outil, ni d'une éventuelle perte des données enregistrées localement dans le navigateur de l'utilisateur (par exemple en cas de suppression du stockage local, de changement d'appareil ou de navigateur)."
+    },
+    "footer": {
+        "legalLink": "Mentions légales"
+    },
+    "screenShare": {
+        "title": "Partager la disposition",
+        "closeAriaLabel": "Fermer le partage",
+        "description": "Activez le partage pour laisser une autre personne suivre la disposition de vos cartes en direct, en lecture seule.",
+        "activateButton": "Activer le partage",
+        "stopButton": "Arrêter le partage",
+        "shareLinkPrompt": "Partagez ce lien avec la personne à inviter :",
+        "copyButton": "Copier le lien",
+        "regenerateButton": "Générer un nouveau code",
+        "copyUnsupported": "La copie automatique n'est pas disponible dans ce navigateur. Copiez le lien manuellement.",
+        "copySuccess": "Lien copié dans le presse-papier.",
+        "copyError": "Échec de la copie du lien.",
+        "unsupported": "Votre navigateur ne supporte pas le partage de la disposition.",
+        "statusWaiting": "En attente d'un spectateur...",
+        "statusConnected": "Spectateur connecté.",
+        "statusStopped": "Partage arrêté : personne ne s'est connecté à temps. Cliquez sur \"Activer le partage\" pour réessayer."
+    },
+    "screenShareViewer": {
+        "closeAriaLabel": "Fermer le partage et revenir à la disposition des cartes",
+        "connecting": "Connexion à l'hôte...",
+        "unsupported": "Votre navigateur ne supporte pas le partage de la disposition (WebRTC indisponible).",
+        "statusWaiting": "En attente de la connexion à l'hôte...",
+        "statusStopped": "Connexion perdue avec l'hôte. Demandez un nouveau lien de partage.",
+        "roomBusy": "Ce partage est déjà suivi par quelqu'un d'autre. Réessayez plus tard."
+    }
+}
