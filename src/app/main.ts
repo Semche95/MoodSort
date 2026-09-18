@@ -11,8 +11,8 @@ import { createLoadingOverlay } from '../shared/ui/loading-overlay'
 import { CardStateService } from '../features/card/card-state-service'
 import { getRoomCodeFromHash } from '../features/screen-share/screen-share-url'
 import { initScreenShareViewer } from '../features/screen-share/screen-share-viewer'
-import atlasData from '../assets/atlas.json'
-import atlasImageUrl from '../assets/atlas.webp?url'
+import atlasData from '../assets/atlas.fr.json'
+import atlasImageUrl from '../assets/atlas.fr.webp?url'
 
 async function bootApp(): Promise<void> {
     const overlay = createLoadingOverlay()

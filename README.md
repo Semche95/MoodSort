@@ -71,7 +71,7 @@ See the comments at the top of `deploy.yml` for the one-time bootstrap step need
 
 ## Scripts
 
-`pnpm dev` and `pnpm build` regenerate two things before starting: the card spritesheet atlas (`src/assets/atlas.webp` + `atlas.json`, built from `src/cards/`) and the app icons (`src/assets/icons/`, rasterized from `lucide-static`). Both outputs are git-ignored.
+`pnpm dev` and `pnpm build` regenerate two things before starting: the card spritesheet atlas (`src/assets/atlas.fr.webp` + `atlas.fr.json`, built from `src/cards/`, plus an `atlas.en.*` pair with English labels that isn't loaded by the app) and the app icons (`src/assets/icons/`, rasterized from `lucide-static`). Both outputs are git-ignored.
 
 | Command | Description |
 |---|---|
@@ -105,7 +105,7 @@ src/
 
 ### Cards
 
-A `Card` is a Pixi `Container` with an image sprite and a blurred drop-shadow layer. All cards are cut from a single pre-built atlas (`atlas.webp` + `atlas.json`), loaded once in `main.ts` and handed to `CardManager` as frame names + textures. No per-card loading at runtime. Scaling is proportional to a 2560px reference width.
+A `Card` is a Pixi `Container` with an image sprite and a blurred drop-shadow layer. All cards are cut from a single pre-built atlas (`atlas.fr.webp` + `atlas.fr.json`), loaded once in `main.ts` and handed to `CardManager` as frame names + textures. No per-card loading at runtime. Scaling is proportional to a 2560px reference width.
 
 ### Stacks
 

@@ -39,6 +39,7 @@ coverage
 !.vscode/extensions.json
 !.vscode/settings.json
 .claude
+.serena
 .idea
 .project
 .classpath
@@ -60,11 +61,10 @@ Thumbs.db
 *.sln
 *.sw?
 
-# Generated atlas
-src/assets/atlas.webp
-src/assets/atlas.json
-
-# Generated toolbar icons (keep the folder tracked via .gitkeep)
+# Generated assets (keep the folders tracked via .gitkeep)
+src/assets/*
+!src/assets/.gitkeep
+!src/assets/icons
 src/assets/icons/*
 !src/assets/icons/.gitkeep
 
