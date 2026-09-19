@@ -30,8 +30,8 @@ describe('resolveLocale', () => {
     })
 
     it('falls back to English for an unsupported browser language', () => {
-        Object.defineProperty(navigator, 'language', { value: 'es-ES', configurable: true })
-        Object.defineProperty(navigator, 'languages', { value: ['es-ES'], configurable: true })
+        Object.defineProperty(navigator, 'language', { value: 'ja-JP', configurable: true })
+        Object.defineProperty(navigator, 'languages', { value: ['ja-JP'], configurable: true })
 
         expect(resolveLocale()).toBe('en')
     })

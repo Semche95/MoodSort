@@ -19,4 +19,5 @@ export const AVAILABLE_LOCALES: LocaleOption[] = [
     { code: 'de', nativeName: 'Deutsch' },
     { code: 'nl', nativeName: 'Nederlands' },
     { code: 'eo', nativeName: 'Esperanto' },
+    { code: 'es', nativeName: 'Español' },
 ]
