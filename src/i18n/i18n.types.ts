@@ -1,6 +1,6 @@
 import fr from './locales/fr.json'
 
-export type Locale = 'fr' | 'en' | 'de' | 'nl'
+export type Locale = 'fr' | 'en' | 'de' | 'nl' | 'eo'
 
 /**
  * Recursively flattens a nested translation dictionary's shape into a union
