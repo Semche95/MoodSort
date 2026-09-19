@@ -6,7 +6,7 @@
 
 A visual emotion exploration tool. Arrange emotion cards on a canvas to identify and express what you're feeling.
 
-The interface is available in French, English, German, and Dutch, auto-detected from the browser on first launch and switchable from the toolbar's globe button (more languages may be added later).
+The interface is available in French, English, German, Dutch, Esperanto, and Spanish, auto-detected from the browser on first launch and switchable from the toolbar's globe button (more languages may be added later).
 
 ## Features
 
@@ -72,7 +72,7 @@ See the comments at the top of `deploy.yml` for the one-time bootstrap step need
 
 ## Scripts
 
-`pnpm dev` and `pnpm build` regenerate two things before starting: the card spritesheet atlas (one `atlas.<locale>.webp` + `atlas.<locale>.json` pair per language in `LANGUAGES`, in `scripts/generate-atlas.mjs`, built from `src/cards/`) and the app icons (`src/assets/icons/`, rasterized from `lucide-static`). Both outputs are git-ignored.
+`pnpm dev` and `pnpm build` regenerate two things before starting: the card spritesheet atlas (one `atlas.<locale>.webp` + `atlas.<locale>.json` pair per language in `LANGUAGES`, in `scripts/generate-atlas.mjs`, built from `src/cards/`) and the app icons (`src/assets/icons/`, rasterized from `lucide-static`). Both outputs are git-ignored. Atlas generation is cached per locale (keyed on the source card images and labels), so a rebuild only regenerates the locales whose inputs actually changed.
 
 | Command | Description |
 |---|---|
