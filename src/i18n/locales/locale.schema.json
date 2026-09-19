@@ -1,0 +1,712 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "MoodSort locale dictionary",
+    "description": "Structure every locale dictionary in src/i18n/locales must follow. fr.json is the reference shape: every key here must exist, with a string value, in every locale file.",
+    "type": "object",
+    "properties": {
+        "toolbar": {
+            "type": "object",
+            "properties": {
+                "undo": {
+                    "type": "string"
+                },
+                "redo": {
+                    "type": "string"
+                },
+                "help": {
+                    "type": "string"
+                },
+                "settings": {
+                    "type": "string"
+                },
+                "share": {
+                    "type": "string"
+                },
+                "shareTooltip": {
+                    "type": "string"
+                },
+                "shareTooltipUnsupported": {
+                    "type": "string"
+                },
+                "languageTooltip": {
+                    "type": "string"
+                },
+                "languageAriaLabel": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "undo",
+                "redo",
+                "help",
+                "settings",
+                "share",
+                "shareTooltip",
+                "shareTooltipUnsupported",
+                "languageTooltip",
+                "languageAriaLabel"
+            ],
+            "additionalProperties": false
+        },
+        "stack": {
+            "type": "object",
+            "properties": {
+                "compactTooltip": {
+                    "type": "string"
+                },
+                "nameTooltipNamed": {
+                    "type": "string"
+                },
+                "nameTooltipUnnamed": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "compactTooltip",
+                "nameTooltipNamed",
+                "nameTooltipUnnamed"
+            ],
+            "additionalProperties": false
+        },
+        "onboarding": {
+            "type": "object",
+            "properties": {
+                "title": {
+                    "type": "string"
+                },
+                "intro": {
+                    "type": "string"
+                },
+                "howItWorksTitle": {
+                    "type": "string"
+                },
+                "step1": {
+                    "type": "string"
+                },
+                "step2": {
+                    "type": "string"
+                },
+                "step3": {
+                    "type": "string"
+                },
+                "step4": {
+                    "type": "string"
+                },
+                "step5": {
+                    "type": "string"
+                },
+                "step6": {
+                    "type": "string"
+                },
+                "outro": {
+                    "type": "string"
+                },
+                "privacy": {
+                    "type": "string"
+                },
+                "dismissButton": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "title",
+                "intro",
+                "howItWorksTitle",
+                "step1",
+                "step2",
+                "step3",
+                "step4",
+                "step5",
+                "step6",
+                "outro",
+                "privacy",
+                "dismissButton"
+            ],
+            "additionalProperties": false
+        },
+        "settings": {
+            "type": "object",
+            "properties": {
+                "title": {
+                    "type": "string"
+                },
+                "closeAriaLabel": {
+                    "type": "string"
+                },
+                "cardsSection": {
+                    "type": "string"
+                },
+                "resetPositionsDescription": {
+                    "type": "string"
+                },
+                "resetPositionsButton": {
+                    "type": "string"
+                },
+                "confirmResetTitle": {
+                    "type": "string"
+                },
+                "confirmResetMessage": {
+                    "type": "string"
+                },
+                "confirmCancel": {
+                    "type": "string"
+                },
+                "confirmOk": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "title",
+                "closeAriaLabel",
+                "cardsSection",
+                "resetPositionsDescription",
+                "resetPositionsButton",
+                "confirmResetTitle",
+                "confirmResetMessage",
+                "confirmCancel",
+                "confirmOk"
+            ],
+            "additionalProperties": false
+        },
+        "legal": {
+            "type": "object",
+            "properties": {
+                "title": {
+                    "type": "string"
+                },
+                "closeAriaLabel": {
+                    "type": "string"
+                },
+                "lastUpdated": {
+                    "type": "string"
+                },
+                "editionTitle": {
+                    "type": "string"
+                },
+                "editionText1": {
+                    "type": "string"
+                },
+                "editionText2": {
+                    "type": "string"
+                },
+                "hostingTitle": {
+                    "type": "string"
+                },
+                "contactTitle": {
+                    "type": "string"
+                },
+                "contactText": {
+                    "type": "string"
+                },
+                "privacyTitle": {
+                    "type": "string"
+                },
+                "privacyText1": {
+                    "type": "string"
+                },
+                "privacyText2": {
+                    "type": "string"
+                },
+                "liabilityTitle": {
+                    "type": "string"
+                },
+                "liabilityText1": {
+                    "type": "string"
+                },
+                "liabilityText2": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "title",
+                "closeAriaLabel",
+                "lastUpdated",
+                "editionTitle",
+                "editionText1",
+                "editionText2",
+                "hostingTitle",
+                "contactTitle",
+                "contactText",
+                "privacyTitle",
+                "privacyText1",
+                "privacyText2",
+                "liabilityTitle",
+                "liabilityText1",
+                "liabilityText2"
+            ],
+            "additionalProperties": false
+        },
+        "footer": {
+            "type": "object",
+            "properties": {
+                "legalLink": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "legalLink"
+            ],
+            "additionalProperties": false
+        },
+        "screenShare": {
+            "type": "object",
+            "properties": {
+                "title": {
+                    "type": "string"
+                },
+                "closeAriaLabel": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "activateButton": {
+                    "type": "string"
+                },
+                "stopButton": {
+                    "type": "string"
+                },
+                "shareLinkPrompt": {
+                    "type": "string"
+                },
+                "copyButton": {
+                    "type": "string"
+                },
+                "regenerateButton": {
+                    "type": "string"
+                },
+                "copyUnsupported": {
+                    "type": "string"
+                },
+                "copySuccess": {
+                    "type": "string"
+                },
+                "copyError": {
+                    "type": "string"
+                },
+                "unsupported": {
+                    "type": "string"
+                },
+                "statusWaiting": {
+                    "type": "string"
+                },
+                "statusConnected": {
+                    "type": "string"
+                },
+                "statusStopped": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "title",
+                "closeAriaLabel",
+                "description",
+                "activateButton",
+                "stopButton",
+                "shareLinkPrompt",
+                "copyButton",
+                "regenerateButton",
+                "copyUnsupported",
+                "copySuccess",
+                "copyError",
+                "unsupported",
+                "statusWaiting",
+                "statusConnected",
+                "statusStopped"
+            ],
+            "additionalProperties": false
+        },
+        "screenShareViewer": {
+            "type": "object",
+            "properties": {
+                "closeAriaLabel": {
+                    "type": "string"
+                },
+                "connecting": {
+                    "type": "string"
+                },
+                "unsupported": {
+                    "type": "string"
+                },
+                "statusWaiting": {
+                    "type": "string"
+                },
+                "statusStopped": {
+                    "type": "string"
+                },
+                "roomBusy": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "closeAriaLabel",
+                "connecting",
+                "unsupported",
+                "statusWaiting",
+                "statusStopped",
+                "roomBusy"
+            ],
+            "additionalProperties": false
+        },
+        "cards": {
+            "type": "object",
+            "properties": {
+                "abandonment": {
+                    "type": "string"
+                },
+                "acceptance": {
+                    "type": "string"
+                },
+                "hostility": {
+                    "type": "string"
+                },
+                "ambivalence": {
+                    "type": "string"
+                },
+                "love": {
+                    "type": "string"
+                },
+                "anguish": {
+                    "type": "string"
+                },
+                "anxiety": {
+                    "type": "string"
+                },
+                "belonging": {
+                    "type": "string"
+                },
+                "attraction": {
+                    "type": "string"
+                },
+                "kindness": {
+                    "type": "string"
+                },
+                "calm": {
+                    "type": "string"
+                },
+                "sorrow": {
+                    "type": "string"
+                },
+                "anger": {
+                    "type": "string"
+                },
+                "compassion": {
+                    "type": "string"
+                },
+                "concentration": {
+                    "type": "string"
+                },
+                "confidence": {
+                    "type": "string"
+                },
+                "confusion": {
+                    "type": "string"
+                },
+                "courage": {
+                    "type": "string"
+                },
+                "guilt": {
+                    "type": "string"
+                },
+                "curiosity": {
+                    "type": "string"
+                },
+                "disconnection": {
+                    "type": "string"
+                },
+                "disappointment": {
+                    "type": "string"
+                },
+                "discouragement": {
+                    "type": "string"
+                },
+                "disgust": {
+                    "type": "string"
+                },
+                "despair": {
+                    "type": "string"
+                },
+                "desire": {
+                    "type": "string"
+                },
+                "destabilization": {
+                    "type": "string"
+                },
+                "detachment": {
+                    "type": "string"
+                },
+                "determination": {
+                    "type": "string"
+                },
+                "devaluation": {
+                    "type": "string"
+                },
+                "doubt": {
+                    "type": "string"
+                },
+                "embarrassment": {
+                    "type": "string"
+                },
+                "wonder": {
+                    "type": "string"
+                },
+                "enthusiasm": {
+                    "type": "string"
+                },
+                "craving": {
+                    "type": "string"
+                },
+                "exhaustion": {
+                    "type": "string"
+                },
+                "hope": {
+                    "type": "string"
+                },
+                "exaltation": {
+                    "type": "string"
+                },
+                "tiredness": {
+                    "type": "string"
+                },
+                "pride": {
+                    "type": "string"
+                },
+                "vagueness": {
+                    "type": "string"
+                },
+                "fragility": {
+                    "type": "string"
+                },
+                "frustration": {
+                    "type": "string"
+                },
+                "gratitude": {
+                    "type": "string"
+                },
+                "shame": {
+                    "type": "string"
+                },
+                "humiliation": {
+                    "type": "string"
+                },
+                "impatience": {
+                    "type": "string"
+                },
+                "indecision": {
+                    "type": "string"
+                },
+                "worry": {
+                    "type": "string"
+                },
+                "dissatisfaction": {
+                    "type": "string"
+                },
+                "insecurity": {
+                    "type": "string"
+                },
+                "inspiration": {
+                    "type": "string"
+                },
+                "jealousy": {
+                    "type": "string"
+                },
+                "joy": {
+                    "type": "string"
+                },
+                "weariness": {
+                    "type": "string"
+                },
+                "distrust": {
+                    "type": "string"
+                },
+                "melancholy": {
+                    "type": "string"
+                },
+                "motivation": {
+                    "type": "string"
+                },
+                "nervousness": {
+                    "type": "string"
+                },
+                "passion": {
+                    "type": "string"
+                },
+                "fear": {
+                    "type": "string"
+                },
+                "pleasure": {
+                    "type": "string"
+                },
+                "pressure": {
+                    "type": "string"
+                },
+                "rage": {
+                    "type": "string"
+                },
+                "comfort": {
+                    "type": "string"
+                },
+                "regret": {
+                    "type": "string"
+                },
+                "rejection": {
+                    "type": "string"
+                },
+                "remorse": {
+                    "type": "string"
+                },
+                "resignation": {
+                    "type": "string"
+                },
+                "resilience": {
+                    "type": "string"
+                },
+                "restraint": {
+                    "type": "string"
+                },
+                "satisfaction": {
+                    "type": "string"
+                },
+                "safety": {
+                    "type": "string"
+                },
+                "serenity": {
+                    "type": "string"
+                },
+                "loneliness": {
+                    "type": "string"
+                },
+                "suffering": {
+                    "type": "string"
+                },
+                "relief": {
+                    "type": "string"
+                },
+                "surprise": {
+                    "type": "string"
+                },
+                "tenderness": {
+                    "type": "string"
+                },
+                "terror": {
+                    "type": "string"
+                },
+                "sadness": {
+                    "type": "string"
+                },
+                "vexation": {
+                    "type": "string"
+                },
+                "emptiness": {
+                    "type": "string"
+                },
+                "vitality": {
+                    "type": "string"
+                },
+                "vulnerability": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "abandonment",
+                "acceptance",
+                "hostility",
+                "ambivalence",
+                "love",
+                "anguish",
+                "anxiety",
+                "belonging",
+                "attraction",
+                "kindness",
+                "calm",
+                "sorrow",
+                "anger",
+                "compassion",
+                "concentration",
+                "confidence",
+                "confusion",
+                "courage",
+                "guilt",
+                "curiosity",
+                "disconnection",
+                "disappointment",
+                "discouragement",
+                "disgust",
+                "despair",
+                "desire",
+                "destabilization",
+                "detachment",
+                "determination",
+                "devaluation",
+                "doubt",
+                "embarrassment",
+                "wonder",
+                "enthusiasm",
+                "craving",
+                "exhaustion",
+                "hope",
+                "exaltation",
+                "tiredness",
+                "pride",
+                "vagueness",
+                "fragility",
+                "frustration",
+                "gratitude",
+                "shame",
+                "humiliation",
+                "impatience",
+                "indecision",
+                "worry",
+                "dissatisfaction",
+                "insecurity",
+                "inspiration",
+                "jealousy",
+                "joy",
+                "weariness",
+                "distrust",
+                "melancholy",
+                "motivation",
+                "nervousness",
+                "passion",
+                "fear",
+                "pleasure",
+                "pressure",
+                "rage",
+                "comfort",
+                "regret",
+                "rejection",
+                "remorse",
+                "resignation",
+                "resilience",
+                "restraint",
+                "satisfaction",
+                "safety",
+                "serenity",
+                "loneliness",
+                "suffering",
+                "relief",
+                "surprise",
+                "tenderness",
+                "terror",
+                "sadness",
+                "vexation",
+                "emptiness",
+                "vitality",
+                "vulnerability"
+            ],
+            "additionalProperties": false
+        }
+    },
+    "required": [
+        "toolbar",
+        "stack",
+        "onboarding",
+        "settings",
+        "legal",
+        "footer",
+        "screenShare",
+        "screenShareViewer",
+        "cards"
+    ],
+    "additionalProperties": false
+}

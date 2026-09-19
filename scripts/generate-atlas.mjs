@@ -1,7 +1,6 @@
 import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { resolve, basename } from 'node:path'
 import sharp from 'sharp'
-import { CARD_LABELS } from '../src/i18n/locales/card-labels.ts'
 import { AVAILABLE_LOCALES } from '../src/i18n/locales.ts'
 
 const CARDS_DIR = resolve(import.meta.dirname, '..', 'src', 'cards')
@@ -111,6 +110,9 @@ async function buildLabelOverlay(label, fontFaceCss) {
 }
 
 async function generateAtlasForLang(lang, files, fontFaceCss) {
+    const dictionary = (await import(`../src/i18n/locales/${lang}.json`, { with: { type: 'json' } })).default
+    const cardLabels = dictionary.cards
+
     const rows = Math.ceil(files.length / COLS)
     const atlasW = COLS * FRAME_W
     const atlasH = rows * FRAME_H
@@ -125,7 +127,7 @@ async function generateAtlasForLang(lang, files, fontFaceCss) {
         const left = col * FRAME_W
         const top = row * FRAME_H
 
-        const label = CARD_LABELS[name]?.[lang]
+        const label = cardLabels[name]
         if (!label) {
             throw new Error(`Missing "${lang}" label for card "${name}"`)
         }
