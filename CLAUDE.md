@@ -13,10 +13,18 @@
 - File and folder names are always kebab-case, no exceptions for files that export a class (`stack-overlay.ts`, not `StackOverlay.ts`). PascalCase is reserved for the TypeScript identifiers (class names, types) exported from those files.
 
 # Project structure conventions
-- `app/`: composition root only — entry point and the top-level scene that ties features together. No business logic here beyond wiring; delegate to `features/`.
-- `features/`: one folder per feature (card, drag, stack, history, toolbar, onboarding, settings, footer). Each feature is organized by domain, not by technical layer — no service/controller/ui split inside a feature. Constants used only within one feature live directly in that feature's main file, not in a separate `constants.ts`. If a feature file has multiple responsibilities and outgrows itself (e.g. orchestration vs. pure Pixi drawing/animation helpers), split it into a subfolder named after the feature (e.g. `features/stack/stack-overlay/`) instead of overloading a single file.
-- `shared/`: code used by two or more features — cross-feature UI widgets in `shared/ui/`, stateless utility functions in `shared/utils/`. Don't move something here preemptively; wait until a second feature actually needs it.
-- `types/`: one type or interface per file, named `<concept>.types.ts`. Only group declarations when inseparable in practice (e.g. `card-state.types.ts` pairs `CardState` with the storage-key constants it's always used with). No interface lives inline in `app/`, `features/`, or `shared/`.
+- `src/app/`: composition root only: entry point and the top-level scene that ties features together. No business logic here beyond wiring; delegate to `src/features/`.
+- `src/features/`: one folder per feature (card, drag, stack, history, toolbar, onboarding, settings, footer, screen-share). Each feature is organized by domain, not by technical layer, no service/controller/ui split inside a feature. Constants used only within one feature live directly in that feature's main file, not in a separate `constants.ts`. If a feature file has multiple responsibilities and outgrows itself (e.g. orchestration vs. pure Pixi drawing/animation helpers), split it into a subfolder named after the feature (e.g. `features/stack/stack-overlay/`) instead of overloading a single file.
+- `src/shared/`: code used by two or more features, cross-feature UI widgets in `shared/ui/`, stateless utility functions in `shared/utils/`. Don't move something here preemptively; wait until a second feature actually needs it.
+- `src/types/`: one type or interface per file, named `<concept>.types.ts`. Only group declarations when inseparable in practice (e.g. `card-state.types.ts` pairs `CardState` with the storage-key constants it's always used with). No interface lives inline in `app/`, `features/`, or `shared/`.
+- `src/i18n/locales/`: one JSON file per locale (currently `fr`, `en`, `de`, `nl`, `eo`, `es`), validated against `locale.schema.json`. More locales are expected to be added over time; don't assume French and English are the only ones.
+- `src/cards/`: source emotion card images, one per emotion, consumed by `scripts/generate-atlas.mjs` to build the per-locale spritesheet atlas at dev/build time.
+- `src/__tests__/`: cross-feature/integration-style tests that don't belong to a single feature file's colocated test.
+
+# Architecture decisions
+- The whole scene renders through PixiJS onto a single real `<canvas>` element (`CanvasScene` in `src/app/`), not DOM/CSS. This is deliberate: canvas sharing (`src/features/screen-share/`) works by calling `canvas.captureStream()` directly on that element, which only captures actual canvas pixels. Any UI that needs to appear in a shared session (cards, stacks, toolbar buttons drawn in-scene, stack name editor, etc.) must be drawn in Pixi on this canvas, not as overlaid HTML/CSS, or it silently won't show up for the remote viewer. DOM elements are only acceptable for things that are intentionally host-local and never meant to be seen by a viewer, such as the settings modal (`src/features/settings/settings.ts`) or the legal notices modal (`src/features/footer/legal.ts`).
+- Card images are pre-baked into one spritesheet atlas per locale at dev/build time (`scripts/generate-atlas.mjs`, loaded via `src/i18n/card-atlas.ts`) rather than loaded individually at runtime. This keeps card rendering and locale switching free of per-card network/loading stalls; adding or changing a card image or label means regenerating the atlas, not just dropping a file in `src/cards/`.
+- Positions, history, and stack names persist to `localStorage` only (`src/shared/utils/store.ts`); there is no backend and no account system by design. Canvas sharing is the one deliberate exception where data leaves the browser, and even then it's peer-to-peer over WebRTC (via Trystero) with no server-side storage or relay of app state: only the two peers involved in a session ever see it.
 
 # Consistency check on every code change
 - After any code modification, verify that the tests touched or added are pertinent: no redundant tests, no misleading titles, each test targeting what it claims to target.
@@ -36,7 +44,7 @@ Do NOT run `vite build`, `pnpm build`, `npm run build`, or any equivalent produc
 
 Reason: `pnpm dev` is expected to be running continuously in this project. A concurrent build process conflicts with the dev server (port usage, Vite cache, file watchers) and breaks it.
 
-The only way to validate changes is: `pnpm typecheck`, `pnpm lint`, `pnpm test`. If you believe a production build is genuinely necessary to verify something, STOP and ask me explicitly first — do not run it preemptively "just to check."
+The only way to validate changes is: `pnpm typecheck`, `pnpm lint`, `pnpm test`. If you believe a production build is genuinely necessary to verify something, STOP and ask me explicitly first: do not run it preemptively "just to check."
 
 # Strict prohibition: browser automation
 
