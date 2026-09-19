@@ -15,7 +15,11 @@ const COLS = 10
 const TEXT_COLOR = '#6E5C4F'
 const FONT_FAMILY = 'Poppins Medium'
 const FONT_SIZE = FRAME_H * 0.068
+const FONT_SIZE_MIN = FRAME_H * 0.05
 const BASELINE_Y = FRAME_H * 0.93
+const LABEL_SIDE_MARGIN = FRAME_W * 0.08
+const LABEL_MAX_WIDTH = FRAME_W - LABEL_SIDE_MARGIN * 2
+const LABEL_LINE_HEIGHT_RATIO = 1.15
 
 // Languages to render an atlas for. Add a language by adding its key to
 // every entry in CARD_LABELS (and to this list).
@@ -28,17 +32,78 @@ function escapeXml(text) {
         .replace(/>/g, '&gt;')
 }
 
+async function measureTextWidth(text, fontSize, fontFaceCss) {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${FRAME_W * 4}" height="${FRAME_H}">
+        <defs><style>${fontFaceCss}</style></defs>
+        <text x="0" y="${BASELINE_Y}" font-family="${FONT_FAMILY}" font-size="${fontSize}">${escapeXml(text)}</text>
+    </svg>`
+
+    const { info } = await sharp(Buffer.from(svg)).trim().png().toBuffer({ resolveWithObject: true })
+    return info.width
+}
+
+function splitLabelIntoTwoLines(label) {
+    const middle = label.length / 2
+    let bestSpaceIndex = -1
+    let bestDistance = Infinity
+
+    for (let i = 0; i < label.length; i++) {
+        if (label[i] !== ' ') continue
+        const distance = Math.abs(i - middle)
+        if (distance < bestDistance) {
+            bestDistance = distance
+            bestSpaceIndex = i
+        }
+    }
+
+    if (bestSpaceIndex !== -1) {
+        return [label.slice(0, bestSpaceIndex), label.slice(bestSpaceIndex + 1)]
+    }
+
+    const cut = Math.round(middle)
+    return [label.slice(0, cut), label.slice(cut)]
+}
+
+async function resolveLabelLayout(label, fontFaceCss) {
+    for (let fontSize = FONT_SIZE; fontSize >= FONT_SIZE_MIN; fontSize--) {
+        const width = await measureTextWidth(label, fontSize, fontFaceCss)
+        if (width <= LABEL_MAX_WIDTH) return { fontSize, lines: [label] }
+    }
+
+    return { fontSize: FONT_SIZE_MIN, lines: splitLabelIntoTwoLines(label) }
+}
+
 async function buildLabelOverlay(label, fontFaceCss) {
+    const { fontSize, lines } = await resolveLabelLayout(label, fontFaceCss)
+
+    const textElements =
+        lines.length === 1
+            ? `<text
+                x="${FRAME_W / 2}"
+                y="${BASELINE_Y}"
+                font-family="${FONT_FAMILY}"
+                font-size="${fontSize}"
+                fill="${TEXT_COLOR}"
+                text-anchor="middle"
+            >${escapeXml(lines[0])}</text>`
+            : lines
+                  .map((line, i) => {
+                      const lineHeight = fontSize * LABEL_LINE_HEIGHT_RATIO
+                      const y = BASELINE_Y + (i - 0.5) * lineHeight
+                      return `<text
+                        x="${FRAME_W / 2}"
+                        y="${y}"
+                        font-family="${FONT_FAMILY}"
+                        font-size="${fontSize}"
+                        fill="${TEXT_COLOR}"
+                        text-anchor="middle"
+                    >${escapeXml(line)}</text>`
+                  })
+                  .join('')
+
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${FRAME_W}" height="${FRAME_H}">
         <defs><style>${fontFaceCss}</style></defs>
-        <text
-            x="${FRAME_W / 2}"
-            y="${BASELINE_Y}"
-            font-family="${FONT_FAMILY}"
-            font-size="${FONT_SIZE}"
-            fill="${TEXT_COLOR}"
-            text-anchor="middle"
-        >${escapeXml(label)}</text>
+        ${textElements}
     </svg>`
 
     return sharp(Buffer.from(svg)).png().toBuffer()
