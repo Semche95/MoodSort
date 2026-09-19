@@ -1,5 +1,5 @@
-import { readdir, readFile, writeFile } from 'node:fs/promises'
-import { resolve, basename } from 'node:path'
+import { readFile, writeFile, stat } from 'node:fs/promises'
+import { resolve } from 'node:path'
 import sharp from 'sharp'
 import { AVAILABLE_LOCALES } from '../src/i18n/locales.ts'
 
@@ -7,6 +7,7 @@ const CARDS_DIR = resolve(import.meta.dirname, '..', 'src', 'cards')
 const OUT_DIR = resolve(import.meta.dirname, '..', 'src', 'assets')
 const FONT_PATH = resolve(import.meta.dirname, 'fonts', 'Poppins-Medium.ttf')
 const ATLAS_NAME = 'atlas'
+const CACHE_PATH = resolve(OUT_DIR, '.atlas-cache.json')
 
 const FRAME_W = 256
 const FRAME_H = 382
@@ -109,21 +110,21 @@ async function buildLabelOverlay(label, fontFaceCss) {
     return sharp(Buffer.from(svg)).png().toBuffer()
 }
 
-async function generateAtlasForLang(lang, files, fontFaceCss) {
+async function generateAtlasForLang(lang, cardNames, fontFaceCss) {
     const dictionary = (await import(`../src/i18n/locales/${lang}.json`, { with: { type: 'json' } })).default
     const cardLabels = dictionary.cards
 
-    const rows = Math.ceil(files.length / COLS)
+    const rows = Math.ceil(cardNames.length / COLS)
     const atlasW = COLS * FRAME_W
     const atlasH = rows * FRAME_H
 
     const frames = {}
     const composites = []
 
-    for (let i = 0; i < files.length; i++) {
+    for (let i = 0; i < cardNames.length; i++) {
         const col = i % COLS
         const row = Math.floor(i / COLS)
-        const name = basename(files[i], '.webp')
+        const name = cardNames[i]
         const left = col * FRAME_W
         const top = row * FRAME_H
 
@@ -132,7 +133,16 @@ async function generateAtlasForLang(lang, files, fontFaceCss) {
             throw new Error(`Missing "${lang}" label for card "${name}"`)
         }
 
-        const cardBuffer = await sharp(resolve(CARDS_DIR, files[i]))
+        const imagePath = resolve(CARDS_DIR, `${name}.webp`)
+        const imageExists = await stat(imagePath).then(
+            () => true,
+            () => false,
+        )
+        if (!imageExists) {
+            throw new Error(`Missing image file for card "${name}" (expected src/cards/${name}.webp)`)
+        }
+
+        const cardBuffer = await sharp(imagePath)
             .composite([{ input: await buildLabelOverlay(label, fontFaceCss) }])
             .toBuffer()
 
@@ -167,13 +177,65 @@ async function generateAtlasForLang(lang, files, fontFaceCss) {
 
     await writeFile(resolve(OUT_DIR, `${ATLAS_NAME}.${lang}.json`), JSON.stringify(manifest))
 
-    console.log(`Atlas generated [${lang}]: ${files.length} frames → ${atlasW}×${atlasH}px`)
+    console.log(`Atlas generated [${lang}]: ${cardNames.length} frames → ${atlasW}×${atlasH}px`)
+}
+
+async function computeSharedKey(cardNames) {
+    const cardStats = await Promise.all(
+        cardNames.map(async (name) => {
+            const { mtimeMs, size } = await stat(resolve(CARDS_DIR, `${name}.webp`)).catch(() => {
+                throw new Error(`Missing image file for card "${name}" (expected src/cards/${name}.webp)`)
+            })
+            return `${name}:${mtimeMs}:${size}`
+        }),
+    )
+
+    const fontStat = await stat(FONT_PATH)
+
+    return JSON.stringify({
+        cards: cardStats,
+        font: `${fontStat.mtimeMs}:${fontStat.size}`,
+    })
+}
+
+async function computeLangKey(lang, sharedKey) {
+    const dictionary = (await import(`../src/i18n/locales/${lang}.json`, { with: { type: 'json' } })).default
+    return JSON.stringify({ shared: sharedKey, cards: dictionary.cards })
+}
+
+async function readCache() {
+    const raw = await readFile(CACHE_PATH, 'utf-8').catch(() => null)
+    if (!raw) return {}
+    try {
+        return JSON.parse(raw)
+    } catch {
+        return {}
+    }
 }
 
 async function main() {
-    const files = (await readdir(CARDS_DIR))
-        .filter((f) => f.endsWith('.webp'))
-        .sort()
+    const referenceDictionary = (
+        await import(`../src/i18n/locales/${LANGUAGES[0]}.json`, { with: { type: 'json' } })
+    ).default
+    const cardNames = Object.keys(referenceDictionary.cards).sort()
+
+    const sharedKey = await computeSharedKey(cardNames)
+    const previousCache = await readCache()
+    const nextCache = {}
+
+    const langsToGenerate = []
+    for (const lang of LANGUAGES) {
+        const langKey = await computeLangKey(lang, sharedKey)
+        nextCache[lang] = langKey
+        if (previousCache[lang] !== langKey) {
+            langsToGenerate.push(lang)
+        }
+    }
+
+    if (langsToGenerate.length === 0) {
+        console.log('Atlas up to date, skipping generation.')
+        return
+    }
 
     const fontBase64 = (await readFile(FONT_PATH)).toString('base64')
     const fontFaceCss = `@font-face {
@@ -181,9 +243,14 @@ async function main() {
         src: url(data:font/ttf;base64,${fontBase64}) format('truetype');
     }`
 
-    for (const lang of LANGUAGES) {
-        await generateAtlasForLang(lang, files, fontFaceCss)
+    for (const lang of langsToGenerate) {
+        await generateAtlasForLang(lang, cardNames, fontFaceCss)
     }
+
+    await writeFile(CACHE_PATH, JSON.stringify(nextCache))
 }
 
-main()
+main().catch((error) => {
+    console.error(`Atlas generation failed: ${error.message}`)
+    process.exit(1)
+})
