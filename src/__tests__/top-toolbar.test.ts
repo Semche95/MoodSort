@@ -335,8 +335,7 @@ describe('TopToolbar', () => {
         initTopToolbar(host, vi.fn(), createTextures())
 
         const select = document.querySelector('.toolbar-locale-select') as HTMLSelectElement
-        const reload = vi.fn()
-        Object.defineProperty(window, 'location', { value: { reload }, writable: true })
+        const reload = vi.spyOn(I18n, 'reload').mockImplementation((): void => {})
 
         select.value = 'en'
         select.dispatchEvent(new Event('change'))

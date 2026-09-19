@@ -66,6 +66,10 @@ class I18nStore {
         this.listeners.add(callback)
         return (): void => { this.listeners.delete(callback) }
     }
+
+    reload(): void {
+        window.location.reload()
+    }
 }
 
 export const I18n = new I18nStore()
@@ -73,5 +77,5 @@ export const I18n = new I18nStore()
 /** Persists `locale` and reloads the page, the app's only supported way to apply a locale change. */
 export function switchLocale(locale: Locale): void {
     I18n.setLocale(locale)
-    window.location.reload()
+    I18n.reload()
 }
