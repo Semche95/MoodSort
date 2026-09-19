@@ -1,4 +1,10 @@
 {
+    "meta": {
+        "title": "MoodSort - Ilo por emocia esplorado",
+        "description": "MoodSort estas ilo por emocia esplorado, kiu helpas identigi, ordigi kaj esprimi emociojn per interaga kart-bazita interfaco.",
+        "ogTitle": "MoodSort - Ilo por emocia esplorado",
+        "ogDescription": "Interaga aplikaĵo por ordigi emociajn kartojn, kreita por helpi identigi kaj esprimi emociojn."
+    },
     "toolbar": {
         "undo": "Malfari",
         "redo": "Refari",

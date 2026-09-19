@@ -1,4 +1,10 @@
 {
+    "meta": {
+        "title": "MoodSort - Ein Werkzeug zur emotionalen Erkundung",
+        "description": "MoodSort ist ein Werkzeug zur emotionalen Erkundung, mit dem du Emotionen anhand einer interaktiven Kartenoberfläche erkennen, einordnen und ausdrücken kannst.",
+        "ogTitle": "MoodSort - Ein Werkzeug zur emotionalen Erkundung",
+        "ogDescription": "Eine interaktive Anwendung zum Sortieren von Gefühlskarten, die dabei hilft, Emotionen zu erkennen und auszudrücken."
+    },
     "toolbar": {
         "undo": "Rückgängig",
         "redo": "Wiederholen",

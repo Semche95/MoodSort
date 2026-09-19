@@ -1,4 +1,10 @@
 {
+    "meta": {
+        "title": "MoodSort - Een hulpmiddel voor emotionele verkenning",
+        "description": "MoodSort is een hulpmiddel voor emotionele verkenning waarmee je emoties kunt herkennen, ordenen en uiten via een interactieve kaartinterface.",
+        "ogTitle": "MoodSort - Een hulpmiddel voor emotionele verkenning",
+        "ogDescription": "Een interactieve applicatie voor het sorteren van emotiekaarten, ontworpen om emoties te herkennen en te uiten."
+    },
     "toolbar": {
         "undo": "Ongedaan maken",
         "redo": "Opnieuw",

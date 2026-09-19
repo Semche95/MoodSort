@@ -1,4 +1,10 @@
 {
+    "meta": {
+        "title": "MoodSort - Una herramienta de exploración emocional",
+        "description": "MoodSort es una herramienta de exploración emocional para identificar, clasificar y expresar emociones mediante una interfaz interactiva basada en tarjetas.",
+        "ogTitle": "MoodSort - Una herramienta de exploración emocional",
+        "ogDescription": "Una aplicación interactiva de clasificación de tarjetas emocionales diseñada para ayudar a identificar y expresar emociones."
+    },
     "toolbar": {
         "undo": "Deshacer",
         "redo": "Rehacer",

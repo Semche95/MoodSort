@@ -4,6 +4,30 @@
     "description": "Structure every locale dictionary in src/i18n/locales must follow. fr.json is the reference shape: every key here must exist, with a string value, in every locale file.",
     "type": "object",
     "properties": {
+        "meta": {
+            "type": "object",
+            "properties": {
+                "title": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "ogTitle": {
+                    "type": "string"
+                },
+                "ogDescription": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "title",
+                "description",
+                "ogTitle",
+                "ogDescription"
+            ],
+            "additionalProperties": false
+        },
         "toolbar": {
             "type": "object",
             "properties": {
@@ -698,6 +722,7 @@
         }
     },
     "required": [
+        "meta",
         "toolbar",
         "stack",
         "onboarding",
