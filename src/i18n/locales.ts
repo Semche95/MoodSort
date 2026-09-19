@@ -14,10 +14,10 @@ export interface LocaleOption {
  * to offer it everywhere without touching UI code.
  */
 export const AVAILABLE_LOCALES: LocaleOption[] = [
-    { code: 'fr', nativeName: 'Français' },
-    { code: 'en', nativeName: 'English' },
     { code: 'de', nativeName: 'Deutsch' },
-    { code: 'nl', nativeName: 'Nederlands' },
+    { code: 'en', nativeName: 'English' },
     { code: 'eo', nativeName: 'Esperanto' },
     { code: 'es', nativeName: 'Español' },
+    { code: 'fr', nativeName: 'Français' },
+    { code: 'nl', nativeName: 'Nederlands' },
 ]

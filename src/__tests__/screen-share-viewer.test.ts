@@ -146,7 +146,7 @@ describe('initScreenShareViewer', () => {
         roomBusyAction.onMessage(null, { peerId: 'host-peer' })
 
         const status = document.querySelector('.screen-share-viewer-status')
-        expect(status?.textContent).toContain('déjà suivi')
+        expect(status?.textContent).toContain('already being followed')
         expect(status?.classList.contains('screen-share-viewer-status--visible')).toBe(true)
     })
 

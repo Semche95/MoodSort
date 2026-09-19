@@ -176,7 +176,7 @@ describe('createScreenShareModal', () => {
         activate(overlay)
         overlay.querySelector<HTMLButtonElement>('.screen-share-copy')!.click()
 
-        expect(overlay.querySelector('.screen-share-copy-feedback')!.textContent).toMatch(/pas disponible/i)
+        expect(overlay.querySelector('.screen-share-copy-feedback')!.textContent).toMatch(/not available/i)
 
         Object.defineProperty(navigator, 'clipboard', { value: originalClipboard, configurable: true })
     })

@@ -1,6 +1,6 @@
-import fr from './locales/fr.json'
+import en from './locales/en.json'
 
-export type Locale = 'fr' | 'en' | 'de' | 'nl' | 'eo' | 'es'
+export type Locale = 'de' | 'en' | 'eo' | 'es' | 'fr' | 'nl'
 
 /**
  * Recursively flattens a nested translation dictionary's shape into a union
@@ -11,5 +11,4 @@ type Flatten<T> = T extends string
     ? never
     : { [K in keyof T & string]: T[K] extends string ? K : `${K}.${Flatten<T[K]>}` }[keyof T & string]
 
-/** fr.json is the reference shape: every translation key must exist there. */
-export type TranslationKey = Flatten<typeof fr>
+export type TranslationKey = Flatten<typeof en>

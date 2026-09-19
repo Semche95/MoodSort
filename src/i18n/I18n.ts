@@ -38,7 +38,7 @@ function interpolate(template: string, params?: Record<string, string | number>)
  * public API for callers that need it.
  */
 class I18nStore {
-    private locale: Locale = 'fr'
+    private locale: Locale = 'en'
     private readonly listeners: Set<(locale: Locale) => void> = new Set<(locale: Locale) => void>()
 
     t(key: TranslationKey, params?: Record<string, string | number>, localeOverride?: Locale): string {

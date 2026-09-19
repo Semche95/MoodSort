@@ -6,7 +6,7 @@
 
 A visual emotion exploration tool. Arrange emotion cards on a canvas to identify and express what you're feeling.
 
-The interface is available in French, English, German, Dutch, Esperanto, and Spanish, auto-detected from the browser on first launch and switchable from the toolbar's globe button (more languages may be added later).
+The interface is available in Dutch, English, Esperanto, French, German, and Spanish, auto-detected from the browser on first launch and switchable from the toolbar's globe button (more languages may be added later).
 
 ## Features
 
