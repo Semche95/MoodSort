@@ -1,6 +1,7 @@
 import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { resolve, basename } from 'node:path'
 import sharp from 'sharp'
+import { CARD_LABELS } from '../src/i18n/locales/card-labels.ts'
 
 const CARDS_DIR = resolve(import.meta.dirname, '..', 'src', 'cards')
 const OUT_DIR = resolve(import.meta.dirname, '..', 'src', 'assets')
@@ -16,97 +17,9 @@ const FONT_FAMILY = 'Poppins Medium'
 const FONT_SIZE = FRAME_H * 0.068
 const BASELINE_Y = FRAME_H * 0.93
 
-// Emotion label shown on each card, per language. Add a language by adding
-// its key to every entry below (and to LANGUAGES).
+// Languages to render an atlas for. Add a language by adding its key to
+// every entry in CARD_LABELS (and to this list).
 const LANGUAGES = ['fr', 'en']
-
-const CARD_LABELS = {
-    abandonment: { fr: 'Abandon', en: 'Abandonment' },
-    acceptance: { fr: 'Acceptation', en: 'Acceptance' },
-    hostility: { fr: 'Agressivité', en: 'Hostility' },
-    ambivalence: { fr: 'Ambivalence', en: 'Ambivalence' },
-    love: { fr: 'Amour', en: 'Love' },
-    anguish: { fr: 'Angoisse', en: 'Anguish' },
-    anxiety: { fr: 'Anxiété', en: 'Anxiety' },
-    belonging: { fr: 'Appartenance', en: 'Belonging' },
-    attraction: { fr: 'Attirance', en: 'Attraction' },
-    kindness: { fr: 'Bienveillance', en: 'Kindness' },
-    calm: { fr: 'Calme', en: 'Calm' },
-    sorrow: { fr: 'Chagrin', en: 'Sorrow' },
-    anger: { fr: 'Colère', en: 'Anger' },
-    compassion: { fr: 'Compassion', en: 'Compassion' },
-    concentration: { fr: 'Concentration', en: 'Concentration' },
-    confidence: { fr: 'Confiance', en: 'Confidence' },
-    confusion: { fr: 'Confusion', en: 'Confusion' },
-    courage: { fr: 'Courage', en: 'Courage' },
-    guilt: { fr: 'Culpabilité', en: 'Guilt' },
-    curiosity: { fr: 'Curiosité', en: 'Curiosity' },
-    disconnection: { fr: 'Décalage', en: 'Disconnection' },
-    disappointment: { fr: 'Déception', en: 'Disappointment' },
-    discouragement: { fr: 'Découragement', en: 'Discouragement' },
-    disgust: { fr: 'Dégoût', en: 'Disgust' },
-    despair: { fr: 'Désespoir', en: 'Despair' },
-    desire: { fr: 'Désir', en: 'Desire' },
-    destabilization: { fr: 'Déstabilisation', en: 'Destabilization' },
-    detachment: { fr: 'Détachement', en: 'Detachment' },
-    determination: { fr: 'Détermination', en: 'Determination' },
-    'self-devaluation': { fr: 'Dévalorisation', en: 'Self-devaluation' },
-    doubt: { fr: 'Doute', en: 'Doubt' },
-    embarrassment: { fr: 'Embarras', en: 'Embarrassment' },
-    wonder: { fr: 'Émerveillement', en: 'Wonder' },
-    enthusiasm: { fr: 'Enthousiasme', en: 'Enthusiasm' },
-    craving: { fr: 'Envie', en: 'Craving' },
-    exhaustion: { fr: 'Épuisement', en: 'Exhaustion' },
-    hope: { fr: 'Espoir', en: 'Hope' },
-    exaltation: { fr: 'Exaltation', en: 'Exaltation' },
-    fatigue: { fr: 'Fatigue', en: 'Fatigue' },
-    pride: { fr: 'Fierté', en: 'Pride' },
-    vagueness: { fr: 'Flou', en: 'Vagueness' },
-    fragility: { fr: 'Fragilité', en: 'Fragility' },
-    frustration: { fr: 'Frustration', en: 'Frustration' },
-    gratitude: { fr: 'Gratitude', en: 'Gratitude' },
-    shame: { fr: 'Honte', en: 'Shame' },
-    humiliation: { fr: 'Humiliation', en: 'Humiliation' },
-    impatience: { fr: 'Impatience', en: 'Impatience' },
-    indecision: { fr: 'Indécision', en: 'Indecision' },
-    worry: { fr: 'Inquiétude', en: 'Worry' },
-    dissatisfaction: { fr: 'Insatisfaction', en: 'Dissatisfaction' },
-    insecurity: { fr: 'Insécurité', en: 'Insecurity' },
-    inspiration: { fr: 'Inspiration', en: 'Inspiration' },
-    jealousy: { fr: 'Jalousie', en: 'Jealousy' },
-    joy: { fr: 'Joie', en: 'Joy' },
-    weariness: { fr: 'Lassitude', en: 'Weariness' },
-    distrust: { fr: 'Méfiance', en: 'Distrust' },
-    melancholy: { fr: 'Mélancolie', en: 'Melancholy' },
-    motivation: { fr: 'Motivation', en: 'Motivation' },
-    nervousness: { fr: 'Nervosité', en: 'Nervousness' },
-    passion: { fr: 'Passion', en: 'Passion' },
-    fear: { fr: 'Peur', en: 'Fear' },
-    pleasure: { fr: 'Plaisir', en: 'Pleasure' },
-    pressure: { fr: 'Pression', en: 'Pressure' },
-    rage: { fr: 'Rage', en: 'Rage' },
-    comfort: { fr: 'Réconfort', en: 'Comfort' },
-    regret: { fr: 'Regret', en: 'Regret' },
-    rejection: { fr: 'Rejet', en: 'Rejection' },
-    remorse: { fr: 'Remords', en: 'Remorse' },
-    resignation: { fr: 'Résignation', en: 'Resignation' },
-    resilience: { fr: 'Résilience', en: 'Resilience' },
-    restraint: { fr: 'Retenue', en: 'Restraint' },
-    satisfaction: { fr: 'Satisfaction', en: 'Satisfaction' },
-    safety: { fr: 'Sécurité', en: 'Safety' },
-    serenity: { fr: 'Sérénité', en: 'Serenity' },
-    loneliness: { fr: 'Solitude', en: 'Loneliness' },
-    suffering: { fr: 'Souffrance', en: 'Suffering' },
-    relief: { fr: 'Soulagement', en: 'Relief' },
-    surprise: { fr: 'Surprise', en: 'Surprise' },
-    tenderness: { fr: 'Tendresse', en: 'Tenderness' },
-    terror: { fr: 'Terreur', en: 'Terror' },
-    sadness: { fr: 'Tristesse', en: 'Sadness' },
-    resentment: { fr: 'Vexation', en: 'Resentment' },
-    emptiness: { fr: 'Vide', en: 'Emptiness' },
-    vitality: { fr: 'Vitalité', en: 'Vitality' },
-    vulnerability: { fr: 'Vulnérabilité', en: 'Vulnerability' },
-}
 
 function escapeXml(text) {
     return text
