@@ -1,0 +1,88 @@
+{
+    "toolbar": {
+        "undo": "Ongedaan maken",
+        "redo": "Opnieuw",
+        "help": "Hulp",
+        "settings": "Instellingen",
+        "share": "Delen",
+        "shareTooltip": "De indeling delen",
+        "shareTooltipUnsupported": "Deze browser ondersteunt het delen van de indeling niet",
+        "languageTooltip": "Taal kiezen",
+        "languageAriaLabel": "Taal wijzigen"
+    },
+    "stack": {
+        "compactTooltip": "De stapel samenvoegen",
+        "nameTooltipNamed": "De stapel hernoemen",
+        "nameTooltipUnnamed": "De stapel benoemen"
+    },
+    "onboarding": {
+        "title": "Welkom bij MoodSort",
+        "intro": "MoodSort is een visuele tool die je helpt je emoties te verkennen.",
+        "howItWorksTitle": "Hoe werkt het&nbsp;?",
+        "step1": "Elke kaart staat voor een emotie.",
+        "step2": "Versleep de kaarten om weer te geven hoe je je vandaag voelt.",
+        "step3": "Stapel kaarten op elkaar om een stapel te vormen, geef er een naam aan en verplaats de kaarten samen.",
+        "step4": "Maak je laatste acties ongedaan of herhaal ze, of zet de posities terug.",
+        "step5": "Je indeling wordt automatisch opgeslagen.",
+        "step6": "Deel de indeling van je kaarten met iemand.",
+        "outro": "Er is geen goede of foute manier om de kaarten te plaatsen. Groepeer ze zoals het jou helpt je emoties te verkennen.",
+        "privacy": "🔒 <strong>Je gegevens blijven privé:</strong> alles wat je in MoodSort doet, blijft op je apparaat en wordt nooit verzonden of elders opgeslagen, tenzij je het delen van de indeling inschakelt: de persoon die zich aansluit, kan dan de indeling van je kaarten zien.",
+        "dismissButton": "Aan de slag"
+    },
+    "settings": {
+        "title": "Instellingen",
+        "closeAriaLabel": "Instellingen sluiten",
+        "cardsSection": "Kaarten",
+        "resetPositionsDescription": "De indeling van alle kaarten terugzetten naar het midden van het scherm.",
+        "resetPositionsButton": "Posities terugzetten",
+        "confirmResetTitle": "Posities terugzetten?",
+        "confirmResetMessage": "Alle kaarten keren terug naar het midden.",
+        "confirmCancel": "Annuleren",
+        "confirmOk": "Bevestigen"
+    },
+    "legal": {
+        "title": "Wettelijke vermeldingen",
+        "closeAriaLabel": "Wettelijke vermeldingen sluiten",
+        "lastUpdated": "Laatst bijgewerkt: 15 juli 2026",
+        "editionTitle": "Uitgever van de site",
+        "editionText1": "Deze site is een persoonlijk, niet-commercieel project dat door een particulier wordt gepubliceerd.",
+        "editionText2": "In overeenstemming met artikel 6-III van de Franse wet nr. 2004-575 van 21 juni 2004 voor vertrouwen in de digitale economie (LCEN) heeft de uitgever, een particulier die niet beroepsmatig handelt, ervoor gekozen zijn persoonlijke contactgegevens niet openbaar te maken. Deze gegevens zijn overeenkomstig de wet aan de hostingprovider van de site meegedeeld.",
+        "hostingTitle": "Hosting",
+        "contactTitle": "Contact",
+        "contactText": "Voor vragen, opmerkingen of meldingen over de site kun je de uitgever bereiken op het volgende adres:<br><strong>contact@moodsort.fr</strong>",
+        "privacyTitle": "Gegevensbescherming en privacy",
+        "privacyText1": "MoodSort verzamelt, verzendt of bewaart geen enkele gegevens op een externe server. Alle informatie die je in de applicatie aanmaakt (kaartposities, actiegeschiedenis) blijft rechtstreeks opgeslagen op je apparaat, in je browser. Er wordt niets naar de uitgever, de hostingprovider of derden verzonden.",
+        "privacyText2": "De site gebruikt geen trackingcookies, geen analysetools voor bezoekersstatistieken en geen advertentietrackers.",
+        "liabilityTitle": "Beperking van aansprakelijkheid",
+        "liabilityText1": "MoodSort is een experimentele tool die \"as is\" wordt aangeboden, zonder enige garantie, expliciet of impliciet. Het is geen medisch hulpmiddel en vervangt op geen enkele wijze het advies, de diagnose of de zorg van een bevoegde zorgverlener.",
+        "liabilityText2": "De auteur kan niet aansprakelijk worden gesteld voor klinisch of therapeutisch gebruik van de tool, noch voor eventueel verlies van gegevens die lokaal in de browser van de gebruiker zijn opgeslagen (bijvoorbeeld bij het wissen van de lokale opslag, of bij een wisseling van apparaat of browser)."
+    },
+    "footer": {
+        "legalLink": "Wettelijke vermeldingen"
+    },
+    "screenShare": {
+        "title": "De indeling delen",
+        "closeAriaLabel": "Delen sluiten",
+        "description": "Schakel delen in zodat een andere persoon de indeling van je kaarten live en alleen-lezen kan volgen.",
+        "activateButton": "Delen inschakelen",
+        "stopButton": "Delen stoppen",
+        "shareLinkPrompt": "Deel deze link met de persoon die je wilt uitnodigen:",
+        "copyButton": "Link kopiëren",
+        "regenerateButton": "Nieuwe code genereren",
+        "copyUnsupported": "Automatisch kopiëren is niet beschikbaar in deze browser. Kopieer de link handmatig.",
+        "copySuccess": "Link naar het klembord gekopieerd.",
+        "copyError": "De link kon niet worden gekopieerd.",
+        "unsupported": "Je browser ondersteunt het delen van de indeling niet.",
+        "statusWaiting": "Wachten op een kijker...",
+        "statusConnected": "Kijker verbonden.",
+        "statusStopped": "Delen gestopt: niemand heeft op tijd verbinding gemaakt. Klik op \"Delen inschakelen\" om het opnieuw te proberen."
+    },
+    "screenShareViewer": {
+        "closeAriaLabel": "Gedeelde weergave sluiten en terugkeren naar de kaartindeling",
+        "connecting": "Verbinden met de host...",
+        "unsupported": "Je browser ondersteunt het delen van de indeling niet (WebRTC niet beschikbaar).",
+        "statusWaiting": "Wachten op verbinding met de host...",
+        "statusStopped": "Verbinding met de host verbroken. Vraag een nieuwe deellink aan.",
+        "roomBusy": "Deze gedeelde sessie wordt al door iemand anders gevolgd. Probeer het later opnieuw."
+    }
+}
