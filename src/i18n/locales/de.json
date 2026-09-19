@@ -1,0 +1,88 @@
+{
+    "toolbar": {
+        "undo": "Rückgängig",
+        "redo": "Wiederholen",
+        "help": "Hilfe",
+        "settings": "Einstellungen",
+        "share": "Teilen",
+        "shareTooltip": "Anordnung teilen",
+        "shareTooltipUnsupported": "Dieser Browser unterstützt das Teilen der Anordnung nicht",
+        "languageTooltip": "Sprache wählen",
+        "languageAriaLabel": "Sprache ändern"
+    },
+    "stack": {
+        "compactTooltip": "Stapel zusammenschieben",
+        "nameTooltipNamed": "Stapel umbenennen",
+        "nameTooltipUnnamed": "Stapel benennen"
+    },
+    "onboarding": {
+        "title": "Willkommen bei MoodSort",
+        "intro": "MoodSort ist ein visuelles Hilfsmittel, das dir hilft, deine Gefühle zu erkunden.",
+        "howItWorksTitle": "Wie funktioniert es&nbsp;?",
+        "step1": "Jede Karte steht für ein Gefühl.",
+        "step2": "Verschiebe die Karten so, dass sie widerspiegeln, wie du dich heute fühlst.",
+        "step3": "Lege Karten übereinander, um einen Stapel zu bilden, benenne ihn und verschiebe die Karten gemeinsam.",
+        "step4": "Mache deine letzten Aktionen rückgängig oder wiederhole sie, oder setze die Positionen zurück.",
+        "step5": "Deine Anordnung wird automatisch gespeichert.",
+        "step6": "Teile die Anordnung deiner Karten mit jemandem.",
+        "outro": "Es gibt keine richtige oder falsche Art, die Karten anzuordnen. Gruppiere sie so, wie es dir hilft, deine Gefühle zu erkunden.",
+        "privacy": "🔒 <strong>Deine Daten bleiben privat:</strong> Alles, was du in MoodSort tust, bleibt auf deinem Gerät und wird niemals gesendet oder anderswo gespeichert, es sei denn, du aktivierst das Teilen der Anordnung: Die Person, die sich verbindet, sieht dann die Anordnung deiner Karten.",
+        "dismissButton": "Loslegen"
+    },
+    "settings": {
+        "title": "Einstellungen",
+        "closeAriaLabel": "Einstellungen schließen",
+        "cardsSection": "Karten",
+        "resetPositionsDescription": "Die Anordnung aller Karten auf die Bildschirmmitte zurücksetzen.",
+        "resetPositionsButton": "Positionen zurücksetzen",
+        "confirmResetTitle": "Positionen zurücksetzen?",
+        "confirmResetMessage": "Alle Karten kehren in die Mitte zurück.",
+        "confirmCancel": "Abbrechen",
+        "confirmOk": "Bestätigen"
+    },
+    "legal": {
+        "title": "Impressum",
+        "closeAriaLabel": "Impressum schließen",
+        "lastUpdated": "Zuletzt aktualisiert: 15. Juli 2026",
+        "editionTitle": "Herausgeber der Website",
+        "editionText1": "Diese Website ist ein persönliches, nicht kommerzielles Projekt, das von einer Privatperson betrieben wird.",
+        "editionText2": "Gemäß Artikel 6-III des französischen Gesetzes Nr. 2004-575 vom 21. Juni 2004 zum Vertrauen in die digitale Wirtschaft (LCEN) hat der Herausgeber, eine Privatperson, die nicht beruflich handelt, entschieden, seine persönlichen Kontaktdaten nicht öffentlich zu machen. Diese Daten wurden dem Hosting-Anbieter der Website gemäß dem Gesetz mitgeteilt.",
+        "hostingTitle": "Hosting",
+        "contactTitle": "Kontakt",
+        "contactText": "Bei Fragen, Anmerkungen oder Meldungen zur Website kannst du den Herausgeber unter folgender Adresse kontaktieren:<br><strong>contact@moodsort.fr</strong>",
+        "privacyTitle": "Datenschutz und Vertraulichkeit",
+        "privacyText1": "MoodSort erfasst, überträgt und speichert keine Daten auf einem entfernten Server. Alle Informationen, die du in der Anwendung erstellst (Kartenpositionen, Aktionsverlauf), werden direkt auf deinem Gerät, in deinem Browser, gespeichert. Es wird nichts an den Herausgeber, den Hosting-Anbieter oder Dritte gesendet.",
+        "privacyText2": "Die Website verwendet keine Tracking-Cookies, keine Analysetools und keine Werbe-Tracker.",
+        "liabilityTitle": "Haftungsbeschränkung",
+        "liabilityText1": "MoodSort ist ein experimentelles Werkzeug, das „wie besehen“ ohne jegliche ausdrückliche oder stillschweigende Garantie bereitgestellt wird. Es handelt sich nicht um ein Medizinprodukt und ersetzt in keiner Weise den Rat, die Diagnose oder die Betreuung durch eine qualifizierte medizinische Fachkraft.",
+        "liabilityText2": "Der Autor kann nicht für eine klinische oder therapeutische Nutzung des Werkzeugs verantwortlich gemacht werden, ebenso wenig für einen etwaigen Verlust der lokal im Browser des Nutzers gespeicherten Daten (zum Beispiel bei Löschung des lokalen Speichers oder einem Wechsel des Geräts oder Browsers)."
+    },
+    "footer": {
+        "legalLink": "Impressum"
+    },
+    "screenShare": {
+        "title": "Anordnung teilen",
+        "closeAriaLabel": "Teilen schließen",
+        "description": "Aktiviere das Teilen, damit eine andere Person die Anordnung deiner Karten live und schreibgeschützt verfolgen kann.",
+        "activateButton": "Teilen aktivieren",
+        "stopButton": "Teilen beenden",
+        "shareLinkPrompt": "Teile diesen Link mit der Person, die du einladen möchtest:",
+        "copyButton": "Link kopieren",
+        "regenerateButton": "Neuen Code erzeugen",
+        "copyUnsupported": "Automatisches Kopieren ist in diesem Browser nicht verfügbar. Kopiere den Link manuell.",
+        "copySuccess": "Link in die Zwischenablage kopiert.",
+        "copyError": "Der Link konnte nicht kopiert werden.",
+        "unsupported": "Dein Browser unterstützt das Teilen der Anordnung nicht.",
+        "statusWaiting": "Warten auf einen Zuschauer...",
+        "statusConnected": "Zuschauer verbunden.",
+        "statusStopped": "Teilen beendet: Niemand hat sich rechtzeitig verbunden. Klicke auf „Teilen aktivieren“, um es erneut zu versuchen."
+    },
+    "screenShareViewer": {
+        "closeAriaLabel": "Geteilte Ansicht schließen und zur Kartenanordnung zurückkehren",
+        "connecting": "Verbindung zum Host wird hergestellt...",
+        "unsupported": "Dein Browser unterstützt das Teilen der Anordnung nicht (WebRTC nicht verfügbar).",
+        "statusWaiting": "Warten auf die Verbindung zum Host...",
+        "statusStopped": "Verbindung zum Host verloren. Fordere einen neuen Freigabelink an.",
+        "roomBusy": "Diese Freigabe wird bereits von jemand anderem verfolgt. Bitte versuche es später erneut."
+    }
+}

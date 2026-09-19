@@ -1,11 +1,11 @@
 import { I18n, LOCALE_STORAGE_KEY } from './I18n'
 import type { Locale } from './i18n.types'
+import { AVAILABLE_LOCALES } from './locales'
 
 function toSupportedLocale(tag: string): Locale | null {
     const lower = tag.toLowerCase()
-    if (lower.startsWith('fr')) return 'fr'
-    if (lower.startsWith('en')) return 'en'
-    return null
+    const match = AVAILABLE_LOCALES.find((locale: { code: Locale }): boolean => lower.startsWith(locale.code))
+    return match?.code ?? null
 }
 
 /** Falls back to English for any browser language outside the supported locales. */
@@ -23,7 +23,7 @@ function detectBrowserLocale(): Locale {
 function readStoredLocale(): Locale | null {
     try {
         const raw = localStorage.getItem(LOCALE_STORAGE_KEY)
-        return raw === 'fr' || raw === 'en' ? raw : null
+        return AVAILABLE_LOCALES.some((locale: { code: Locale }): boolean => locale.code === raw) ? (raw as Locale) : null
     } catch {
         return null
     }

@@ -16,4 +16,5 @@ export interface LocaleOption {
 export const AVAILABLE_LOCALES: LocaleOption[] = [
     { code: 'fr', nativeName: 'Français' },
     { code: 'en', nativeName: 'English' },
+    { code: 'de', nativeName: 'Deutsch' },
 ]

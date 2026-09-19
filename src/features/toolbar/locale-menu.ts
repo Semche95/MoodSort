@@ -4,16 +4,13 @@ import type { CanvasTooltip } from '../../shared/ui/canvas-tooltip'
 import { createIcon } from '../../shared/ui/icons'
 import type { Locale } from '../../i18n/i18n.types'
 import { AVAILABLE_LOCALES } from '../../i18n/locales'
+import { I18n } from '../../i18n/I18n'
 import { BUTTON_SIZE, createButton } from './toolbar-view'
-
-function ariaLabel(locale: Locale): string {
-    return locale === 'fr' ? 'Changer de langue' : 'Change language'
-}
 
 function createNativeSelect(currentLocale: Locale, onSelect: (locale: Locale) => void): HTMLSelectElement {
     const select = document.createElement('select')
     select.className = 'toolbar-locale-select'
-    select.setAttribute('aria-label', ariaLabel(currentLocale))
+    select.setAttribute('aria-label', I18n.t('toolbar.languageAriaLabel', undefined, currentLocale))
     select.style.position = 'fixed'
     select.style.opacity = '0'
     select.style.margin = '0'
@@ -52,7 +49,7 @@ export interface LocaleMenu {
  * picker. Its `onchange` calls `onSelect`.
  */
 export function createLocaleMenu(tooltip: CanvasTooltip, globeIconTexture: Texture, currentLocale: Locale, onSelect: (locale: Locale) => void): LocaleMenu {
-    const label = ariaLabel(currentLocale)
+    const label = I18n.t('toolbar.languageAriaLabel', undefined, currentLocale)
     const select = createNativeSelect(currentLocale, onSelect)
     document.body.appendChild(select)
 

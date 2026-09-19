@@ -7,7 +7,8 @@
         "share": "Partager",
         "shareTooltip": "Partager la disposition",
         "shareTooltipUnsupported": "Partage de la disposition non supporté par ce navigateur",
-        "languageTooltip": "Choisir la langue"
+        "languageTooltip": "Choisir la langue",
+        "languageAriaLabel": "Changer de langue"
     },
     "stack": {
         "compactTooltip": "Compacter le tas",

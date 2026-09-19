@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import fr from '../i18n/locales/fr.json'
-import en from '../i18n/locales/en.json'
 import { I18n } from '../i18n/I18n'
+
+const dictionaryModules = import.meta.glob<{ default: Record<string, unknown> }>('../i18n/locales/*.json', { eager: true })
+const dictionariesByLocale = Object.fromEntries(
+    Object.entries(dictionaryModules).map(([path, module]: [string, { default: Record<string, unknown> }]): [string, Record<string, unknown>] =>
+        [path.replace('../i18n/locales/', '').replace('.json', ''), module.default]),
+)
 
 function flattenKeys(value: unknown, prefix: string = ''): string[] {
     if (typeof value === 'string') {
@@ -12,11 +16,12 @@ function flattenKeys(value: unknown, prefix: string = ''): string[] {
 }
 
 describe('i18n dictionaries', () => {
-    it('fr.json and en.json expose exactly the same set of keys', () => {
-        const frKeys = flattenKeys(fr).sort()
-        const enKeys = flattenKeys(en).sort()
+    it('every locale dictionary exposes exactly the same set of keys as fr.json', () => {
+        const referenceKeys = flattenKeys(dictionariesByLocale.fr).sort()
 
-        expect(enKeys).toEqual(frKeys)
+        for (const [locale, dictionary] of Object.entries(dictionariesByLocale)) {
+            expect(flattenKeys(dictionary).sort(), `locale "${locale}"`).toEqual(referenceKeys)
+        }
     })
 })
 

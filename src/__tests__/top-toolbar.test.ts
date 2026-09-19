@@ -3,6 +3,7 @@ import type { Container, Texture } from 'pixi.js'
 import { initTopToolbar } from '../features/toolbar/top-toolbar'
 import type { ToolbarHost } from '../types/toolbar.types'
 import { I18n } from '../i18n/I18n'
+import { AVAILABLE_LOCALES } from '../i18n/locales'
 
 const { pixi, ui, buttons } = vi.hoisted(() => {
     class Texture {
@@ -290,7 +291,7 @@ describe('TopToolbar', () => {
 
         const select = document.querySelector('.toolbar-locale-select') as HTMLSelectElement
         expect(select).not.toBeNull()
-        expect(Array.from(select.options).map((option: HTMLOptionElement): string => option.value)).toEqual(['fr', 'en'])
+        expect(Array.from(select.options).map((option: HTMLOptionElement): string => option.value)).toEqual(AVAILABLE_LOCALES.map((locale: { code: string }): string => locale.code))
     })
 
     it('should pin undo/redo/help/settings/locale to the right edge on construction, with settings closest to the edge', () => {

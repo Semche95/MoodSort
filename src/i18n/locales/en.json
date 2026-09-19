@@ -7,7 +7,8 @@
         "share": "Share",
         "shareTooltip": "Share the layout",
         "shareTooltipUnsupported": "Sharing the layout is not supported by this browser",
-        "languageTooltip": "Choose language"
+        "languageTooltip": "Choose language",
+        "languageAriaLabel": "Change language"
     },
     "stack": {
         "compactTooltip": "Compact the stack",

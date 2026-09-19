@@ -1,12 +1,16 @@
-import fr from './locales/fr.json'
-import en from './locales/en.json'
 import type { Locale, TranslationKey } from './i18n.types'
 
 export const LOCALE_STORAGE_KEY = 'moodsort-locale'
 
 type Dictionary = Record<string, unknown>
+type DictionaryModule = { default: Dictionary }
 
-const dictionaries: Record<Locale, Dictionary> = { fr, en }
+/** Every locale JSON dictionary, keyed by its locale code, discovered from the files present in `./locales`: adding a locale here needs no change to this file. */
+const dictionaryModules: Record<string, DictionaryModule> = import.meta.glob<DictionaryModule>('./locales/*.json', { eager: true })
+const dictionaries = Object.fromEntries(
+    Object.entries(dictionaryModules).map(([path, module]: [string, DictionaryModule]): [string, Dictionary] =>
+        [path.replace('./locales/', '').replace('.json', ''), module.default]),
+) as Record<Locale, Dictionary>
 
 function resolveTemplate(dictionary: Dictionary, key: TranslationKey): string {
     const value: unknown = key.split('.').reduce<unknown>((node: unknown, part: string): unknown => {

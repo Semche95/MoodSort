@@ -30,10 +30,17 @@ describe('resolveLocale', () => {
     })
 
     it('falls back to English for an unsupported browser language', () => {
+        Object.defineProperty(navigator, 'language', { value: 'es-ES', configurable: true })
+        Object.defineProperty(navigator, 'languages', { value: ['es-ES'], configurable: true })
+
+        expect(resolveLocale()).toBe('en')
+    })
+
+    it('detects German as the browser locale', () => {
         Object.defineProperty(navigator, 'language', { value: 'de-DE', configurable: true })
         Object.defineProperty(navigator, 'languages', { value: ['de-DE'], configurable: true })
 
-        expect(resolveLocale()).toBe('en')
+        expect(resolveLocale()).toBe('de')
     })
 
     it('prioritizes a previously persisted locale over the detected browser locale', () => {

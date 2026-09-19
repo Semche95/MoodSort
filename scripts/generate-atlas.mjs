@@ -2,6 +2,7 @@ import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { resolve, basename } from 'node:path'
 import sharp from 'sharp'
 import { CARD_LABELS } from '../src/i18n/locales/card-labels.ts'
+import { AVAILABLE_LOCALES } from '../src/i18n/locales.ts'
 
 const CARDS_DIR = resolve(import.meta.dirname, '..', 'src', 'cards')
 const OUT_DIR = resolve(import.meta.dirname, '..', 'src', 'assets')
@@ -21,9 +22,9 @@ const LABEL_SIDE_MARGIN = FRAME_W * 0.08
 const LABEL_MAX_WIDTH = FRAME_W - LABEL_SIDE_MARGIN * 2
 const LABEL_LINE_HEIGHT_RATIO = 1.15
 
-// Languages to render an atlas for. Add a language by adding its key to
-// every entry in CARD_LABELS (and to this list).
-const LANGUAGES = ['fr', 'en']
+// Languages to render an atlas for: derived from the single locale registry
+// (src/i18n/locales.ts), so adding a language there is enough.
+const LANGUAGES = AVAILABLE_LOCALES.map((locale) => locale.code)
 
 function escapeXml(text) {
     return text
