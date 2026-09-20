@@ -5,6 +5,7 @@ import { createIcon } from '../../shared/ui/icons'
 import type { Locale } from '../../i18n/i18n.types'
 import { AVAILABLE_LOCALES } from '../../i18n/locales'
 import { I18n } from '../../i18n/I18n'
+import type { ResolvedTheme } from '../../types/theme.types'
 import { BUTTON_SIZE, createButton } from './toolbar-view'
 
 function createNativeSelect(currentLocale: Locale, onSelect: (locale: Locale) => void): HTMLSelectElement {
@@ -48,18 +49,18 @@ export interface LocaleMenu {
  * `updatePosition`), so a click is really caught by the browser's own
  * picker. Its `onchange` calls `onSelect`.
  */
-export function createLocaleMenu(tooltip: CanvasTooltip, globeIconTexture: Texture, currentLocale: Locale, onSelect: (locale: Locale) => void): LocaleMenu {
+export function createLocaleMenu(tooltip: CanvasTooltip, globeIconTexture: Texture, currentLocale: Locale, onSelect: (locale: Locale) => void, resolvedTheme: ResolvedTheme = 'light'): LocaleMenu {
     const label = I18n.t('toolbar.languageAriaLabel', undefined, currentLocale)
     const select = createNativeSelect(currentLocale, onSelect)
     document.body.appendChild(select)
 
-    const button = createButton(tooltip, createIcon(globeIconTexture), (): void => {
+    const button = createButton(tooltip, createIcon(globeIconTexture, resolvedTheme), (): void => {
         try {
             select.showPicker()
         } catch {
             select.click()
         }
-    }, 'toolbar-localebutton', label)
+    }, 'toolbar-localebutton', label, undefined, resolvedTheme)
 
     function updatePosition(canvasElement: HTMLCanvasElement): void {
         const rect = canvasElement.getBoundingClientRect()

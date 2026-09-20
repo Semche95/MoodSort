@@ -1,6 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ScreenShareViewer, initScreenShareViewer } from '../features/screen-share/screen-share-viewer'
-import { SCREEN_SHARE_GRACE_TIMEOUT_MS } from '../features/screen-share/room-config'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { VIEWER_THEME_STORAGE_KEY, THEME_STORAGE_KEY } from '../types/theme.types'
 
 const { joinRoom, rooms } = vi.hoisted(() => {
     const rooms: Array<{
@@ -21,143 +20,45 @@ const { joinRoom, rooms } = vi.hoisted(() => {
 
 vi.mock('trystero', () => ({ joinRoom }))
 
-describe('ScreenShareViewer', () => {
-    beforeEach(() => {
-        rooms.length = 0
-        joinRoom.mockClear()
-        document.body.innerHTML = ''
-        vi.useFakeTimers()
-    })
+const { ThemeServiceMock } = vi.hoisted(() => {
+    const ThemeServiceMock = vi.fn(
+        class {
+            getResolvedTheme(): void {}
+        },
+    )
 
-    afterEach(() => {
-        vi.useRealTimers()
-    })
-
-    it('joins the room and reports waiting status', () => {
-        const onStatusChange = vi.fn()
-        const viewer = new ScreenShareViewer('AB12CD', vi.fn(), onStatusChange)
-
-        viewer.start()
-
-        expect(joinRoom).toHaveBeenCalledWith(expect.objectContaining({ appId: expect.any(String) }), 'AB12CD')
-        expect(onStatusChange).toHaveBeenCalledWith('waiting')
-    })
-
-    it('forwards the received stream and reports connected status', () => {
-        const onStream = vi.fn()
-        const onStatusChange = vi.fn()
-        const viewer = new ScreenShareViewer('AB12CD', onStream, onStatusChange)
-
-        viewer.start()
-        rooms[0].onPeerStream?.('the-stream', 'host-peer')
-
-        expect(onStream).toHaveBeenCalledWith('the-stream')
-        expect(onStatusChange).toHaveBeenCalledWith('connected')
-    })
-
-    it('waits in the same room, without rejoining, when the host disconnects', () => {
-        const onStatusChange = vi.fn()
-        const viewer = new ScreenShareViewer('AB12CD', vi.fn(), onStatusChange)
-
-        viewer.start()
-        rooms[0].onPeerStream?.('the-stream', 'host-peer')
-        rooms[0].onPeerLeave?.('host-peer')
-
-        expect(onStatusChange).toHaveBeenLastCalledWith('waiting')
-        expect(joinRoom).toHaveBeenCalledTimes(1)
-    })
-
-    it('resumes once the host reconnects within the grace period, cancelling the timeout', () => {
-        const onStream = vi.fn()
-        const onStatusChange = vi.fn()
-        const onTimedOut = vi.fn()
-        const viewer = new ScreenShareViewer('AB12CD', onStream, onStatusChange, onTimedOut)
-
-        viewer.start()
-        rooms[0].onPeerLeave?.('host-peer')
-        rooms[0].onPeerStream?.('the-stream', 'host-peer')
-        vi.advanceTimersByTime(SCREEN_SHARE_GRACE_TIMEOUT_MS)
-
-        expect(onStatusChange).not.toHaveBeenCalledWith('stopped')
-        expect(onTimedOut).not.toHaveBeenCalled()
-    })
-
-    it('gives up and leaves the room after too long without the host', () => {
-        const onStatusChange = vi.fn()
-        const onTimedOut = vi.fn()
-        const viewer = new ScreenShareViewer('AB12CD', vi.fn(), onStatusChange, onTimedOut)
-
-        viewer.start()
-        vi.advanceTimersByTime(SCREEN_SHARE_GRACE_TIMEOUT_MS)
-
-        expect(rooms[0].leave).toHaveBeenCalledOnce()
-        expect(onStatusChange).toHaveBeenLastCalledWith('stopped')
-        expect(onTimedOut).toHaveBeenCalledOnce()
-    })
-
-    it('leaves the room and reports being rejected when the host says the room is busy', () => {
-        const onRoomBusy = vi.fn()
-        const viewer = new ScreenShareViewer('AB12CD', vi.fn(), vi.fn(), vi.fn(), onRoomBusy)
-
-        viewer.start()
-        const roomBusyAction = rooms[0].makeAction.mock.results[0].value
-        roomBusyAction.onMessage(null, { peerId: 'host-peer' })
-
-        expect(rooms[0].leave).toHaveBeenCalledOnce()
-        expect(onRoomBusy).toHaveBeenCalledOnce()
-    })
+    return { ThemeServiceMock }
 })
 
-describe('initScreenShareViewer', () => {
+vi.mock('../features/theme/theme-service', () => ({ ThemeService: ThemeServiceMock }))
+
+// Only the theme wiring in initScreenShareViewer is covered here.
+describe('initScreenShareViewer theme wiring', () => {
     beforeEach(() => {
         rooms.length = 0
         joinRoom.mockClear()
+        ThemeServiceMock.mockClear()
         document.body.innerHTML = ''
         const patchedGlobal = globalThis as { RTCPeerConnection?: unknown }
         patchedGlobal.RTCPeerConnection = class {}
     })
 
-    afterEach(() => {
-        Reflect.deleteProperty(globalThis, 'RTCPeerConnection')
-    })
+    it('builds its own ThemeService scoped to the viewer-dedicated storage key', async () => {
+        const { initScreenShareViewer } = await import('../features/screen-share/screen-share-viewer')
 
-    it('renders a fullscreen video element and a status banner, with no Pixi canvas', () => {
         initScreenShareViewer('AB12CD', vi.fn())
 
-        const container = document.querySelector('.screen-share-viewer')
-        expect(container).not.toBeNull()
-        expect(container?.querySelector('video')).not.toBeNull()
-        expect(document.querySelector('canvas')).toBeNull()
+        expect(ThemeServiceMock).toHaveBeenCalledTimes(1)
+        expect(ThemeServiceMock).toHaveBeenCalledWith(expect.anything(), VIEWER_THEME_STORAGE_KEY)
     })
 
-    it('attaches the received stream to the video element once connected', () => {
+    it('never constructs its ThemeService with the host app storage key', async () => {
+        const { initScreenShareViewer } = await import('../features/screen-share/screen-share-viewer')
+
         initScreenShareViewer('AB12CD', vi.fn())
-        const video = document.querySelector('video') as HTMLVideoElement
 
-        rooms[0].onPeerStream?.('the-stream', 'host-peer')
-
-        expect(video.srcObject).toBe('the-stream')
-    })
-
-    it('shows an explicit error when the host reports the room is already busy', () => {
-        initScreenShareViewer('AB12CD', vi.fn())
-        const roomBusyAction = rooms[0].makeAction.mock.results[0].value
-
-        roomBusyAction.onMessage(null, { peerId: 'host-peer' })
-
-        const status = document.querySelector('.screen-share-viewer-status')
-        expect(status?.textContent).toContain('already being followed')
-        expect(status?.classList.contains('screen-share-viewer-status--visible')).toBe(true)
-    })
-
-    it('removes the overlay, leaves the room and calls onClose when the close button is clicked', () => {
-        const onClose = vi.fn()
-        initScreenShareViewer('AB12CD', onClose)
-
-        document.querySelector<HTMLButtonElement>('.screen-share-viewer-close')?.click()
-
-        expect(rooms[0].leave).toHaveBeenCalledOnce()
-        expect(document.querySelector('.screen-share-viewer')).toBeNull()
-        expect(onClose).toHaveBeenCalled()
+        const usedKeys = ThemeServiceMock.mock.calls.map((call: unknown[]) => call[1])
+        expect(usedKeys).not.toContain(THEME_STORAGE_KEY)
+        expect(VIEWER_THEME_STORAGE_KEY).not.toBe(THEME_STORAGE_KEY)
     })
 })

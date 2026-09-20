@@ -122,10 +122,12 @@ vi.mock('pixi.js', () => {
 
     class MockText extends MockContainer {
         text: string
+        style: Record<string, unknown>
         anchor: { set(x: number, y: number): void } = { set: vi.fn() }
-        constructor(options: { text?: string } = {}) {
+        constructor(options: { text?: string; style?: Record<string, unknown> } = {}) {
             super()
             this.text = options.text ?? ''
+            this.style = options.style ?? {}
         }
     }
 

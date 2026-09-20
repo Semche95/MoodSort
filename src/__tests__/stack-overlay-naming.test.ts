@@ -73,9 +73,11 @@ const { pixi } = vi.hoisted(() => {
         override width: number = 40
         override height: number = 16
         anchor: { set(x: number, y: number): void } = { set: (): void => {} }
-        constructor(options: { text?: string } = {}) {
+        style: Record<string, unknown>
+        constructor(options: { text?: string; style?: Record<string, unknown> } = {}) {
             super()
             this.text = options.text ?? ''
+            this.style = options.style ?? {}
         }
     }
 
@@ -115,6 +117,37 @@ describe('StackOverlay name label and button', () => {
         const label = labelContainer.children.find((t: { text: string }): boolean => t.text === 'Joie')
         expect(label).toBeDefined()
         expect(label?.visible).toBe(true)
+    })
+
+    it('draws the border and handle with the dark theme colors when the injected getResolvedTheme reports dark, re-read fresh on every render', () => {
+        const cardLayer = new pixi.Container()
+        const cardA = makeCard(100, 100, 200, 300, 'a')
+        const cardB = makeCard(300, 100, 200, 300, 'b')
+        cardLayer.addChild(cardA)
+        cardLayer.addChild(cardB)
+
+        let theme: 'light' | 'dark' = 'light'
+        const { app, tick } = createApp()
+        const overlay = new StackOverlay(app, cardLayer as unknown as Container, () => ({}), () => theme)
+        overlay.addToStage()
+        tick()
+
+        const border = overlay.stackBorder as unknown as { calls: Array<{ method: string; args: unknown[] }> }
+        const handle = overlay.stackDragHandle as unknown as { calls: Array<{ method: string; args: unknown[] }> }
+        const lightStroke = border.calls.filter((c: { method: string; args: unknown[] }): boolean => c.method === 'stroke').pop()!
+        const lightFill = handle.calls.find((c: { method: string; args: unknown[] }): boolean => c.method === 'fill')!
+        expect((lightStroke.args[0] as { color: number }).color).toBe(0x333333)
+        expect((lightFill.args[0] as { color: number }).color).toBe(0x444444)
+
+        theme = 'dark'
+        border.calls = []
+        handle.calls = []
+        tick()
+
+        const darkStroke = border.calls.filter((c: { method: string; args: unknown[] }): boolean => c.method === 'stroke').pop()!
+        const darkFill = handle.calls.find((c: { method: string; args: unknown[] }): boolean => c.method === 'fill')!
+        expect((darkStroke.args[0] as { color: number }).color).toBe(0xcccccc)
+        expect((darkFill.args[0] as { color: number }).color).toBe(0x888888)
     })
 
     it('does not draw a label for an unnamed stack', () => {

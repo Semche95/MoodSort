@@ -3,7 +3,9 @@ import { Card } from '../../types/card.types'
 import { AnimationTarget } from '../../types/animation.types'
 import { CardState } from '../../types/card-state.types'
 import { Position } from '../../types/position.types'
+import { ResolvedTheme } from '../../types/theme.types'
 import { clampCardPosition } from '../stack/stack'
+import { getPixiThemeColors } from '../theme/pixi-theme-colors'
 
 /** Screen width (in px) at which cards render at native size */
 export const CARD_REFERENCE_WIDTH: number = 2560
@@ -21,13 +23,14 @@ export function createCard(
     frameName: string,
     texture: Texture,
     onDragStart: (event: FederatedPointerEvent) => void,
+    getResolvedTheme: () => ResolvedTheme = (): ResolvedTheme => 'light',
 ): Card {
     const card = new Container() as Card
     card.imageUrl = frameName
 
     const shadow = new Graphics()
     shadow.roundRect(0, 0, texture.width, texture.height, 8)
-    shadow.fill({ color: 0x000000, alpha: 0.25 })
+    shadow.fill({ color: getPixiThemeColors(getResolvedTheme()).card.shadow, alpha: 0.25 })
     shadow.filters = [new BlurFilter({ strength: 4 })]
     shadow.x = 4
     shadow.y = 4
@@ -40,7 +43,8 @@ export function createCard(
     card.eventMode = 'static'
     card.cursor = 'move'
     card.on('pointerdown', onDragStart, card)
-    card.on('pointerover', (): void => { sprite.tint = 0xFFEEDD })
+    // Read fresh on every hover so a theme flip is picked up without re-tinting existing cards.
+    card.on('pointerover', (): void => { sprite.tint = getPixiThemeColors(getResolvedTheme()).card.hoverTint })
     card.on('pointerout', (): void => { sprite.tint = 0xFFFFFF })
 
     return card
@@ -49,10 +53,16 @@ export function createCard(
 export class CardManager {
     private app: Application
     private cardLayer: Container
+    private resolvedTheme: ResolvedTheme
 
     constructor(app: Application, cardLayer: Container) {
         this.app = app
         this.cardLayer = cardLayer
+        this.resolvedTheme = 'light'
+    }
+
+    setResolvedTheme(theme: ResolvedTheme): void {
+        this.resolvedTheme = theme
     }
 
     resolveOrder(images: string[], saved: CardState): string[] {
@@ -74,7 +84,7 @@ export class CardManager {
         const cards: Card[] = []
         for (let i = 0; i < frameNames.length; i++) {
             const texture = spritesheet.textures[frameNames[i]]
-            const card = createCard(frameNames[i], texture, onDragStart)
+            const card = createCard(frameNames[i], texture, onDragStart, (): ResolvedTheme => this.resolvedTheme)
             this.applyScale(card)
             cards.push(card)
             this.placeCard(card, positions[frameNames[i]])

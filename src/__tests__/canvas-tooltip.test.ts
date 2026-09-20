@@ -41,12 +41,14 @@ const { pixi } = vi.hoisted(() => {
         text: string
         width: number = 40
         height: number = 16
+        style: { fill?: number } = {}
         anchor: { set(x: number, y: number): void } = {
             set: (): void => {},
         }
-        constructor(options: { text?: string } = {}) {
+        constructor(options: { text?: string; style?: { fill?: number } } = {}) {
             super()
             this.text = options.text ?? ''
+            this.style = options.style ?? {}
         }
     }
 
@@ -90,5 +92,21 @@ describe('CanvasTooltip', () => {
         tooltip.hide()
 
         expect((tooltip.view as unknown as { visible: boolean }).visible).toBe(false)
+    })
+
+    it('reads the fill and background color fresh from the getResolvedTheme callback on every show', () => {
+        let theme: 'light' | 'dark' = 'light'
+        const tooltip = new CanvasTooltip(() => theme)
+
+        tooltip.show(0, 0, 'Annuler')
+        const text = tooltip.view.children[1] as unknown as { style: { fill?: number } }
+        expect(text.style.fill).toBe(0xffffff)
+
+        theme = 'dark'
+        tooltip.show(0, 0, 'Renommer')
+        expect(text.style.fill).toBe(0xffffff)
+        const bg = (tooltip.view as unknown as { children: Array<{ calls: Array<{ method: string; args: unknown[] }> }> }).children[0]
+        const lastFillCall = bg.calls.filter((call: { method: string }): boolean => call.method === 'fill').pop()!
+        expect((lastFillCall.args[0] as { color: number }).color).toBe(0x2a2a2a)
     })
 })

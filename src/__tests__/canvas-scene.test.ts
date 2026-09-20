@@ -22,10 +22,13 @@ vi.mock('pixi.js', () => {
     const mockApp: Record<string, unknown> = {
         stage: undefined,
         screen: { width: 800, height: 600 },
-        renderer: { resize: vi.fn((w: number, h: number): void => {
-            (mockApp.screen as { width: number; height: number }).width = w
-            ;(mockApp.screen as { width: number; height: number }).height = h
-        }) },
+        renderer: {
+            resize: vi.fn((w: number, h: number): void => {
+                (mockApp.screen as { width: number; height: number }).width = w
+                ;(mockApp.screen as { width: number; height: number }).height = h
+            }),
+            background: { color: 0 },
+        },
         ticker: {
             add: (fn: () => void): void => {
                 tickers.push(fn)
@@ -111,10 +114,12 @@ vi.mock('pixi.js', () => {
 
     class MockText extends MockContainer {
         text: string
+        style: Record<string, unknown>
         anchor: { set(x: number, y: number): void } = { set: vi.fn() }
-        constructor(options: { text?: string } = {}) {
+        constructor(options: { text?: string; style?: Record<string, unknown> } = {}) {
             super()
             this.text = options.text ?? ''
+            this.style = options.style ?? {}
         }
     }
 
@@ -192,6 +197,38 @@ describe('CanvasScene', () => {
         expect(testable.cards.map((c: Card): string => c.imageUrl)).toEqual(['card-a', 'card-b'])
         expect(scene.stage).toBe(testable.app.stage)
         expect(document.body.querySelector('canvas')).not.toBeNull()
+    })
+
+    it('applyTheme updates the renderer background color and the theme cards read on hover', async () => {
+        const { scene } = await setup()
+        const pixi = await importMockedPixi()
+        const mockApp = pixi.__getMockApp() as unknown as { renderer: { background: { color: number } } }
+
+        scene.applyTheme('dark')
+
+        expect(mockApp.renderer.background.color).toBe(0x1e1e1e)
+    })
+
+    it('resolves the initial theme from the provided ThemeService and applies it once init resolves', async () => {
+        const store = seedStore()
+        let listener: ((resolved: 'light' | 'dark') => void) | undefined
+        const fakeThemeService = {
+            getResolvedTheme: (): 'light' | 'dark' => 'dark',
+            onChange: (fn: (resolved: 'light' | 'dark') => void): (() => void) => {
+                listener = fn
+                return (): void => {}
+            },
+        }
+        const scene = new CanvasScene(store, historyStore, fakeThemeService as never)
+        await scene.init(['card-a', 'card-b'], mockSpritesheet as unknown as Spritesheet)
+        const pixi = await importMockedPixi()
+        const mockApp = pixi.__getMockApp() as unknown as { renderer: { background: { color: number } } }
+
+        expect(mockApp.renderer.background.color).toBe(0x1e1e1e)
+
+        listener?.('light')
+
+        expect(mockApp.renderer.background.color).toBe(0xa9a9a9)
     })
 
     it('exposes the current screen size after init, resized to the window dimensions', async () => {

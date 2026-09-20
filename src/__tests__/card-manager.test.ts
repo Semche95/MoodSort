@@ -90,6 +90,18 @@ describe('createCard', () => {
         pointerout.handler()
         expect(card.innerSprite.tint).toBe(0xFFFFFF)
     })
+
+    it('reads the dark theme hover tint from the getResolvedTheme callback given at creation', () => {
+        const texture = { width: 200, height: 300 }
+        const card = createCard('card-a', texture as unknown as Texture, vi.fn(), () => 'dark') as unknown as Container & {
+            listeners: Listener[]
+            innerSprite: { tint: number }
+        }
+
+        const pointerover = card.listeners.find((l: Listener): boolean => l.event === 'pointerover')!
+        pointerover.handler()
+        expect(card.innerSprite.tint).toBe(0xffd9a8)
+    })
 })
 
 describe('CardManager', () => {
@@ -102,6 +114,20 @@ describe('CardManager', () => {
         app = { screen: { width: 1280, height: 720 } } as unknown as Application
         cardLayer = new MockContainer() as unknown as Container
         manager = new CardManager(app, cardLayer)
+    })
+
+    describe('setResolvedTheme', () => {
+        it('changes the hover tint applied to cards created afterwards through loadCards', () => {
+            const spritesheet = { textures: { a: { width: 200, height: 300 } } }
+            manager.setResolvedTheme('dark')
+            const cards = manager.loadCards(['a'], {}, vi.fn(), spritesheet as unknown as Spritesheet) as unknown as Array<
+                Container & { listeners: Listener[]; innerSprite: { tint: number } }
+            >
+
+            const pointerover = cards[0].listeners.find((l: Listener): boolean => l.event === 'pointerover')!
+            pointerover.handler()
+            expect(cards[0].innerSprite.tint).toBe(0xffd9a8)
+        })
     })
 
     describe('resolveOrder', () => {

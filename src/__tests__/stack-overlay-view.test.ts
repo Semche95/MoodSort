@@ -9,9 +9,12 @@ import {
     drawMergeDim,
     drawMergePlus,
     drawMergeTargetBorder,
+    drawNameButton,
+    drawNameIcon,
     drawSingleBox,
     drawSingleStack,
 } from '../features/stack/stack-overlay/stack-overlay-view'
+import { getPixiThemeColors } from '../features/theme/pixi-theme-colors'
 
 type Call = { method: string; args: unknown[] }
 
@@ -137,5 +140,49 @@ describe('stack-overlay-view', () => {
         drawMergePlus(stack, mergePlus)
 
         expect(mergePlus.calls.filter((c: Call): boolean => c.method === 'rect')).toHaveLength(2)
+    })
+
+    it('draws with the dark theme palette when one is passed explicitly', () => {
+        const darkPalette = getPixiThemeColors('dark').stackOverlay
+        const border = makeGraphics()
+        const handle = makeGraphics()
+        const mergeIndicator = makeGraphics()
+        const mergePlus = makeGraphics()
+        const stack = [makeCard(0, 0, 100, 100, 'a')]
+
+        drawSingleStack(stack, border, handle, darkPalette)
+        drawMergeTargetBorder(stack, mergeIndicator, darkPalette)
+        drawMergeDim(stack, mergeIndicator, darkPalette)
+        drawMergePlus(stack, mergePlus, darkPalette)
+
+        const borderStroke = border.calls.find((c: Call): boolean => c.method === 'stroke')!
+        expect((borderStroke.args[0] as { color: number }).color).toBe(darkPalette.border)
+        const handleFill = handle.calls.find((c: Call): boolean => c.method === 'fill')!
+        expect((handleFill.args[0] as { color: number }).color).toBe(darkPalette.handle)
+        const mergeDimFill = mergeIndicator.calls.filter((c: Call): boolean => c.method === 'fill').pop()!
+        expect((mergeDimFill.args[0] as { color: number }).color).toBe(darkPalette.mergeDim)
+        const mergePlusFill = mergePlus.calls.find((c: Call): boolean => c.method === 'fill')!
+        expect((mergePlusFill.args[0] as { color: number }).color).toBe(darkPalette.mergePlus)
+    })
+
+    it('drawNameButton and drawNameIcon draw the pencil icon with the given palette', () => {
+        const darkPalette = getPixiThemeColors('dark').stackOverlay
+        const nameButton = makeGraphics()
+        const stack = [makeCard(0, 0, 100, 100, 'a')]
+
+        drawNameButton(stack, nameButton, darkPalette)
+
+        expect(nameButton.calls.some((c: Call): boolean => c.method === 'roundRect')).toBe(true)
+        const fills = nameButton.calls.filter((c: Call): boolean => c.method === 'fill')
+        expect(fills.some((c: Call): boolean => (c.args[0] as { color: number }).color === darkPalette.controlIcon)).toBe(true)
+    })
+
+    it('drawNameIcon draws a pencil shaft and tip', () => {
+        const icon = makeGraphics()
+
+        drawNameIcon({ x: 0, y: 0, width: 24, height: 24 }, icon)
+
+        expect(icon.calls.filter((c: Call): boolean => c.method === 'moveTo')).toHaveLength(2)
+        expect(icon.calls.filter((c: Call): boolean => c.method === 'closePath')).toHaveLength(2)
     })
 })

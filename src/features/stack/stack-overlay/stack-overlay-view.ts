@@ -1,6 +1,9 @@
 import { Graphics } from 'pixi.js'
 import { Card } from '../../../types/card.types'
 import { computeBoundingBox, computeCompactButtonBox, computeNameButtonBox, STACK_HIGHLIGHT_PADDING, STACK_HANDLE_HEIGHT } from '../stack'
+import { getPixiThemeColors, PixiThemePalette } from '../../theme/pixi-theme-colors'
+
+const DEFAULT_PALETTE: PixiThemePalette['stackOverlay'] = getPixiThemeColors('light').stackOverlay
 
 function paddedBox(
     box: { x: number; y: number; width: number; height: number },
@@ -14,55 +17,56 @@ function paddedBox(
     }
 }
 
-function drawOutlineRect(g: Graphics, rect: { x: number; y: number; width: number; height: number }): void {
+function drawOutlineRect(g: Graphics, rect: { x: number; y: number; width: number; height: number }, borderColor: number): void {
     g.rect(rect.x, rect.y, rect.width, rect.height)
     g.fill({ color: 0x000000, alpha: 0.001 })
     g.rect(rect.x, rect.y, rect.width, rect.height)
-    g.stroke({ color: 0x333333, width: 2, alpha: 0.6 })
+    g.stroke({ color: borderColor, width: 2, alpha: 0.6 })
 }
 
 export function drawSingleBox(
     box: { x: number; y: number; width: number; height: number },
     border: Graphics,
     handle: Graphics,
+    palette: PixiThemePalette['stackOverlay'] = DEFAULT_PALETTE,
 ): void {
     const rect = paddedBox(box)
     const { x: bx, y: by, width: bw } = rect
 
-    drawOutlineRect(border, rect)
+    drawOutlineRect(border, rect, palette.border)
 
     const handleWidth = Math.min(bw, 80)
     const hx = bx + (bw - handleWidth) / 2
     const hy = by - STACK_HANDLE_HEIGHT / 2
 
     handle.roundRect(hx, hy, handleWidth, STACK_HANDLE_HEIGHT, 6)
-    handle.fill({ color: 0x444444, alpha: 0.75 })
-    drawGripIcon(hx, hy, handleWidth, handle)
+    handle.fill({ color: palette.handle, alpha: 0.75 })
+    drawGripIcon(hx, hy, handleWidth, handle, palette)
 }
 
-export function drawSingleStack(stack: Card[], border: Graphics, handle: Graphics): void {
-    drawSingleBox(computeBoundingBox(stack), border, handle)
+export function drawSingleStack(stack: Card[], border: Graphics, handle: Graphics, palette: PixiThemePalette['stackOverlay'] = DEFAULT_PALETTE): void {
+    drawSingleBox(computeBoundingBox(stack), border, handle, palette)
 }
 
-export function drawGripIcon(hx: number, hy: number, handleWidth: number, handle: Graphics): void {
+export function drawGripIcon(hx: number, hy: number, handleWidth: number, handle: Graphics, palette: PixiThemePalette['stackOverlay'] = DEFAULT_PALETTE): void {
     const cx = hx + handleWidth / 2
     const cy = hy + STACK_HANDLE_HEIGHT / 2
     const lineHalfWidth = 10
     const spacing = 4
     for (let i = -1; i <= 1; i++) {
         handle.rect(cx - lineHalfWidth, cy + i * spacing - 1, lineHalfWidth * 2, 2)
-        handle.fill({ color: 0xaaaaaa, alpha: 0.9 })
+        handle.fill({ color: palette.controlIcon, alpha: 0.9 })
     }
 }
 
-export function drawCompactButton(stack: Card[], compactButton: Graphics): void {
+export function drawCompactButton(stack: Card[], compactButton: Graphics, palette: PixiThemePalette['stackOverlay'] = DEFAULT_PALETTE): void {
     const rect = computeCompactButtonBox(stack)
     if (!rect) {
         return
     }
     compactButton.roundRect(rect.x, rect.y, rect.width, rect.height, 6)
-    compactButton.fill({ color: 0x444444, alpha: 0.75 })
-    drawCompactIcon(rect, compactButton)
+    compactButton.fill({ color: palette.handle, alpha: 0.75 })
+    drawCompactIcon(rect, compactButton, palette)
 }
 
 /**
@@ -74,6 +78,7 @@ export function drawCompactButton(stack: Card[], compactButton: Graphics): void 
 export function drawCompactIcon(
     rect: { x: number; y: number; width: number; height: number },
     compactButton: Graphics,
+    palette: PixiThemePalette['stackOverlay'] = DEFAULT_PALETTE,
 ): void {
     const scaleX = rect.width / 24
     const scaleY = rect.height / 24
@@ -86,8 +91,8 @@ export function drawCompactIcon(
     // Arrows reach almost to the button's corners so they read at the same
     // visual size as the handle's grip icon, instead of a small mark
     // floating in the middle of the button.
-    drawArrow(compactButton, toWorld(21, 3), toWorld(13, 11), thickness)
-    drawArrow(compactButton, toWorld(3, 21), toWorld(11, 13), thickness)
+    drawArrow(compactButton, toWorld(21, 3), toWorld(13, 11), thickness, palette.controlIcon)
+    drawArrow(compactButton, toWorld(3, 21), toWorld(11, 13), thickness, palette.controlIcon)
 }
 
 export function drawArrow(
@@ -95,6 +100,7 @@ export function drawArrow(
     from: { x: number; y: number },
     to: { x: number; y: number },
     thickness: number,
+    color: number = DEFAULT_PALETTE.controlIcon,
 ): void {
     const dx = to.x - from.x
     const dy = to.y - from.y
@@ -114,20 +120,20 @@ export function drawArrow(
     icon.lineTo(shaftEndX - px * halfThickness, shaftEndY - py * halfThickness)
     icon.lineTo(from.x - px * halfThickness, from.y - py * halfThickness)
     icon.closePath()
-    icon.fill({ color: 0xaaaaaa, alpha: 0.9 })
+    icon.fill({ color, alpha: 0.9 })
 
     icon.moveTo(to.x, to.y)
     icon.lineTo(shaftEndX + px * halfHeadWidth, shaftEndY + py * halfHeadWidth)
     icon.lineTo(shaftEndX - px * halfHeadWidth, shaftEndY - py * halfHeadWidth)
     icon.closePath()
-    icon.fill({ color: 0xaaaaaa, alpha: 0.9 })
+    icon.fill({ color, alpha: 0.9 })
 }
 
-export function drawNameButton(stack: Card[], nameButton: Graphics): void {
+export function drawNameButton(stack: Card[], nameButton: Graphics, palette: PixiThemePalette['stackOverlay'] = DEFAULT_PALETTE): void {
     const rect = computeNameButtonBox(stack)
     nameButton.roundRect(rect.x, rect.y, rect.width, rect.height, 6)
-    nameButton.fill({ color: 0x444444, alpha: 0.75 })
-    drawNameIcon(rect, nameButton)
+    nameButton.fill({ color: palette.handle, alpha: 0.75 })
+    drawNameIcon(rect, nameButton, palette)
 }
 
 /**
@@ -138,6 +144,7 @@ export function drawNameButton(stack: Card[], nameButton: Graphics): void {
 export function drawNameIcon(
     rect: { x: number; y: number; width: number; height: number },
     nameButton: Graphics,
+    palette: PixiThemePalette['stackOverlay'] = DEFAULT_PALETTE,
 ): void {
     const scale = Math.min(rect.width / 24, rect.height / 24)
     const toWorld = (px: number, py: number): { x: number; y: number } => ({
@@ -164,34 +171,34 @@ export function drawNameIcon(
     nameButton.lineTo(to.x - px, to.y - py)
     nameButton.lineTo(from.x - px, from.y - py)
     nameButton.closePath()
-    nameButton.fill({ color: 0xaaaaaa, alpha: 0.9 })
+    nameButton.fill({ color: palette.controlIcon, alpha: 0.9 })
 
     const tip = toWorld(20, 4)
     nameButton.moveTo(to.x + px, to.y + py)
     nameButton.lineTo(tip.x, tip.y)
     nameButton.lineTo(to.x - px, to.y - py)
     nameButton.closePath()
-    nameButton.fill({ color: 0xaaaaaa, alpha: 0.9 })
+    nameButton.fill({ color: palette.controlIcon, alpha: 0.9 })
 }
 
-export function drawMergeTargetBorder(stack: Card[], mergeIndicator: Graphics): void {
-    drawOutlineRect(mergeIndicator, paddedBox(computeBoundingBox(stack)))
+export function drawMergeTargetBorder(stack: Card[], mergeIndicator: Graphics, palette: PixiThemePalette['stackOverlay'] = DEFAULT_PALETTE): void {
+    drawOutlineRect(mergeIndicator, paddedBox(computeBoundingBox(stack)), palette.border)
 }
 
-export function drawMergeDim(stack: Card[], mergeIndicator: Graphics): void {
+export function drawMergeDim(stack: Card[], mergeIndicator: Graphics, palette: PixiThemePalette['stackOverlay'] = DEFAULT_PALETTE): void {
     const rect = paddedBox(computeBoundingBox(stack))
     mergeIndicator.rect(rect.x, rect.y, rect.width, rect.height)
-    mergeIndicator.fill({ color: 0x000000, alpha: 0.15 })
+    mergeIndicator.fill({ color: palette.mergeDim, alpha: 0.15 })
 }
 
-export function drawMergePlus(stack: Card[], mergePlus: Graphics): void {
+export function drawMergePlus(stack: Card[], mergePlus: Graphics, palette: PixiThemePalette['stackOverlay'] = DEFAULT_PALETTE): void {
     const box = computeBoundingBox(stack)
     const cx = box.x + box.width / 2
     const cy = box.y + box.height / 2
     const arm = 20
     const thickness = 5
     mergePlus.rect(cx - arm, cy - thickness / 2, arm * 2, thickness)
-    mergePlus.fill({ color: 0x333333, alpha: 0.7 })
+    mergePlus.fill({ color: palette.mergePlus, alpha: 0.7 })
     mergePlus.rect(cx - thickness / 2, cy - arm, thickness, arm * 2)
-    mergePlus.fill({ color: 0x333333, alpha: 0.7 })
+    mergePlus.fill({ color: palette.mergePlus, alpha: 0.7 })
 }

@@ -8,6 +8,42 @@
     <meta name="description" content="MoodSort is an emotional exploration tool for identifying, sorting and expressing emotions through an interactive card-based interface.">
     <meta property="og:title" content="MoodSort - An emotional exploration tool">
     <meta property="og:description" content="An interactive emotional card-sorting application designed to help identify and express emotions.">
+    <script>
+        (function () {
+            try {
+                var roomHashPattern = /^#room=([A-Za-z0-9]{6})$/
+                var isViewer = roomHashPattern.test(location.hash)
+                var storageKey = isViewer ? 'moodsort-viewer-theme' : 'moodsort-theme'
+
+                var theme = null
+                try {
+                    var raw = localStorage.getItem(storageKey)
+                    if (raw) {
+                        var parsed = JSON.parse(raw)
+                        if (parsed === 'light' || parsed === 'dark') {
+                            theme = parsed
+                        }
+                    }
+                } catch (e) {
+                    theme = null
+                }
+
+                if (!theme) {
+                    var prefersDark = false
+                    try {
+                        prefersDark = !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+                    } catch (e) {
+                        prefersDark = false
+                    }
+                    theme = prefersDark ? 'dark' : 'light'
+                }
+
+                document.documentElement.setAttribute('data-theme', theme)
+            } catch (e) {
+                // Never let the anti-FOUC script break page load.
+            }
+        })()
+    </script>
     <script type="module" src="/src/app/main.ts"></script>
 </head>
 <body>

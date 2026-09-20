@@ -1,7 +1,10 @@
 import { I18n } from '../../i18n/I18n'
+import { ThemeService } from '../theme/theme-service'
+import { Theme } from '../../types/theme.types'
 
 export function createSettingsModal(options: {
     onResetPositions: () => void
+    themeService: ThemeService
 }): HTMLDivElement {
     const overlay = document.createElement('div')
     overlay.className = 'settings-overlay'
@@ -15,6 +18,14 @@ export function createSettingsModal(options: {
             <button class="settings-close" aria-label="${I18n.t('settings.closeAriaLabel')}">&times;</button>
         </div>
         <div class="settings-body">
+            <section class="settings-section">
+                <h2>${I18n.t('settings.themeSection')}</h2>
+                <div class="settings-theme-toggle" role="group">
+                    <button class="settings-theme-option" data-theme="light">${I18n.t('settings.themeLight')}</button>
+                    <button class="settings-theme-option" data-theme="dark">${I18n.t('settings.themeDark')}</button>
+                    <button class="settings-theme-option" data-theme="auto">${I18n.t('settings.themeAuto')}</button>
+                </div>
+            </section>
             <section class="settings-section">
                 <h2>${I18n.t('settings.cardsSection')}</h2>
                 <p>${I18n.t('settings.resetPositionsDescription')}</p>
@@ -34,9 +45,19 @@ export function createSettingsModal(options: {
         }
     })
 
+    const themeButtons = modal.querySelectorAll<HTMLButtonElement>('.settings-theme-option')
+    setActiveThemeButton(themeButtons, options.themeService.getTheme())
+    for (const button of themeButtons) {
+        button.addEventListener('click', (): void => {
+            const theme = button.dataset.theme as Theme
+            options.themeService.setTheme(theme)
+            setActiveThemeButton(themeButtons, theme)
+        })
+    }
+
     const resetBtn = modal.querySelector<HTMLButtonElement>('.settings-reset-positions')!
     resetBtn.addEventListener('click', (): void => {
-        showConfirmation(modal, I18n.t('settings.confirmResetTitle'), I18n.t('settings.confirmResetMessage'), (): void => {
+        showConfirmation(modal.querySelector<HTMLDivElement>('.settings-body')!, I18n.t('settings.confirmResetTitle'), I18n.t('settings.confirmResetMessage'), (): void => {
             options.onResetPositions()
             overlay.remove()
         })
@@ -44,6 +65,14 @@ export function createSettingsModal(options: {
 
     overlay.appendChild(modal)
     return overlay
+}
+
+function setActiveThemeButton(buttons: NodeListOf<HTMLButtonElement>, activeTheme: Theme): void {
+    for (const button of buttons) {
+        const isActive = button.dataset.theme === activeTheme
+        button.classList.toggle('active', isActive)
+        button.setAttribute('aria-pressed', String(isActive))
+    }
 }
 
 function showConfirmation(

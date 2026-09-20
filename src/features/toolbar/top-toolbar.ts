@@ -13,7 +13,9 @@ import { I18n, switchLocale } from '../../i18n/I18n'
 import type { Locale } from '../../i18n/i18n.types'
 import { createLocaleMenu } from './locale-menu'
 import type { LocaleMenu } from './locale-menu'
-import { BUTTON_SIZE, LOGO_EMOJI_SIZE, createButton, createLogo, createShareButton, setButtonEnabled, setShareIndicators } from './toolbar-view'
+import { BUTTON_SIZE, LOGO_EMOJI_SIZE, applyButtonTheme, applyLogoTheme, applyShareButtonTheme, createButton, createLogo, createShareButton, setButtonEnabled, setShareIndicators } from './toolbar-view'
+import type { ThemeService } from '../theme/theme-service'
+import type { ResolvedTheme } from '../../types/theme.types'
 
 const GAP = 8
 const TOP_MARGIN = 16
@@ -41,28 +43,31 @@ type ToolbarState = {
     localeMenu: LocaleMenu
     shareButton: ReturnType<typeof createShareButton>['button']
     onDismissOnboarding: () => void
+    themeService: ThemeService
 }
 
-function createToolbarState(host: ToolbarHost, onDismissOnboarding: () => void, iconTextures: Record<string, Texture>): ToolbarState {
+function createToolbarState(host: ToolbarHost, onDismissOnboarding: () => void, iconTextures: Record<string, Texture>, themeService: ThemeService): ToolbarState {
+    const resolvedTheme = themeService.getResolvedTheme()
     const tooltip = new CanvasTooltip()
-    const logo = createLogo()
-    const undoIcon = createIcon(iconTextures['undo-2'])
-    const redoIcon = createIcon(iconTextures['redo-2'])
+    const logo = createLogo(resolvedTheme)
+    const undoIcon = createIcon(iconTextures['undo-2'], resolvedTheme)
+    const redoIcon = createIcon(iconTextures['redo-2'], resolvedTheme)
     const shareSupported = isScreenShareHostSupported()
 
-    const state = { host, tooltip, logo, undoIcon, redoIcon, onDismissOnboarding } as ToolbarState
+    const state = { host, tooltip, logo, undoIcon, redoIcon, onDismissOnboarding, themeService } as ToolbarState
 
-    state.undoButton = createButton(tooltip, undoIcon, (): void => doUndo(state), 'toolbar-undobutton', I18n.t('toolbar.undo'))
-    state.redoButton = createButton(tooltip, redoIcon, (): void => doRedo(state), 'toolbar-redobutton', I18n.t('toolbar.redo'))
-    state.helpButton = createButton(tooltip, createHelpIcon(), (): void => showOnboarding(state), 'toolbar-helpbutton', I18n.t('toolbar.help'), 1)
-    state.settingsButton = createButton(tooltip, createIcon(iconTextures['sliders-horizontal']), (): void => openSettings(state), 'toolbar-settingsbutton', I18n.t('toolbar.settings'))
+    state.undoButton = createButton(tooltip, undoIcon, (): void => doUndo(state), 'toolbar-undobutton', I18n.t('toolbar.undo'), undefined, resolvedTheme)
+    state.redoButton = createButton(tooltip, redoIcon, (): void => doRedo(state), 'toolbar-redobutton', I18n.t('toolbar.redo'), undefined, resolvedTheme)
+    state.helpButton = createButton(tooltip, createHelpIcon(resolvedTheme), (): void => showOnboarding(state), 'toolbar-helpbutton', I18n.t('toolbar.help'), 1, resolvedTheme)
+    state.settingsButton = createButton(tooltip, createIcon(iconTextures['sliders-horizontal'], resolvedTheme), (): void => openSettings(state), 'toolbar-settingsbutton', I18n.t('toolbar.settings'), undefined, resolvedTheme)
 
     const share = createShareButton(
         tooltip,
-        createIcon(iconTextures['screen-share']),
+        createIcon(iconTextures['screen-share'], resolvedTheme),
         (): void => openScreenShare(state),
         shareSupported ? I18n.t('toolbar.shareTooltip') : I18n.t('toolbar.shareTooltipUnsupported'),
         I18n.t('toolbar.share'),
+        resolvedTheme,
     )
     state.shareButton = share.button
     state.shareIcon = share.content
@@ -70,7 +75,7 @@ function createToolbarState(host: ToolbarHost, onDismissOnboarding: () => void, 
     state.shareViewerIndicator = share.viewerIndicator
     setButtonEnabled(state.shareButton, state.shareIcon, shareSupported, tooltip)
 
-    state.localeMenu = createLocaleMenu(tooltip, iconTextures.globe, I18n.getLocale(), (locale: Locale): void => switchLocale(locale))
+    state.localeMenu = createLocaleMenu(tooltip, iconTextures.globe, I18n.getLocale(), (locale: Locale): void => switchLocale(locale), resolvedTheme)
 
     if (shareSupported) {
         subscribeToSharing(host.canvasElement, (sharing: SharingState): void => {
@@ -114,7 +119,18 @@ function openSettings(state: ToolbarState): void {
             state.host.resetPositions()
             updateHistoryButtons(state)
         },
+        themeService: state.themeService,
     }))
+}
+
+function applyToolbarTheme(state: ToolbarState, resolved: ResolvedTheme): void {
+    applyLogoTheme(state.logo, resolved)
+    applyButtonTheme(state.undoButton, resolved)
+    applyButtonTheme(state.redoButton, resolved)
+    applyButtonTheme(state.helpButton, resolved)
+    applyButtonTheme(state.settingsButton, resolved)
+    applyButtonTheme(state.localeMenu.button, resolved)
+    applyShareButtonTheme(state.shareButton, state.shareIcon, state.shareActiveIndicator, state.shareViewerIndicator, resolved)
 }
 
 function openScreenShare(state: ToolbarState): void {
@@ -151,11 +167,11 @@ function resizeToolbar(state: ToolbarState): void {
  * is never needed after setup (everything is wired via `host` callbacks), so
  * it's exposed as an init function rather than a class kept around unused.
  */
-export function initTopToolbar(host: ToolbarHost, onDismissOnboarding: () => void, iconTextures: Record<string, Texture>): void {
+export function initTopToolbar(host: ToolbarHost, onDismissOnboarding: () => void, iconTextures: Record<string, Texture>, themeService: ThemeService): void {
     const container = new Container()
     container.label = 'top-toolbar'
 
-    const state = createToolbarState(host, onDismissOnboarding, iconTextures)
+    const state = createToolbarState(host, onDismissOnboarding, iconTextures, themeService)
 
     container.addChild(state.logo)
     container.addChild(state.undoButton)
@@ -171,6 +187,7 @@ export function initTopToolbar(host: ToolbarHost, onDismissOnboarding: () => voi
     host.setOnHistoryChange((): void => updateHistoryButtons(state))
     host.registerOnResize((): void => resizeToolbar(state))
     window.addEventListener('scroll', (): void => state.localeMenu.updatePosition(state.host.canvasElement), true)
+    themeService.onChange((resolved: ResolvedTheme): void => applyToolbarTheme(state, resolved))
     resizeToolbar(state)
     updateHistoryButtons(state)
 }

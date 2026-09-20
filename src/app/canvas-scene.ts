@@ -2,6 +2,9 @@ import { Application, Container, FederatedPointerEvent, Spritesheet } from 'pixi
 import { Card } from '../types/card.types'
 import { Position } from '../types/position.types'
 import { AnimationTarget } from '../types/animation.types'
+import { ResolvedTheme } from '../types/theme.types'
+import type { ThemeService } from '../features/theme/theme-service'
+import { getPixiThemeColors } from '../features/theme/pixi-theme-colors'
 import { CardManager } from '../features/card/card-manager'
 import { DragHandler } from '../features/drag/drag-handler'
 import { CardDrag } from '../features/drag/card-drag'
@@ -38,8 +41,9 @@ export class CanvasScene {
     private stackNames: Record<string, string>
     private onHistoryChange: () => void
     private onResize: () => void
+    private resolvedTheme: ResolvedTheme
 
-    constructor(store: CardStateService, historyStore: IStore) {
+    constructor(store: CardStateService, historyStore: IStore, themeService?: ThemeService) {
         this.app = new Application()
         this.cardLayer = new Container()
         this.cardLayer.label = 'card-layer'
@@ -47,8 +51,10 @@ export class CanvasScene {
         this.stackNames = {}
         this.onHistoryChange = (): void => {}
         this.onResize = (): void => {}
+        this.resolvedTheme = themeService?.getResolvedTheme() ?? 'light'
         this.positionPersistence = new PositionPersistence(store)
         this.cardManager = new CardManager(this.app, this.cardLayer)
+        this.cardManager.setResolvedTheme(this.resolvedTheme)
         this.actionHistory = new ActionHistory(historyStore, (): void => {
             this.onHistoryChange()
         })
@@ -57,7 +63,12 @@ export class CanvasScene {
             this.recomputeStacks()
             this.positionPersistence.saveFromStage(this.cardLayer, this.stackNames)
         }, this.actionHistory)
-        this.overlay = new StackOverlay(this.app, this.cardLayer, (): Record<string, string> => this.stackNames)
+        this.overlay = new StackOverlay(
+            this.app,
+            this.cardLayer,
+            (): Record<string, string> => this.stackNames,
+            (): ResolvedTheme => this.resolvedTheme,
+        )
         this.stackDragManager = new StackDragManager(
             this.app,
             this.cardLayer,
@@ -69,6 +80,17 @@ export class CanvasScene {
         this.overlay.initHandle(this.handleDragHandlePointerDown)
         this.overlay.initCompactButton(this.handleCompactButtonPointerDown)
         this.overlay.initNameButton(this.handleNameButtonPointerDown)
+        themeService?.onChange((resolved: ResolvedTheme): void => this.applyTheme(resolved))
+    }
+
+    /** Single entry point for recoloring the scene on a theme change; card manager and overlay read the new theme lazily. */
+    applyTheme(resolved: ResolvedTheme): void {
+        this.resolvedTheme = resolved
+        this.cardManager.setResolvedTheme(resolved)
+        const renderer = this.app.renderer as unknown as { background?: { color: number } } | undefined
+        if (renderer?.background) {
+            renderer.background.color = getPixiThemeColors(resolved).canvasBackground
+        }
     }
 
     setOnHistoryChange(callback: () => void): void {
@@ -102,10 +124,11 @@ export class CanvasScene {
 
         await this.app.init({
             antialias: true,
-            backgroundColor: '#a9a9a9',
+            backgroundColor: getPixiThemeColors(this.resolvedTheme).canvasBackground,
             resolution: window.devicePixelRatio || 1,
             autoDensity: true,
         })
+        this.applyTheme(this.resolvedTheme)
         this.app.renderer.resize(window.innerWidth, window.innerHeight)
         this.app.stage.addChild(this.cardLayer)
 

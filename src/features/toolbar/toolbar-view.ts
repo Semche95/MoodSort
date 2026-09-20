@@ -1,29 +1,21 @@
 import { Container, Graphics, Sprite, Text } from 'pixi.js'
 import { FancyButton } from '@pixi/ui'
 import type { CanvasTooltip } from '../../shared/ui/canvas-tooltip'
-import { ICON_COLOR, ICON_SIZE } from '../../shared/ui/icons'
+import { ICON_SIZE, applyIconTheme } from '../../shared/ui/icons'
+import type { ResolvedTheme } from '../../types/theme.types'
+import { getPixiThemeColors } from '../theme/pixi-theme-colors'
 
 export const BUTTON_SIZE = 48
 export const LOGO_EMOJI_SIZE = 28
 export const FONT_FAMILY = 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif'
 const ICON_SOURCE_SIZE = 64
-const TITLE_COLOR = 0x3a3a3a
 const DISABLED_ICON_ALPHA = 0.35
 const TOOLTIP_GAP = 8
-const SHARE_BUTTON_COLOR = 0x2563eb
-const SHARE_BUTTON_HOVER_COLOR = 0x1d4ed8
-const SHARE_BUTTON_PRESSED_COLOR = 0x1e40af
-const SHARE_BUTTON_DISABLED_COLOR = 0x93c5fd
-const SHARE_LABEL_COLOR = 0xffffff
 const SHARE_ICON_GAP = 8
 const SHARE_BUTTON_PADDING_X = 18
 const SHARE_INDICATOR_RADIUS = 4
 const SHARE_INDICATOR_GAP = 7
-const SHARE_ACTIVE_INDICATOR_COLOR = 0xf59e0b
-const SHARE_VIEWER_INDICATOR_COLOR = 0x22c55e
-const SHARE_INDICATOR_STROKE_COLOR = 0xffffff
 const SHARE_INDICATOR_STROKE_WIDTH = 1.5
-const SHARE_INDICATOR_SHADOW_COLOR = 0x0f172a
 const SHARE_INDICATOR_SHADOW_ALPHA = 0.4
 const SHARE_INDICATOR_SHADOW_OFFSET = 1
 
@@ -34,13 +26,14 @@ export function createCircleView(fill: number, alpha: number): Graphics {
     return view
 }
 
-export function createLogo(): Container {
+export function createLogo(resolvedTheme: ResolvedTheme = 'light'): Container {
+    const palette = getPixiThemeColors(resolvedTheme)
     const emoji = new Text({
         text: '🎭',
         style: {
             fontFamily: FONT_FAMILY,
             fontSize: LOGO_EMOJI_SIZE,
-            fill: ICON_COLOR,
+            fill: palette.icon,
         },
     })
     emoji.label = 'toolbar-logo-emoji'
@@ -52,7 +45,7 @@ export function createLogo(): Container {
             fontFamily: FONT_FAMILY,
             fontSize: 20,
             fontWeight: '700',
-            fill: TITLE_COLOR,
+            fill: palette.toolbar.title,
         },
     })
     title.label = 'toolbar-title'
@@ -64,6 +57,33 @@ export function createLogo(): Container {
     logo.addChild(title)
     title.position.set(LOGO_EMOJI_SIZE + 10, 0)
     return logo
+}
+
+/** Re-theme an already-created round icon button in place, so a theme flip doesn't require rebuilding the toolbar. */
+export function applyButtonTheme(button: FancyButton, resolvedTheme: ResolvedTheme): void {
+    const palette = getPixiThemeColors(resolvedTheme).toolbar
+    button.defaultView = createCircleView(palette.buttonDefault, 0.85)
+    button.hoverView = createCircleView(palette.buttonHover, 1)
+    button.pressedView = createCircleView(palette.buttonPressed, 1)
+    button.disabledView = createCircleView(palette.buttonDisabled, 0.45)
+    const icon = button.iconView
+    if (icon instanceof Sprite) {
+        applyIconTheme(icon, resolvedTheme)
+    } else if (icon instanceof Text) {
+        icon.style.fill = getPixiThemeColors(resolvedTheme).icon
+    }
+}
+
+/** Re-theme the logo's emoji and title text in place. */
+export function applyLogoTheme(logo: Container, resolvedTheme: ResolvedTheme): void {
+    const palette = getPixiThemeColors(resolvedTheme)
+    for (const child of logo.children) {
+        if (child instanceof Text && child.label === 'toolbar-logo-emoji') {
+            child.style.fill = palette.icon
+        } else if (child instanceof Text && child.label === 'toolbar-title') {
+            child.style.fill = palette.toolbar.title
+        }
+    }
 }
 
 export function setButtonEnabled(button: FancyButton, icon: Container, enabled: boolean, tooltip: CanvasTooltip): void {
@@ -88,12 +108,13 @@ function attachTooltipBehavior(button: FancyButton, tooltip: CanvasTooltip, onCl
     button.onOut.connect((): void => { tooltip.hide() })
 }
 
-export function createButton(tooltip: CanvasTooltip, icon: Container, onClick: () => void, label: string, tooltipLabel: string, iconScale: number = ICON_SIZE / ICON_SOURCE_SIZE): FancyButton {
+export function createButton(tooltip: CanvasTooltip, icon: Container, onClick: () => void, label: string, tooltipLabel: string, iconScale: number = ICON_SIZE / ICON_SOURCE_SIZE, resolvedTheme: ResolvedTheme = 'light'): FancyButton {
+    const palette = getPixiThemeColors(resolvedTheme).toolbar
     const button = new FancyButton({
-        defaultView: createCircleView(0xffffff, 0.85),
-        hoverView: createCircleView(0xffffff, 1),
-        pressedView: createCircleView(0xe1e1e1, 1),
-        disabledView: createCircleView(0xffffff, 0.45),
+        defaultView: createCircleView(palette.buttonDefault, 0.85),
+        hoverView: createCircleView(palette.buttonHover, 1),
+        pressedView: createCircleView(palette.buttonPressed, 1),
+        disabledView: createCircleView(palette.buttonDisabled, 0.45),
         icon,
         anchor: 0.5,
         defaultIconScale: iconScale,
@@ -121,23 +142,30 @@ export function setShareIndicators(activeIndicator: Graphics, viewerIndicator: G
     viewerIndicator.visible = status === 'connected'
 }
 
-/** A small dot with a soft shadow, used to flag share-button status (active / has a viewer) at a given x offset from the pill's center-top. */
-function createShareIndicatorDot(label: string, color: number, x: number): Graphics {
-    const dot = new Graphics()
-    dot.label = label
+function redrawShareIndicatorDot(dot: Graphics, color: number, resolvedTheme: ResolvedTheme): void {
+    const palette = getPixiThemeColors(resolvedTheme).toolbar
+    dot.clear()
     dot.circle(SHARE_INDICATOR_SHADOW_OFFSET, SHARE_INDICATOR_SHADOW_OFFSET, SHARE_INDICATOR_RADIUS)
-    dot.fill({ color: SHARE_INDICATOR_SHADOW_COLOR, alpha: SHARE_INDICATOR_SHADOW_ALPHA })
+    dot.fill({ color: palette.shareIndicatorShadow, alpha: SHARE_INDICATOR_SHADOW_ALPHA })
     dot.circle(0, 0, SHARE_INDICATOR_RADIUS)
     dot.fill({ color })
-    dot.stroke({ width: SHARE_INDICATOR_STROKE_WIDTH, color: SHARE_INDICATOR_STROKE_COLOR })
+    dot.stroke({ width: SHARE_INDICATOR_STROKE_WIDTH, color: palette.shareIndicatorStroke })
+}
+
+/** A small dot with a soft shadow, used to flag share-button status (active / has a viewer) at a given x offset from the pill's center-top. */
+function createShareIndicatorDot(label: string, color: number, x: number, resolvedTheme: ResolvedTheme): Graphics {
+    const dot = new Graphics()
+    dot.label = label
+    redrawShareIndicatorDot(dot, color, resolvedTheme)
     dot.position.set(x, -BUTTON_SIZE / 2 + SHARE_INDICATOR_RADIUS + 2)
     dot.visible = false
     return dot
 }
 
-export function createShareButton(tooltip: CanvasTooltip, icon: Sprite, onClick: () => void, tooltipLabel: string, buttonLabel: string): { button: FancyButton; content: Container; activeIndicator: Graphics; viewerIndicator: Graphics } {
+export function createShareButton(tooltip: CanvasTooltip, icon: Sprite, onClick: () => void, tooltipLabel: string, buttonLabel: string, resolvedTheme: ResolvedTheme = 'light'): { button: FancyButton; content: Container; activeIndicator: Graphics; viewerIndicator: Graphics } {
+    const palette = getPixiThemeColors(resolvedTheme).toolbar
     icon.scale.set(ICON_SIZE / ICON_SOURCE_SIZE)
-    icon.tint = SHARE_LABEL_COLOR
+    icon.tint = palette.shareLabel
 
     const label = new Text({
         text: buttonLabel,
@@ -145,7 +173,7 @@ export function createShareButton(tooltip: CanvasTooltip, icon: Sprite, onClick:
             fontFamily: FONT_FAMILY,
             fontSize: 15,
             fontWeight: '600',
-            fill: SHARE_LABEL_COLOR,
+            fill: palette.shareLabel,
         },
     })
     label.label = 'toolbar-share-label'
@@ -166,10 +194,10 @@ export function createShareButton(tooltip: CanvasTooltip, icon: Sprite, onClick:
     const buttonWidth = ICON_SIZE + SHARE_ICON_GAP + label.width + SHARE_BUTTON_PADDING_X * 2
 
     const button = new FancyButton({
-        defaultView: createPillView(SHARE_BUTTON_COLOR, buttonWidth),
-        hoverView: createPillView(SHARE_BUTTON_HOVER_COLOR, buttonWidth),
-        pressedView: createPillView(SHARE_BUTTON_PRESSED_COLOR, buttonWidth),
-        disabledView: createPillView(SHARE_BUTTON_DISABLED_COLOR, buttonWidth),
+        defaultView: createPillView(palette.shareButton, buttonWidth),
+        hoverView: createPillView(palette.shareButtonHover, buttonWidth),
+        pressedView: createPillView(palette.shareButtonPressed, buttonWidth),
+        disabledView: createPillView(palette.shareButtonDisabled, buttonWidth),
         icon: content,
         anchor: 0.5,
         animations: {
@@ -182,11 +210,33 @@ export function createShareButton(tooltip: CanvasTooltip, icon: Sprite, onClick:
 
     // Added to `innerView` (not the button's root container) since that's where FancyButton
     // shifts the actual visuals to; adding indicators to the root would offset them off the pill.
-    const viewerIndicator = createShareIndicatorDot('toolbar-share-viewer-indicator', SHARE_VIEWER_INDICATOR_COLOR, buttonWidth / 2 - SHARE_INDICATOR_RADIUS - 2)
+    const viewerIndicator = createShareIndicatorDot('toolbar-share-viewer-indicator', palette.shareViewerIndicator, buttonWidth / 2 - SHARE_INDICATOR_RADIUS - 2, resolvedTheme)
     button.innerView.addChild(viewerIndicator)
 
-    const activeIndicator = createShareIndicatorDot('toolbar-share-active-indicator', SHARE_ACTIVE_INDICATOR_COLOR, buttonWidth / 2 - SHARE_INDICATOR_RADIUS * 3 - SHARE_INDICATOR_GAP - 2)
+    const activeIndicator = createShareIndicatorDot('toolbar-share-active-indicator', palette.shareActiveIndicator, buttonWidth / 2 - SHARE_INDICATOR_RADIUS * 3 - SHARE_INDICATOR_GAP - 2, resolvedTheme)
     button.innerView.addChild(activeIndicator)
 
     return { button, content, activeIndicator, viewerIndicator }
+}
+
+/** Re-theme an already-created share button (pill views, icon/label tint, status dots) in place. */
+export function applyShareButtonTheme(button: FancyButton, content: Container, activeIndicator: Graphics, viewerIndicator: Graphics, resolvedTheme: ResolvedTheme): void {
+    const palette = getPixiThemeColors(resolvedTheme).toolbar
+    const buttonWidth = button.width
+    button.defaultView = createPillView(palette.shareButton, buttonWidth)
+    button.hoverView = createPillView(palette.shareButtonHover, buttonWidth)
+    button.pressedView = createPillView(palette.shareButtonPressed, buttonWidth)
+    button.disabledView = createPillView(palette.shareButtonDisabled, buttonWidth)
+
+    const icon = content.children.find((child: Container): boolean => child instanceof Sprite) as Sprite | undefined
+    const label = content.children.find((child: Container): boolean => child instanceof Text) as Text | undefined
+    if (icon) {
+        icon.tint = palette.shareLabel
+    }
+    if (label) {
+        label.style.fill = palette.shareLabel
+    }
+
+    redrawShareIndicatorDot(activeIndicator, palette.shareActiveIndicator, resolvedTheme)
+    redrawShareIndicatorDot(viewerIndicator, palette.shareViewerIndicator, resolvedTheme)
 }

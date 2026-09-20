@@ -4,6 +4,8 @@ import { initTopToolbar } from '../features/toolbar/top-toolbar'
 import type { ToolbarHost } from '../types/toolbar.types'
 import { I18n } from '../i18n/I18n'
 import { AVAILABLE_LOCALES } from '../i18n/locales'
+import { ThemeService } from '../features/theme/theme-service'
+import { InMemoryStore } from './in-memory-store'
 
 const { pixi, ui, buttons } = vi.hoisted(() => {
     class Texture {
@@ -78,9 +80,11 @@ const { pixi, ui, buttons } = vi.hoisted(() => {
             },
         }
         text: unknown
-        constructor(options: { text?: unknown } = {}) {
+        style: Record<string, unknown>
+        constructor(options: { text?: unknown; style?: Record<string, unknown> } = {}) {
             super()
             this.text = options.text
+            this.style = options.style ?? {}
         }
     }
 
@@ -251,6 +255,10 @@ function createHost(initial: { width?: number } = {}): TestHost {
     }
 }
 
+function createThemeService(): ThemeService {
+    return new ThemeService(new InMemoryStore())
+}
+
 function createTextures(): Record<string, Texture> {
     return {
         'undo-2': new pixi.Texture() as unknown as Texture,
@@ -276,7 +284,7 @@ describe('TopToolbar', () => {
 
     it('should add the toolbar container to the host stage with logo, six buttons, and a hidden native locale select', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
 
         expect(host.stage.children).toHaveLength(1)
         expect(buttons).toHaveLength(6)
@@ -296,7 +304,7 @@ describe('TopToolbar', () => {
 
     it('should pin undo/redo/help/settings/locale to the right edge on construction, with settings closest to the edge', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
 
         const [undo, redo, help, settings, , locale] = buttons
         expect(settings.x).toBe(800 - 16 - 24)
@@ -309,7 +317,7 @@ describe('TopToolbar', () => {
 
     it('should center the share button horizontally at the top of the screen', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
 
         const [, , , , share] = buttons
         expect(share.x).toBe(400)
@@ -318,7 +326,7 @@ describe('TopToolbar', () => {
 
     it('should open the native locale picker when the locale button is pressed', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
 
         const localeButton = buttons.find((button: { label: string }): boolean => button.label === 'toolbar-localebutton')!
         const select = document.querySelector('.toolbar-locale-select') as HTMLSelectElement & { showPicker: () => void }
@@ -332,7 +340,7 @@ describe('TopToolbar', () => {
 
     it('should switch locale and reload the page when a locale is picked from the native select', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
 
         const select = document.querySelector('.toolbar-locale-select') as HTMLSelectElement
         const reload = vi.spyOn(I18n, 'reload').mockImplementation((): void => {})
@@ -346,7 +354,7 @@ describe('TopToolbar', () => {
 
     it('should render the mask emoji logo aligned with the MoodSort title', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
 
         const toolbar = host.stage.children[0] as { children: unknown[] }
         const logo = toolbar.children[0] as { children: unknown[] }
@@ -366,7 +374,7 @@ describe('TopToolbar', () => {
 
     it('should scale button icons to about half the button size', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
 
         const [undo, redo, help, settings, share] = buttons
         for (const button of [undo, redo, settings]) {
@@ -381,14 +389,14 @@ describe('TopToolbar', () => {
 
     it('should render the help button icon as a plain question mark text', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
 
         expect((buttons[2].iconView as { text: unknown }).text).toBe('?')
     })
 
     it('should render the help button with a background circle like the other buttons', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
 
         const [, , help, settings] = buttons
         const helpOptions = help as unknown as { options: Record<string, unknown> }
@@ -402,7 +410,7 @@ describe('TopToolbar', () => {
 
     it('should disable undo/redo buttons when the history is empty', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
 
         const [undo, redo, help, settings] = buttons
         expect(undo.enabled).toBe(false)
@@ -416,7 +424,7 @@ describe('TopToolbar', () => {
     it('should trigger the host undo action when the undo button is pressed', () => {
         const host = createHost()
         host.setUndoAvailable(true)
-        initTopToolbar(host, vi.fn(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
 
         buttons[0].press()
 
@@ -426,7 +434,7 @@ describe('TopToolbar', () => {
 
     it('should update enabled states when history availability changes', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
 
         host.setUndoAvailable(true)
         host.setRedoAvailable(true)
@@ -444,7 +452,7 @@ describe('TopToolbar', () => {
 
     it('should re-anchor the buttons to the right edge on resize, keeping the share button centered', () => {
         const host = createHost({ width: 800 })
-        initTopToolbar(host, vi.fn(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
 
         host.setWidth(1200)
         host.resize()
@@ -462,7 +470,7 @@ describe('TopToolbar', () => {
 
     it('should show a tooltip with the button label on hover, anchored below the button', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
 
         const [undo] = buttons
         undo.hover()
@@ -481,7 +489,7 @@ describe('TopToolbar', () => {
 
     it('should hide the tooltip on pointer out, on press, and on resize', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
 
         const [undo] = buttons
         const toolbar = host.stage.children[0] as { children: unknown[] }
@@ -505,7 +513,7 @@ describe('TopToolbar', () => {
 
     it('should disable the share button and explain why when the browser lacks screen-share support', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
 
         const share = buttons[4]
         expect(share.enabled).toBe(false)
@@ -519,7 +527,7 @@ describe('TopToolbar', () => {
 
     it('should render hidden active and viewer indicator dots overlaid on the share button by default', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
 
         const share = buttons[4] as unknown as { innerView: { children: Array<{ label: string; visible: boolean }> } }
         const activeIndicator = share.innerView.children.find((child: { label: string }): boolean => child.label === 'toolbar-share-active-indicator')
@@ -532,7 +540,7 @@ describe('TopToolbar', () => {
 
     it('should open the screen share modal when the share button is pressed', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
 
         buttons[4].press()
 
@@ -543,7 +551,7 @@ describe('TopToolbar', () => {
 
     it('should not open a second screen share modal while one is already open', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures())
+        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
 
         buttons[4].press()
         buttons[4].press()

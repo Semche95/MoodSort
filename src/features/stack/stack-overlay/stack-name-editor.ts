@@ -1,5 +1,7 @@
 import { Container, FederatedPointerEvent, Graphics, Text } from 'pixi.js'
 import { STACK_NAME_MAX_WIDTH } from '../stack'
+import type { ResolvedTheme } from '../../../types/theme.types'
+import { getPixiThemeColors } from '../../theme/pixi-theme-colors'
 
 const PADDING_X = 8
 const PADDING_Y = 5
@@ -7,10 +9,7 @@ const RADIUS = 6
 // Matches LABEL_FONT_SIZE in stack-overlay.ts, so the editable field reads at
 // the same size as the label it's editing instead of popping up noticeably smaller.
 const FONT_SIZE = 20
-const BG_COLOR = 0x222222
 const BG_ALPHA = 0.95
-const TEXT_COLOR = 0xffffff
-const BORDER_COLOR = 0x6699ff
 const FONT_FAMILY = 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif'
 const CURSOR_WIDTH = 2
 const CURSOR_BLINK_INTERVAL_MS = 500
@@ -52,8 +51,10 @@ export class StackNameEditor {
     private input: HTMLInputElement | null
     private boundKeyDown: (e: KeyboardEvent) => void
     private boundSync: () => void
+    private readonly getResolvedTheme: () => ResolvedTheme
 
-    constructor() {
+    constructor(getResolvedTheme: () => ResolvedTheme = (): ResolvedTheme => 'light') {
+        this.getResolvedTheme = getResolvedTheme
         this.view = new Container()
         this.view.label = 'stack-name-editor'
         this.view.visible = false
@@ -82,7 +83,7 @@ export class StackNameEditor {
             style: {
                 fontFamily: FONT_FAMILY,
                 fontSize: FONT_SIZE,
-                fill: TEXT_COLOR,
+                fill: getPixiThemeColors(this.getResolvedTheme()).stackNameEditor.text,
             },
         })
         this.text.label = 'stack-name-editor-text'
@@ -102,7 +103,7 @@ export class StackNameEditor {
         // positioned without disturbing what's actually drawn as `this.text`.
         this.measurer = new Text({
             text: '',
-            style: { fontFamily: FONT_FAMILY, fontSize: FONT_SIZE, fill: TEXT_COLOR },
+            style: { fontFamily: FONT_FAMILY, fontSize: FONT_SIZE, fill: getPixiThemeColors(this.getResolvedTheme()).stackNameEditor.text },
         })
 
         this.textClip.addChild(this.selectionHighlight)
@@ -294,6 +295,9 @@ export class StackNameEditor {
     }
 
     private redraw(): void {
+        // Re-read on every redraw so a theme flip is picked up on the next keystroke/blink.
+        const palette = getPixiThemeColors(this.getResolvedTheme()).stackNameEditor
+        this.text.style.fill = palette.text
         this.text.text = this.buffer.length > 0 ? this.buffer : ' '
         const fullTextWidth = this.text.width
         const textHeight = this.text.height
@@ -304,9 +308,9 @@ export class StackNameEditor {
 
         this.bg.clear()
         this.bg.roundRect(-width / 2, 0, width, height, RADIUS)
-        this.bg.fill({ color: BG_COLOR, alpha: BG_ALPHA })
+        this.bg.fill({ color: palette.background, alpha: BG_ALPHA })
         this.bg.roundRect(-width / 2, 0, width, height, RADIUS)
-        this.bg.stroke({ color: BORDER_COLOR, width: 1.5, alpha: 0.9 })
+        this.bg.stroke({ color: palette.border, width: 1.5, alpha: 0.9 })
 
         const textX = -width / 2 + PADDING_X
         // Clips to innerWidth + CURSOR_WIDTH, not just innerWidth: the caret drawn right after
@@ -334,18 +338,18 @@ export class StackNameEditor {
             const selectionX = drawX + this.measureWidth(this.buffer.slice(0, start))
             const selectionWidth = this.measureWidth(this.buffer.slice(start, end))
             this.selectionHighlight.rect(selectionX, PADDING_Y, selectionWidth, textHeight)
-            this.selectionHighlight.fill({ color: BORDER_COLOR, alpha: 0.4 })
+            this.selectionHighlight.fill({ color: palette.border, alpha: 0.4 })
         } else if (this.cursorVisible) {
             const cursorX = drawX + cursorOffset
             this.cursor.rect(cursorX, PADDING_Y, CURSOR_WIDTH, textHeight)
-            this.cursor.fill({ color: TEXT_COLOR, alpha: 0.9 })
+            this.cursor.fill({ color: palette.text, alpha: 0.9 })
         }
 
-        this.redrawClearButton(width, height)
+        this.redrawClearButton(width, height, palette)
     }
 
     /** Small "x" sitting just right of the box, only while there's something to clear. */
-    private redrawClearButton(width: number, height: number): void {
+    private redrawClearButton(width: number, height: number, palette: ReturnType<typeof getPixiThemeColors>['stackNameEditor']): void {
         this.clearButton.clear()
         if (this.buffer.length === 0) {
             this.clearButton.eventMode = 'none'
@@ -369,13 +373,13 @@ export class StackNameEditor {
         // bare stroke: floating directly on the canvas's own mid-gray background, a plain white
         // line at this size read as invisible rather than just low-contrast.
         this.clearButton.roundRect(cx - half, cy - half, CLEAR_BUTTON_SIZE, CLEAR_BUTTON_SIZE, 4)
-        this.clearButton.fill({ color: 0x444444, alpha: 0.85 })
+        this.clearButton.fill({ color: palette.clearButton, alpha: 0.85 })
 
         this.clearButton.moveTo(cx - half + inset, cy - half + inset)
         this.clearButton.lineTo(cx + half - inset, cy + half - inset)
-        this.clearButton.stroke({ color: 0xdddddd, width: 2, alpha: 0.95, cap: 'round' })
+        this.clearButton.stroke({ color: palette.clearIcon, width: 2, alpha: 0.95, cap: 'round' })
         this.clearButton.moveTo(cx + half - inset, cy - half + inset)
         this.clearButton.lineTo(cx - half + inset, cy + half - inset)
-        this.clearButton.stroke({ color: 0xdddddd, width: 2, alpha: 0.95, cap: 'round' })
+        this.clearButton.stroke({ color: palette.clearIcon, width: 2, alpha: 0.95, cap: 'round' })
     }
 }

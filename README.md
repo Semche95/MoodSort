@@ -130,7 +130,7 @@ Each stack can also carry a name. A dedicated button next to the drag handle ope
 
 ### Toolbar
 
-`TopToolbar` renders directly on the Pixi canvas rather than as HTML: a logo on the left, and undo/redo/help/settings buttons on the right that stay pinned on resize. Hovering a button shows a `CanvasTooltip`, a small reusable rounded label. Keyboard shortcuts (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, Ctrl/Cmd+Y) are wired independently in `initHistoryShortcuts`. The settings button opens a modal (`createSettingsModal`) whose only action is resetting all card positions, gated behind a confirmation step.
+`TopToolbar` renders directly on the Pixi canvas rather than as HTML: a logo on the left, and undo/redo/help/settings buttons on the right that stay pinned on resize. Hovering a button shows a `CanvasTooltip`, a small reusable rounded label. Keyboard shortcuts (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, Ctrl/Cmd+Y) are wired independently in `initHistoryShortcuts`. The settings button opens a modal (`createSettingsModal`) with an appearance section (a Light/Dark/Auto theme toggle backed by `ThemeService`) and a cards section whose only action is resetting all card positions, gated behind a confirmation step.
 
 ### Localization
 

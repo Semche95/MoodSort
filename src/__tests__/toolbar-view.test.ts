@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CanvasTooltip } from '../shared/ui/canvas-tooltip'
-import { createButton, createCircleView, createLogo, setButtonEnabled } from '../features/toolbar/toolbar-view'
+import { createButton, createCircleView, createLogo, createShareButton, setButtonEnabled } from '../features/toolbar/toolbar-view'
 
 const { pixi, ui, buttons } = vi.hoisted(() => {
     class Container {
@@ -22,11 +22,25 @@ const { pixi, ui, buttons } = vi.hoisted(() => {
 
     class Graphics extends Container {
         fillAlpha: number = 0
+        fillColor: number | undefined
+        strokeColor: number | undefined
+        visible: boolean = true
         circle(): this {
             return this
         }
-        fill(options: { alpha?: number } = {}): this {
+        roundRect(): this {
+            return this
+        }
+        clear(): this {
+            return this
+        }
+        fill(options: { alpha?: number; color?: number } = {}): this {
             this.fillAlpha = options.alpha ?? 1
+            this.fillColor = options.color
+            return this
+        }
+        stroke(options: { color?: number } = {}): this {
+            this.strokeColor = options.color
             return this
         }
     }
@@ -41,9 +55,11 @@ const { pixi, ui, buttons } = vi.hoisted(() => {
             },
         }
         text: unknown
-        constructor(options: { text?: unknown } = {}) {
+        style: Record<string, unknown>
+        constructor(options: { text?: unknown; style?: Record<string, unknown> } = {}) {
             super()
             this.text = options.text
+            this.style = options.style ?? {}
         }
     }
 
@@ -55,6 +71,7 @@ const { pixi, ui, buttons } = vi.hoisted(() => {
         x: number = 10
         y: number = 20
         iconView: unknown = null
+        innerView: { addChild(child: unknown): unknown } = { addChild: (child: unknown): unknown => child }
         options: Record<string, unknown>
         private onPressCallback: (() => void) | null = null
         private onHoverCallback: (() => void) | null = null
@@ -90,8 +107,15 @@ const { pixi, ui, buttons } = vi.hoisted(() => {
         }
     }
 
+    class Sprite extends Container {
+        scale: { set(v: number): void } = { set: (): void => {} }
+        anchor: { set(x: number, y: number): void } = { set: (): void => {} }
+        tint: number = 0
+        height: number = 20
+    }
+
     return {
-        pixi: { Container, Graphics, Text },
+        pixi: { Container, Graphics, Text, Sprite },
         ui: { FancyButton },
         buttons,
     }
@@ -184,5 +208,37 @@ describe('toolbar-view', () => {
 
         expect(defaultScale.options.defaultIconScale).toBeCloseTo(22 / 64)
         expect(overriddenScale.options.defaultIconScale).toBe(1)
+    })
+
+    it('fills the logo emoji and title with the dark theme palette when built for the dark theme', () => {
+        const logo = createLogo('dark') as unknown as { children: Array<{ style: { fill?: number } }> }
+        const [emoji, title] = logo.children
+
+        expect(emoji.style.fill).toBe(0xf2f2f2)
+        expect(title.style.fill).toBe(0xf0f0f0)
+    })
+
+    it('draws button state views with the dark theme palette when built for the dark theme', () => {
+        const tooltip = createFakeTooltip()
+
+        const button = createButton(tooltip, new pixi.Container() as never, vi.fn(), 'my-button', 'My label', undefined, 'dark') as unknown as {
+            options: { defaultView: { fillColor: number }; hoverView: { fillColor: number }; pressedView: { fillColor: number }; disabledView: { fillColor: number } }
+        }
+
+        expect(button.options.defaultView.fillColor).toBe(0x76767f)
+        expect(button.options.hoverView.fillColor).toBe(0x82828c)
+        expect(button.options.pressedView.fillColor).toBe(0x44444c)
+        expect(button.options.disabledView.fillColor).toBe(0x76767f)
+    })
+
+    it('tints the share button icon and its status dots with the dark theme palette', () => {
+        const tooltip = createFakeTooltip()
+        const icon = new pixi.Sprite() as unknown as { tint: number }
+
+        const { activeIndicator, viewerIndicator } = createShareButton(tooltip, icon as never, vi.fn(), 'Share', 'Share', 'dark')
+
+        expect(icon.tint).toBe(0xffffff)
+        expect((activeIndicator as unknown as { strokeColor: number }).strokeColor).toBe(0x1a1a1a)
+        expect((viewerIndicator as unknown as { strokeColor: number }).strokeColor).toBe(0x1a1a1a)
     })
 })

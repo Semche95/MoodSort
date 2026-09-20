@@ -9,12 +9,14 @@ import { createLoadingOverlay } from '../shared/ui/loading-overlay'
 import { CardStateService } from '../features/card/card-state-service'
 import { loadCardAtlas } from '../i18n/card-atlas'
 import type { Locale } from '../i18n/i18n.types'
+import { ThemeService } from '../features/theme/theme-service'
 
 export async function bootApp(locale: Locale): Promise<void> {
     const overlay = createLoadingOverlay()
     document.body.appendChild(overlay)
 
     const cardStateService = new CardStateService()
+    const themeService = new ThemeService()
 
     const { atlasData, atlasImageUrl } = await loadCardAtlas(locale)
     const baseTexture = await Assets.load(atlasImageUrl)
@@ -22,7 +24,7 @@ export async function bootApp(locale: Locale): Promise<void> {
     await spritesheet.parse()
 
     const frameNames = Object.keys(spritesheet.textures)
-    const scene = new CanvasScene(cardStateService, new Store())
+    const scene = new CanvasScene(cardStateService, new Store(), themeService)
     await scene.init(frameNames, spritesheet)
 
     if (overlay.parentElement) {
@@ -34,5 +36,5 @@ export async function bootApp(locale: Locale): Promise<void> {
     initOnboarding(cardStateService)
 
     const iconTextures = await loadIconTextures()
-    initTopToolbar(scene, (): void => { dismissOnboarding(cardStateService) }, iconTextures)
+    initTopToolbar(scene, (): void => { dismissOnboarding(cardStateService) }, iconTextures, themeService)
 }

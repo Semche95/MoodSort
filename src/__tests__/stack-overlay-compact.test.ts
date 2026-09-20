@@ -96,9 +96,11 @@ const { pixi } = vi.hoisted(() => {
         override width: number = 40
         override height: number = 16
         anchor: { set(x: number, y: number): void } = { set: (): void => {} }
-        constructor(options: { text?: string } = {}) {
+        style: Record<string, unknown>
+        constructor(options: { text?: string; style?: Record<string, unknown> } = {}) {
             super()
             this.text = options.text ?? ''
+            this.style = options.style ?? {}
         }
     }
 

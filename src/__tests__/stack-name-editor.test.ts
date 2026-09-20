@@ -42,10 +42,12 @@ const { pixi } = vi.hoisted(() => {
 
     class Text extends Container {
         private _text: string
-        constructor(options: { text?: string } = {}) {
+        style: { fill?: number }
+        constructor(options: { text?: string; style?: { fill?: number } } = {}) {
             super()
             this._text = options.text ?? ''
             this.width = this._text.length * 10
+            this.style = options.style ?? {}
         }
         get text(): string { return this._text }
         set text(value: string) {
@@ -467,5 +469,17 @@ describe('StackNameEditor', () => {
 
         expect(firstCommit).toHaveBeenCalledWith('Joie')
         expect(editor.value).toBe('')
+    })
+
+    it('reads background, border, and text colors from the getResolvedTheme callback on redraw', () => {
+        const editor = new StackNameEditor(() => 'dark')
+        editor.open(0, 0, 'Joie', vi.fn(), vi.fn())
+
+        const bg = editor.view.children[0] as unknown as { calls: Array<{ method: string; args: unknown[] }> }
+        const fillCall = bg.calls.find((call: { method: string; args: unknown[] }): boolean => call.method === 'fill')!
+        const strokeCall = bg.calls.find((call: { method: string; args: unknown[] }): boolean => call.method === 'stroke')!
+        expect((fillCall.args[0] as { color: number }).color).toBe(0x3a3a3a)
+        expect((strokeCall.args[0] as { color: number }).color).toBe(0x88aaff)
+        expect((editor as unknown as { text: { style: { fill?: number } } }).text.style.fill).toBe(0xffffff)
     })
 })

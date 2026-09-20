@@ -5,6 +5,9 @@ import { buildRoomConfig, ROOM_BUSY_ACTION, SCREEN_SHARE_GRACE_TIMEOUT_MS } from
 import { isWebRtcSupported } from './compat'
 import { GraceTimeout } from './grace-timeout'
 import { I18n } from '../../i18n/I18n'
+import { Store } from '../../shared/utils/store'
+import { ThemeService } from '../theme/theme-service'
+import { VIEWER_THEME_STORAGE_KEY } from '../../types/theme.types'
 
 // Spectator side of a screen-share session; only receives the host's video stream, never renders Pixi.
 // Stays in the same signaling room across a host disconnect, waiting again for `onPeerStream`
@@ -68,6 +71,10 @@ function describeStatus(status: ConnectionStatus): string {
 
 // Bootstraps the read-only spectator page: a fullscreen <video> element plus a status banner.
 export function initScreenShareViewer(roomCode: string, onClose: () => void): void {
+    // Scoped to the viewer's own storage key, fully independent from the host app's theme.
+    const viewerThemeService = new ThemeService(new Store(), VIEWER_THEME_STORAGE_KEY)
+    viewerThemeService.getResolvedTheme()
+
     const container = document.createElement('div')
     container.className = 'screen-share-viewer'
 

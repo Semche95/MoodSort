@@ -153,6 +153,22 @@ describe('StackOverlay', () => {
         expect(mergeIndicator.calls.some((c: { method: string }): boolean => c.method === 'rect')).toBe(true)
     })
 
+    it('showDragHighlights draws merge indicators with colors from the injected getResolvedTheme callback', () => {
+        const cardLayer = new pixi.Container()
+        const a = makeCard(0, 0, 200, 300, 'a')
+        const b = makeCard(300, 0, 200, 300, 'b')
+        cardLayer.addChild(a)
+        cardLayer.addChild(b)
+        const { app } = createApp()
+        const overlay = new StackOverlay(app, cardLayer as unknown as Container, () => ({}), () => 'dark')
+
+        overlay.showDragHighlights([a], [[b]])
+
+        const mergeIndicator = overlay['mergeIndicator'] as unknown as { calls: Array<{ method: string; args: unknown[] }> }
+        const strokeCall = mergeIndicator.calls.find((c: { method: string; args: unknown[] }): boolean => c.method === 'stroke')!
+        expect((strokeCall.args[0] as { color: number }).color).toBe(0xcccccc)
+    })
+
     it('showDragHighlights does not draw merge indicators when there are no merge targets', () => {
         const cardLayer = new pixi.Container()
         const a = makeCard(0, 0, 200, 300, 'a')

@@ -1,3 +1,104 @@
+/* Theme variables: light (default) values live under :root, dark
+ * equivalents under html[data-theme='dark']. Every color below is a
+ * resolved value read off document.documentElement, never computed here. */
+:root {
+  /* Loading overlay */
+  --loading-bg: #222;
+  --loading-text: #fff;
+  --loading-spinner-track: rgba(255, 255, 255, 0.2);
+
+  /* Overlay backdrops (behind modals) */
+  --overlay-backdrop: rgba(0, 0, 0, 0.5);
+  --overlay-backdrop-strong: rgba(0, 0, 0, 0.75);
+
+  /* Shared modal chrome (onboarding, settings, screen share, legal) */
+  --modal-bg: #fff;
+  --modal-text: #222;
+  --modal-shadow: rgba(0, 0, 0, 0.3);
+  --modal-border: #ddd;
+  --modal-close-color: #666;
+  --modal-close-hover-color: #000;
+  --panel-bg: #f9f9f9;
+
+  /* Shared buttons */
+  --button-primary-bg: #333;
+  --button-primary-hover-bg: #555;
+  --on-accent-text: #fff;
+  --button-secondary-bg: #f5f5f5;
+  --button-secondary-hover-bg: #eaeaea;
+  --button-neutral-bg: #e0e0e0;
+  --button-neutral-text: #333;
+  --button-neutral-hover-bg: #d0d0d0;
+  --button-danger-bg: #c0392b;
+  --button-danger-hover-bg: #a93226;
+
+  /* Screen share host modal */
+  --button-info-bg: #2563eb;
+  --button-info-hover-bg: #1d4ed8;
+  --button-info-disabled-bg: #93c5fd;
+  --button-stop-bg: #dc2626;
+  --button-stop-hover-bg: #b91c1c;
+
+  /* Screen share viewer (full-page, over video) */
+  --viewer-bg: #111;
+  --viewer-text: #fff;
+  --viewer-control-bg: rgba(0, 0, 0, 0.6);
+  --viewer-control-hover-bg: rgba(0, 0, 0, 0.8);
+
+  /* Footer link */
+  --footer-link-color: rgba(0, 0, 0, 0.45);
+  --footer-link-hover-color: rgba(0, 0, 0, 0.7);
+}
+
+html[data-theme='dark'] {
+  /* Loading overlay */
+  --loading-bg: #141418;
+  --loading-text: #fff;
+  --loading-spinner-track: rgba(255, 255, 255, 0.25);
+
+  /* Overlay backdrops (behind modals) */
+  --overlay-backdrop: rgba(0, 0, 0, 0.65);
+  --overlay-backdrop-strong: rgba(0, 0, 0, 0.85);
+
+  /* Shared modal chrome (onboarding, settings, screen share, legal) */
+  --modal-bg: #1e1e24;
+  --modal-text: #f0f0f2;
+  --modal-shadow: rgba(0, 0, 0, 0.6);
+  --modal-border: #3a3a42;
+  --modal-close-color: #a0a0aa;
+  --modal-close-hover-color: #fff;
+  --panel-bg: #26262e;
+
+  /* Shared buttons */
+  --button-primary-bg: #4a4a54;
+  --button-primary-hover-bg: #5c5c68;
+  --on-accent-text: #fff;
+  --button-secondary-bg: #33333c;
+  --button-secondary-hover-bg: #3f3f4a;
+  --button-neutral-bg: #3a3a44;
+  --button-neutral-text: #e8e8ec;
+  --button-neutral-hover-bg: #46464f;
+  --button-danger-bg: #e05545;
+  --button-danger-hover-bg: #c8432f;
+
+  /* Screen share host modal */
+  --button-info-bg: #3b82f6;
+  --button-info-hover-bg: #2f6fe0;
+  --button-info-disabled-bg: #3a557a;
+  --button-stop-bg: #ef4444;
+  --button-stop-hover-bg: #c53030;
+
+  /* Screen share viewer (full-page, over video) */
+  --viewer-bg: #0d0d10;
+  --viewer-text: #fff;
+  --viewer-control-bg: rgba(0, 0, 0, 0.7);
+  --viewer-control-hover-bg: rgba(0, 0, 0, 0.85);
+
+  /* Footer link */
+  --footer-link-color: rgba(255, 255, 255, 0.5);
+  --footer-link-hover-color: rgba(255, 255, 255, 0.75);
+}
+
 /* Global styles */
 * {
   margin: 0;
@@ -22,8 +123,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #222;
-    color: #fff;
+    background: var(--loading-bg);
+    color: var(--loading-text);
     z-index: 9999;
     font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
 }
@@ -38,8 +139,8 @@ body {
 .loading-spinner {
     width: 40px;
     height: 40px;
-    border: 4px solid rgba(255, 255, 255, 0.2);
-    border-top-color: #fff;
+    border: 4px solid var(--loading-spinner-track);
+    border-top-color: var(--loading-text);
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -59,19 +160,19 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.75);
+    background: var(--overlay-backdrop-strong);
     z-index: 10000;
     font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
 }
 
 .onboarding-card {
-    background: #fff;
-    color: #222;
+    background: var(--modal-bg);
+    color: var(--modal-text);
     border-radius: 16px;
     padding: 40px 48px;
     max-width: 480px;
     width: 90%;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 32px var(--modal-shadow);
 }
 
 .onboarding-card h1 {
@@ -107,14 +208,14 @@ body {
     padding: 12px;
     border: none;
     border-radius: 8px;
-    background: #333;
-    color: #fff;
+    background: var(--button-primary-bg);
+    color: var(--on-accent-text);
     font-size: 1rem;
     cursor: pointer;
 }
 
 .onboarding-dismiss:hover {
-    background: #555;
+    background: var(--button-primary-hover-bg);
 }
 
 /* Settings modal */
@@ -127,19 +228,19 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--overlay-backdrop);
     z-index: 10000;
     font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
 }
 
 .settings-modal {
-    background: #fff;
-    color: #222;
+    background: var(--modal-bg);
+    color: var(--modal-text);
     border-radius: 16px;
     padding: 0;
     max-width: 420px;
     width: 90%;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 32px var(--modal-shadow);
     overflow: hidden;
 }
 
@@ -159,12 +260,12 @@ body {
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
-    color: #666;
+    color: var(--modal-close-color);
     padding: 0 4px;
 }
 
 .settings-close:hover {
-    color: #000;
+    color: var(--modal-close-hover-color);
 }
 
 .settings-body {
@@ -186,9 +287,39 @@ body {
 
 .settings-section p {
     font-size: 0.9rem;
-    color: #555;
+    color: var(--modal-text);
     margin-bottom: 10px;
     line-height: 1.4;
+}
+
+.settings-theme-toggle {
+    display: flex;
+    border: 1px solid var(--modal-border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.settings-theme-option {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    background: var(--button-secondary-bg);
+    color: var(--modal-text);
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.settings-theme-option + .settings-theme-option {
+    border-left: 1px solid var(--modal-border);
+}
+
+.settings-theme-option:hover {
+    background: var(--button-secondary-hover-bg);
+}
+
+.settings-theme-option.active {
+    background: var(--button-primary-bg);
+    color: var(--on-accent-text);
 }
 
 .settings-reset-positions,
@@ -196,23 +327,23 @@ body {
     display: block;
     width: 100%;
     padding: 10px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--modal-border);
     border-radius: 8px;
-    background: #f5f5f5;
-    color: #222;
+    background: var(--button-secondary-bg);
+    color: var(--modal-text);
     font-size: 0.9rem;
     cursor: pointer;
 }
 
 .settings-reset-positions:hover,
 .settings-show-onboarding:hover {
-    background: #eaeaea;
+    background: var(--button-secondary-hover-bg);
 }
 
 /* Confirmation dialog inside modal */
 .settings-confirm {
-    background: #f9f9f9;
-    border: 1px solid #ddd;
+    background: var(--panel-bg);
+    border: 1px solid var(--modal-border);
     border-radius: 8px;
     padding: 16px;
     margin-top: 12px;
@@ -221,7 +352,7 @@ body {
 .settings-confirm p {
     margin-bottom: 8px;
     font-size: 0.9rem;
-    color: #222;
+    color: var(--modal-text);
 }
 
 .settings-confirm-actions {
@@ -241,21 +372,21 @@ body {
 }
 
 .settings-confirm-cancel {
-    background: #e0e0e0;
-    color: #333;
+    background: var(--button-neutral-bg);
+    color: var(--button-neutral-text);
 }
 
 .settings-confirm-cancel:hover {
-    background: #d0d0d0;
+    background: var(--button-neutral-hover-bg);
 }
 
 .settings-confirm-ok {
-    background: #c0392b;
-    color: #fff;
+    background: var(--button-danger-bg);
+    color: var(--on-accent-text);
 }
 
 .settings-confirm-ok:hover {
-    background: #a93226;
+    background: var(--button-danger-hover-bg);
 }
 
 /* Screen share modal (host) */
@@ -268,19 +399,19 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--overlay-backdrop);
     z-index: 10000;
     font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
 }
 
 .screen-share-modal {
-    background: #fff;
-    color: #222;
+    background: var(--modal-bg);
+    color: var(--modal-text);
     border-radius: 16px;
     padding: 0;
     max-width: 420px;
     width: 90%;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 32px var(--modal-shadow);
     overflow: hidden;
 }
 
@@ -300,12 +431,12 @@ body {
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
-    color: #666;
+    color: var(--modal-close-color);
     padding: 0 4px;
 }
 
 .screen-share-close:hover {
-    color: #000;
+    color: var(--modal-close-hover-color);
 }
 
 .screen-share-body {
@@ -314,7 +445,7 @@ body {
 
 .screen-share-body p {
     font-size: 0.9rem;
-    color: #555;
+    color: var(--modal-text);
     margin-bottom: 10px;
     line-height: 1.4;
 }
@@ -326,19 +457,19 @@ body {
     margin-bottom: 8px;
     border: none;
     border-radius: 8px;
-    background: #2563eb;
-    color: #fff;
+    background: var(--button-info-bg);
+    color: var(--on-accent-text);
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
 }
 
 .screen-share-activate:hover {
-    background: #1d4ed8;
+    background: var(--button-info-hover-bg);
 }
 
 .screen-share-activate:disabled {
-    background: #93c5fd;
+    background: var(--button-info-disabled-bg);
     cursor: default;
 }
 
@@ -366,15 +497,15 @@ body {
     margin-bottom: 8px;
     border: none;
     border-radius: 8px;
-    background: #dc2626;
-    color: #fff;
+    background: var(--button-stop-bg);
+    color: var(--on-accent-text);
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
 }
 
 .screen-share-stop:hover {
-    background: #b91c1c;
+    background: var(--button-stop-hover-bg);
 }
 
 .screen-share-stop[hidden] {
@@ -390,25 +521,25 @@ body {
 .screen-share-url {
     flex: 1;
     padding: 8px 10px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--modal-border);
     border-radius: 8px;
     font-size: 0.85rem;
-    color: #222;
-    background: #f9f9f9;
+    color: var(--modal-text);
+    background: var(--panel-bg);
 }
 
 .screen-share-copy {
     padding: 8px 14px;
     border: none;
     border-radius: 8px;
-    background: #333;
-    color: #fff;
+    background: var(--button-primary-bg);
+    color: var(--on-accent-text);
     font-size: 0.85rem;
     cursor: pointer;
 }
 
 .screen-share-copy:hover {
-    background: #555;
+    background: var(--button-primary-hover-bg);
 }
 
 .screen-share-regenerate {
@@ -416,32 +547,32 @@ body {
     width: 100%;
     padding: 8px 14px;
     margin-bottom: 8px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--modal-border);
     border-radius: 8px;
-    background: #fff;
-    color: #333;
+    background: var(--modal-bg);
+    color: var(--modal-text);
     font-size: 0.85rem;
     cursor: pointer;
 }
 
 .screen-share-regenerate:hover {
-    background: #f5f5f5;
+    background: var(--button-secondary-bg);
 }
 
 .screen-share-copy-feedback {
     font-size: 0.85rem;
-    color: #555;
+    color: var(--modal-text);
     min-height: 1.2em;
     margin-bottom: 8px;
 }
 
 .screen-share-copy-feedback--error {
-    color: #c0392b;
+    color: var(--button-danger-bg);
 }
 
 .screen-share-status {
     font-size: 0.85rem;
-    color: #333;
+    color: var(--modal-text);
     font-weight: 600;
     min-height: 1.2em;
 }
@@ -453,7 +584,7 @@ body {
     top: 0;
     right: 0;
     bottom: 0;
-    background: #111;
+    background: var(--viewer-bg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -473,8 +604,8 @@ body {
     height: 40px;
     border: none;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.6);
-    color: #fff;
+    background: var(--viewer-control-bg);
+    color: var(--viewer-text);
     font-size: 1.5rem;
     line-height: 1;
     cursor: pointer;
@@ -482,7 +613,7 @@ body {
 }
 
 .screen-share-viewer-close:hover {
-    background: rgba(0, 0, 0, 0.8);
+    background: var(--viewer-control-hover-bg);
 }
 
 .screen-share-viewer-status {
@@ -492,10 +623,10 @@ body {
     bottom: 0;
     padding: 16px;
     text-align: center;
-    color: #fff;
+    color: var(--viewer-text);
     font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
     font-size: 0.95rem;
-    background: rgba(0, 0, 0, 0.6);
+    background: var(--viewer-control-bg);
     display: none;
 }
 
@@ -519,14 +650,14 @@ body {
 .app-footer-link {
     pointer-events: auto;
     font-size: 0.8rem;
-    color: rgba(0, 0, 0, 0.45);
+    color: var(--footer-link-color);
     text-decoration: underline;
     text-underline-offset: 2px;
     cursor: pointer;
 }
 
 .app-footer-link:hover {
-    color: rgba(0, 0, 0, 0.7);
+    color: var(--footer-link-hover-color);
 }
 
 /* Legal modal */
@@ -539,19 +670,19 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--overlay-backdrop);
     z-index: 10000;
     font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
 }
 
 .legal-modal {
-    background: #fff;
-    color: #222;
+    background: var(--modal-bg);
+    color: var(--modal-text);
     border-radius: 16px;
     padding: 0;
     max-width: 600px;
     width: 90%;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 32px var(--modal-shadow);
     overflow: hidden;
 }
 
@@ -571,12 +702,12 @@ body {
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
-    color: #666;
+    color: var(--modal-close-color);
     padding: 0 4px;
 }
 
 .legal-close:hover {
-    color: #000;
+    color: var(--modal-close-hover-color);
 }
 
 .legal-body {
@@ -585,7 +716,7 @@ body {
 
 .legal-body h2 {
     font-size: 0.9rem;
-    color: #888;
+    color: var(--modal-text);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-top: 16px;
@@ -598,13 +729,13 @@ body {
 
 .legal-body p {
     font-size: 0.85rem;
-    color: #444;
+    color: var(--modal-text);
     line-height: 1.5;
     margin-bottom: 6px;
 }
 
 .legal-date {
     font-size: 0.8rem;
-    color: #999;
+    color: var(--modal-text);
     margin-bottom: 16px;
 }

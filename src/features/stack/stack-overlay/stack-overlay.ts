@@ -18,6 +18,8 @@ import { CanvasTooltip } from '../../../shared/ui/canvas-tooltip'
 import { StackNameEditor } from './stack-name-editor'
 import { drawCompactButton, drawNameButton, drawMergeDim, drawMergePlus, drawMergeTargetBorder, drawSingleBox, drawSingleStack } from './stack-overlay-view'
 import { I18n } from '../../../i18n/I18n'
+import type { ResolvedTheme } from '../../../types/theme.types'
+import { getPixiThemeColors } from '../../theme/pixi-theme-colors'
 
 const COMPACT_TOOLTIP_GAP = 6
 const NAME_TOOLTIP_GAP = 6
@@ -60,6 +62,7 @@ export class StackOverlay {
     private draggedLabelContainer: Container
     private draggedLabelPool: Text[]
     private getStackNames: () => Record<string, string>
+    private getResolvedTheme: () => ResolvedTheme
     private draggedBorder: Graphics
     private draggedHandle: Graphics
     private mergeIndicator: Graphics
@@ -72,17 +75,23 @@ export class StackOverlay {
     private draggedSourceLabelPoint: Position | null
     private hoveredCards: Set<Card> | null
 
-    constructor(app: Application, cardLayer: Container, getStackNames: () => Record<string, string> = (): Record<string, string> => ({})) {
+    constructor(
+        app: Application,
+        cardLayer: Container,
+        getStackNames: () => Record<string, string> = (): Record<string, string> => ({}),
+        getResolvedTheme: () => ResolvedTheme = (): ResolvedTheme => 'light',
+    ) {
         this.app = app
         this.cardLayer = cardLayer
         this.getStackNames = getStackNames
+        this.getResolvedTheme = getResolvedTheme
         this.stackBorder = new Graphics()
         this.stackDragHandle = new Graphics()
         this.stackCompactButton = new Graphics()
         this.stackNameButton = new Graphics()
-        this.compactTooltip = new CanvasTooltip()
-        this.nameTooltip = new CanvasTooltip()
-        this.nameEditor = new StackNameEditor()
+        this.compactTooltip = new CanvasTooltip(getResolvedTheme)
+        this.nameTooltip = new CanvasTooltip(getResolvedTheme)
+        this.nameEditor = new StackNameEditor(getResolvedTheme)
         this.labelContainer = new Container()
         this.labelContainer.label = 'stack-labels'
         // Purely decorative text: must never intercept pointer events meant for
@@ -200,11 +209,12 @@ export class StackOverlay {
         this.draggedCards = draggedStack
         this.mergeIndicator.clear()
         this.mergePlus.clear()
+        const palette = getPixiThemeColors(this.getResolvedTheme()).stackOverlay
 
         if (mergeTargets.length > 0) {
             for (const target of mergeTargets) {
-                drawMergeTargetBorder(target, this.mergeIndicator)
-                drawMergeDim(target, this.mergeIndicator)
+                drawMergeTargetBorder(target, this.mergeIndicator, palette)
+                drawMergeDim(target, this.mergeIndicator, palette)
             }
             this.cardLayer.addChild(this.mergeIndicator)
         }
@@ -217,7 +227,7 @@ export class StackOverlay {
 
         if (mergeTargets.length > 0) {
             for (const target of mergeTargets) {
-                drawMergePlus(target, this.mergePlus)
+                drawMergePlus(target, this.mergePlus, palette)
             }
             this.cardLayer.addChild(this.mergePlus)
         }
@@ -243,6 +253,8 @@ export class StackOverlay {
     }
 
     private render: () => void = (): void => {
+        // Read fresh every frame so a theme flip recolors borders/handles/labels on the next tick.
+        const palette = getPixiThemeColors(this.getResolvedTheme()).stackOverlay
         this.stackBorder.clear()
         this.stackDragHandle.clear()
         this.stackCompactButton.clear()
@@ -295,7 +307,7 @@ export class StackOverlay {
         for (const group of this.draggedSourceGroups) {
             // The card being pulled out is still mid-drag (not dropped yet): its
             // stack-mates left behind still need their border/handle drawn.
-            drawSingleBox(computeBoundingBox(group), this.stackBorder, this.stackDragHandle)
+            drawSingleBox(computeBoundingBox(group), this.stackBorder, this.stackDragHandle, palette)
         }
         if (this.draggedSourceCards && this.draggedSourceLabelPoint && this.draggedSourceGroups.length > 0) {
             // One label for the whole original pile, computed from every card that
@@ -308,28 +320,28 @@ export class StackOverlay {
             labelEntries.push({ stack: this.draggedSourceCards, point: this.draggedSourceLabelPoint })
         }
         for (const stack of computeStacks(stackedCards)) {
-            drawSingleStack(stack, this.stackBorder, this.stackDragHandle)
+            drawSingleStack(stack, this.stackBorder, this.stackDragHandle, palette)
             labelEntries.push({ stack, point: computeLabelAnchorPoint(stack) })
             if (this.isHoveredStack(stack)) {
                 if (stack.length >= 2) {
-                    drawCompactButton(stack, this.stackCompactButton)
+                    drawCompactButton(stack, this.stackCompactButton, palette)
                 }
-                drawNameButton(stack, this.stackNameButton)
+                drawNameButton(stack, this.stackNameButton, palette)
             }
         }
         const draggedLabelEntries: Array<{ stack: Card[]; point: Position }> = []
         for (const stack of computeStacks(this.draggedCards)) {
-            drawSingleStack(stack, this.draggedBorder, this.draggedHandle)
+            drawSingleStack(stack, this.draggedBorder, this.draggedHandle, palette)
             // Routed to draggedLabelEntries, not labelEntries: this is the label of the
             // stack actually being carried, so it must stay above its own cards, not
             // below them like the "coverable" labels of stationary stacks.
             draggedLabelEntries.push({ stack, point: computeLabelAnchorPoint(stack) })
         }
-        this.updateLabels(labelEntries, this.labelPool, this.labelContainer)
-        this.updateLabels(draggedLabelEntries, this.draggedLabelPool, this.draggedLabelContainer)
+        this.updateLabels(labelEntries, this.labelPool, this.labelContainer, palette)
+        this.updateLabels(draggedLabelEntries, this.draggedLabelPool, this.draggedLabelContainer, palette)
 
         if (draggingCard) {
-            this.drawSingleCardMergeIndicator(draggingCard)
+            this.drawSingleCardMergeIndicator(draggingCard, palette)
         }
 
         // Cards can be brought to the front (drag start, stack drag, reordering)
@@ -375,7 +387,12 @@ export class StackOverlay {
      * one for the actively handle-dragged stack's own label, which must stay
      * above its own cards instead.
      */
-    private updateLabels(entries: Array<{ stack: Card[]; point: Position }>, pool: Text[], container: Container): void {
+    private updateLabels(
+        entries: Array<{ stack: Card[]; point: Position }>,
+        pool: Text[],
+        container: Container,
+        palette: ReturnType<typeof getPixiThemeColors>['stackOverlay'],
+    ): void {
         const stackNames = this.getStackNames()
         let used = 0
         for (const { stack, point } of entries) {
@@ -391,8 +408,8 @@ export class StackOverlay {
                         fontFamily: LABEL_FONT_FAMILY,
                         fontSize: LABEL_FONT_SIZE,
                         fontWeight: 'bold',
-                        fill: 0xffffff,
-                        stroke: { color: 0x000000, width: 3 },
+                        fill: palette.labelText,
+                        stroke: { color: palette.labelStroke, width: 3 },
                     },
                 })
                 // Top-anchored (not centered): the label only grows downward from
@@ -401,6 +418,9 @@ export class StackOverlay {
                 pool.push(text)
                 container.addChild(text)
             }
+            // Re-applied every frame so a pooled label created under one theme still flips to the other.
+            text.style.fill = palette.labelText
+            text.style.stroke = { color: palette.labelStroke, width: 3 }
             const measureWidth = (candidate: string): number => {
                 text.text = candidate
                 return text.width
@@ -415,7 +435,7 @@ export class StackOverlay {
         }
     }
 
-    private drawSingleCardMergeIndicator(draggingCard: Card): void {
+    private drawSingleCardMergeIndicator(draggingCard: Card, palette: ReturnType<typeof getPixiThemeColors>['stackOverlay']): void {
         this.mergeIndicator.clear()
         this.mergePlus.clear()
 
@@ -430,12 +450,12 @@ export class StackOverlay {
         }
 
         for (const target of mergeTargets) {
-            drawMergeTargetBorder(target, this.mergeIndicator)
-            drawMergeDim(target, this.mergeIndicator)
+            drawMergeTargetBorder(target, this.mergeIndicator, palette)
+            drawMergeDim(target, this.mergeIndicator, palette)
         }
         this.cardLayer.addChild(this.mergeIndicator)
         for (const target of mergeTargets) {
-            drawMergePlus(target, this.mergePlus)
+            drawMergePlus(target, this.mergePlus, palette)
         }
         this.cardLayer.addChild(this.mergePlus)
     }
