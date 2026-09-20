@@ -1,4 +1,4 @@
-import { CardState } from '../../types/card-state.types'
+import { CardState, StoredCardState } from '../../types/card-state.types'
 import { Store } from '../../shared/utils/store'
 import { IStore } from '../../types/store.types'
 
@@ -12,10 +12,6 @@ const STORAGE_KEY: string = 'moodsort-card-state'
 const CARD_STATE_SCHEMA_VERSION: number = 2
 
 const DEFAULTS: CardState = { positions: {}, order: [], onboardingDismissed: false, stackNames: {} }
-
-interface StoredCardState extends CardState {
-    schemaVersion: number
-}
 
 export class CardStateService {
     private store: IStore

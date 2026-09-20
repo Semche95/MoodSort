@@ -1,6 +1,6 @@
 import { Container, Graphics, Text } from 'pixi.js'
-import type { ResolvedTheme } from '../../types/theme.types'
-import { getPixiThemeColors } from '../../features/theme/pixi-theme-colors'
+import type { GetResolvedTheme } from '../../types/theme.types'
+import { DEFAULT_GET_RESOLVED_THEME, getPixiThemeColors } from '../../features/theme/pixi-theme-colors'
 
 const PADDING_X = 10
 const PADDING_Y = 6
@@ -18,9 +18,9 @@ export class CanvasTooltip {
     readonly view: Container
     private readonly bg: Graphics
     private readonly text: Text
-    private readonly getResolvedTheme: () => ResolvedTheme
+    private readonly getResolvedTheme: GetResolvedTheme
 
-    constructor(getResolvedTheme: () => ResolvedTheme = (): ResolvedTheme => 'light') {
+    constructor(getResolvedTheme: GetResolvedTheme = DEFAULT_GET_RESOLVED_THEME) {
         this.getResolvedTheme = getResolvedTheme
         this.view = new Container()
         this.view.label = 'canvas-tooltip'

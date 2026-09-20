@@ -1,6 +1,8 @@
 import { Container } from 'pixi.js'
 import { Card } from '../../types/card.types'
 import { Position } from '../../types/position.types'
+import { Box } from '../../types/box.types'
+import { NameReassignment } from '../../types/name-reassignment.types'
 import { constrainPosition } from '../../shared/utils/geometry'
 
 /** Padding (in px) added around the stack bounding box highlight */
@@ -54,13 +56,6 @@ export function clampCardPosition(
     appHeight: number,
 ): Position {
     return constrainPosition(x, y, card.width, card.height, appWidth, appHeight, STACK_HANDLE_TOP_CLEARANCE)
-}
-
-export interface Box {
-    x: number
-    y: number
-    width: number
-    height: number
 }
 
 /**
@@ -258,12 +253,6 @@ export function computeStackLabel(
 export function findNameAnchor(stack: Card[], cardLayer: Container, stackNames: Record<string, string>): Card {
     const [firstNamed] = sortedNamedCards(stack, cardLayer, stackNames)
     return firstNamed ?? getStackAnchor(stack, cardLayer)
-}
-
-/** Before/after values (by imageUrl) for each stackNames slot a split or merge touched, for bundling into an undo/redo history entry. */
-export interface NameReassignment {
-    before: Record<string, string | null>
-    after: Record<string, string | null>
 }
 
 /**

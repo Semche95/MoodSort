@@ -1,7 +1,8 @@
 import { Graphics } from 'pixi.js'
 import { Card } from '../../../types/card.types'
 import { computeBoundingBox, computeCompactButtonBox, computeNameButtonBox, STACK_HIGHLIGHT_PADDING, STACK_HANDLE_HEIGHT } from '../stack'
-import { getPixiThemeColors, PixiThemePalette } from '../../theme/pixi-theme-colors'
+import { getPixiThemeColors } from '../../theme/pixi-theme-colors'
+import type { PixiThemePalette } from '../../../types/pixi-theme-palette.types'
 
 const DEFAULT_PALETTE: PixiThemePalette['stackOverlay'] = getPixiThemeColors('light').stackOverlay
 

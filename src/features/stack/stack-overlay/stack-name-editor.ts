@@ -1,7 +1,8 @@
 import { Container, FederatedPointerEvent, Graphics, Text } from 'pixi.js'
 import { STACK_NAME_MAX_WIDTH } from '../stack'
-import type { ResolvedTheme } from '../../../types/theme.types'
-import { getPixiThemeColors } from '../../theme/pixi-theme-colors'
+import type { GetResolvedTheme } from '../../../types/theme.types'
+import { DEFAULT_GET_RESOLVED_THEME, getPixiThemeColors } from '../../theme/pixi-theme-colors'
+import type { PixiThemePalette } from '../../../types/pixi-theme-palette.types'
 
 const PADDING_X = 8
 const PADDING_Y = 5
@@ -51,9 +52,9 @@ export class StackNameEditor {
     private input: HTMLInputElement | null
     private boundKeyDown: (e: KeyboardEvent) => void
     private boundSync: () => void
-    private readonly getResolvedTheme: () => ResolvedTheme
+    private readonly getResolvedTheme: GetResolvedTheme
 
-    constructor(getResolvedTheme: () => ResolvedTheme = (): ResolvedTheme => 'light') {
+    constructor(getResolvedTheme: GetResolvedTheme = DEFAULT_GET_RESOLVED_THEME) {
         this.getResolvedTheme = getResolvedTheme
         this.view = new Container()
         this.view.label = 'stack-name-editor'
@@ -349,7 +350,7 @@ export class StackNameEditor {
     }
 
     /** Small "x" sitting just right of the box, only while there's something to clear. */
-    private redrawClearButton(width: number, height: number, palette: ReturnType<typeof getPixiThemeColors>['stackNameEditor']): void {
+    private redrawClearButton(width: number, height: number, palette: PixiThemePalette['stackNameEditor']): void {
         this.clearButton.clear()
         if (this.buffer.length === 0) {
             this.clearButton.eventMode = 'none'

@@ -3,9 +3,9 @@ import { Card } from '../../types/card.types'
 import { AnimationTarget } from '../../types/animation.types'
 import { CardState } from '../../types/card-state.types'
 import { Position } from '../../types/position.types'
-import { ResolvedTheme } from '../../types/theme.types'
+import { GetResolvedTheme, ResolvedTheme } from '../../types/theme.types'
 import { clampCardPosition } from '../stack/stack'
-import { getPixiThemeColors } from '../theme/pixi-theme-colors'
+import { DEFAULT_GET_RESOLVED_THEME, getPixiThemeColors } from '../theme/pixi-theme-colors'
 
 /** Screen width (in px) at which cards render at native size */
 export const CARD_REFERENCE_WIDTH: number = 2560
@@ -23,7 +23,7 @@ export function createCard(
     frameName: string,
     texture: Texture,
     onDragStart: (event: FederatedPointerEvent) => void,
-    getResolvedTheme: () => ResolvedTheme = (): ResolvedTheme => 'light',
+    getResolvedTheme: GetResolvedTheme = DEFAULT_GET_RESOLVED_THEME,
 ): Card {
     const card = new Container() as Card
     card.imageUrl = frameName

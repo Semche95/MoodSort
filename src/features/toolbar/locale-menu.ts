@@ -1,4 +1,3 @@
-import type { FancyButton } from '@pixi/ui'
 import type { Texture } from 'pixi.js'
 import type { CanvasTooltip } from '../../shared/ui/canvas-tooltip'
 import { createIcon } from '../../shared/ui/icons'
@@ -6,6 +5,7 @@ import type { Locale } from '../../i18n/i18n.types'
 import { AVAILABLE_LOCALES } from '../../i18n/locales'
 import { I18n } from '../../i18n/I18n'
 import type { ResolvedTheme } from '../../types/theme.types'
+import type { LocaleMenu } from '../../types/locale-menu.types'
 import { BUTTON_SIZE, createButton } from './toolbar-view'
 
 function createNativeSelect(currentLocale: Locale, onSelect: (locale: Locale) => void): HTMLSelectElement {
@@ -33,13 +33,6 @@ function createNativeSelect(currentLocale: Locale, onSelect: (locale: Locale) =>
     })
 
     return select
-}
-
-export interface LocaleMenu {
-    button: FancyButton
-    select: HTMLSelectElement
-    /** Recalculates the invisible native select's screen position to match the Pixi button's, given the current canvas placement. */
-    updatePosition(canvasElement: HTMLCanvasElement): void
 }
 
 /**

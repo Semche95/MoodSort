@@ -4,6 +4,8 @@ import type { CanvasTooltip } from '../../shared/ui/canvas-tooltip'
 import { ICON_SIZE, applyIconTheme } from '../../shared/ui/icons'
 import type { ResolvedTheme } from '../../types/theme.types'
 import { getPixiThemeColors } from '../theme/pixi-theme-colors'
+import type { PixiThemePalette } from '../../types/pixi-theme-palette.types'
+import type { RoundButtonViews } from '../../types/round-button-views.types'
 
 export const BUTTON_SIZE = 48
 export const LOGO_EMOJI_SIZE = 28
@@ -24,6 +26,16 @@ export function createCircleView(fill: number, alpha: number): Graphics {
     view.circle(BUTTON_SIZE / 2, BUTTON_SIZE / 2, BUTTON_SIZE / 2)
     view.fill({ color: fill, alpha })
     return view
+}
+
+/** Builds the four state views shared by every round icon button, from the toolbar palette. Used both to construct a button and to re-theme one in place. */
+function roundButtonViews(palette: PixiThemePalette['toolbar']): RoundButtonViews {
+    return {
+        defaultView: createCircleView(palette.buttonDefault, 0.85),
+        hoverView: createCircleView(palette.buttonHover, 1),
+        pressedView: createCircleView(palette.buttonPressed, 1),
+        disabledView: createCircleView(palette.buttonDisabled, 0.45),
+    }
 }
 
 export function createLogo(resolvedTheme: ResolvedTheme = 'light'): Container {
@@ -62,10 +74,11 @@ export function createLogo(resolvedTheme: ResolvedTheme = 'light'): Container {
 /** Re-theme an already-created round icon button in place, so a theme flip doesn't require rebuilding the toolbar. */
 export function applyButtonTheme(button: FancyButton, resolvedTheme: ResolvedTheme): void {
     const palette = getPixiThemeColors(resolvedTheme).toolbar
-    button.defaultView = createCircleView(palette.buttonDefault, 0.85)
-    button.hoverView = createCircleView(palette.buttonHover, 1)
-    button.pressedView = createCircleView(palette.buttonPressed, 1)
-    button.disabledView = createCircleView(palette.buttonDisabled, 0.45)
+    const views = roundButtonViews(palette)
+    button.defaultView = views.defaultView
+    button.hoverView = views.hoverView
+    button.pressedView = views.pressedView
+    button.disabledView = views.disabledView
     const icon = button.iconView
     if (icon instanceof Sprite) {
         applyIconTheme(icon, resolvedTheme)
@@ -111,10 +124,7 @@ function attachTooltipBehavior(button: FancyButton, tooltip: CanvasTooltip, onCl
 export function createButton(tooltip: CanvasTooltip, icon: Container, onClick: () => void, label: string, tooltipLabel: string, iconScale: number = ICON_SIZE / ICON_SOURCE_SIZE, resolvedTheme: ResolvedTheme = 'light'): FancyButton {
     const palette = getPixiThemeColors(resolvedTheme).toolbar
     const button = new FancyButton({
-        defaultView: createCircleView(palette.buttonDefault, 0.85),
-        hoverView: createCircleView(palette.buttonHover, 1),
-        pressedView: createCircleView(palette.buttonPressed, 1),
-        disabledView: createCircleView(palette.buttonDisabled, 0.45),
+        ...roundButtonViews(palette),
         icon,
         anchor: 0.5,
         defaultIconScale: iconScale,
@@ -133,6 +143,16 @@ function createPillView(fill: number, width: number): Graphics {
     view.roundRect(0, 0, width, BUTTON_SIZE, BUTTON_SIZE / 2)
     view.fill({ color: fill, alpha: 1 })
     return view
+}
+
+/** Builds the four pill-shaped state views shared by the share button, from the toolbar palette. Used both to construct the button and to re-theme it in place. */
+function shareButtonViews(palette: PixiThemePalette['toolbar'], buttonWidth: number): RoundButtonViews {
+    return {
+        defaultView: createPillView(palette.shareButton, buttonWidth),
+        hoverView: createPillView(palette.shareButtonHover, buttonWidth),
+        pressedView: createPillView(palette.shareButtonPressed, buttonWidth),
+        disabledView: createPillView(palette.shareButtonDisabled, buttonWidth),
+    }
 }
 
 // Pill-shaped blue CTA button (icon + share label), reading as the primary action.
@@ -194,10 +214,7 @@ export function createShareButton(tooltip: CanvasTooltip, icon: Sprite, onClick:
     const buttonWidth = ICON_SIZE + SHARE_ICON_GAP + label.width + SHARE_BUTTON_PADDING_X * 2
 
     const button = new FancyButton({
-        defaultView: createPillView(palette.shareButton, buttonWidth),
-        hoverView: createPillView(palette.shareButtonHover, buttonWidth),
-        pressedView: createPillView(palette.shareButtonPressed, buttonWidth),
-        disabledView: createPillView(palette.shareButtonDisabled, buttonWidth),
+        ...shareButtonViews(palette, buttonWidth),
         icon: content,
         anchor: 0.5,
         animations: {
@@ -223,10 +240,11 @@ export function createShareButton(tooltip: CanvasTooltip, icon: Sprite, onClick:
 export function applyShareButtonTheme(button: FancyButton, content: Container, activeIndicator: Graphics, viewerIndicator: Graphics, resolvedTheme: ResolvedTheme): void {
     const palette = getPixiThemeColors(resolvedTheme).toolbar
     const buttonWidth = button.width
-    button.defaultView = createPillView(palette.shareButton, buttonWidth)
-    button.hoverView = createPillView(palette.shareButtonHover, buttonWidth)
-    button.pressedView = createPillView(palette.shareButtonPressed, buttonWidth)
-    button.disabledView = createPillView(palette.shareButtonDisabled, buttonWidth)
+    const views = shareButtonViews(palette, buttonWidth)
+    button.defaultView = views.defaultView
+    button.hoverView = views.hoverView
+    button.pressedView = views.pressedView
+    button.disabledView = views.disabledView
 
     const icon = content.children.find((child: Container): boolean => child instanceof Sprite) as Sprite | undefined
     const label = content.children.find((child: Container): boolean => child instanceof Text) as Text | undefined

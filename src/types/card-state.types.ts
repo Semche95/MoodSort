@@ -12,3 +12,8 @@ export const POSITIONS_KEY = 'positions' as const
 export const ORDER_KEY = 'order' as const
 export const ONBOARDING_KEY = 'onboardingDismissed' as const
 export const STACK_NAMES_KEY = 'stackNames' as const
+
+/** Persisted shape of `CardState`, tagged with the schema version it was saved under so a migration can be detected on load. */
+export interface StoredCardState extends CardState {
+    schemaVersion: number
+}

@@ -18,8 +18,9 @@ import { CanvasTooltip } from '../../../shared/ui/canvas-tooltip'
 import { StackNameEditor } from './stack-name-editor'
 import { drawCompactButton, drawNameButton, drawMergeDim, drawMergePlus, drawMergeTargetBorder, drawSingleBox, drawSingleStack } from './stack-overlay-view'
 import { I18n } from '../../../i18n/I18n'
-import type { ResolvedTheme } from '../../../types/theme.types'
-import { getPixiThemeColors } from '../../theme/pixi-theme-colors'
+import type { GetResolvedTheme } from '../../../types/theme.types'
+import { DEFAULT_GET_RESOLVED_THEME, getPixiThemeColors } from '../../theme/pixi-theme-colors'
+import type { PixiThemePalette } from '../../../types/pixi-theme-palette.types'
 
 const COMPACT_TOOLTIP_GAP = 6
 const NAME_TOOLTIP_GAP = 6
@@ -62,7 +63,7 @@ export class StackOverlay {
     private draggedLabelContainer: Container
     private draggedLabelPool: Text[]
     private getStackNames: () => Record<string, string>
-    private getResolvedTheme: () => ResolvedTheme
+    private getResolvedTheme: GetResolvedTheme
     private draggedBorder: Graphics
     private draggedHandle: Graphics
     private mergeIndicator: Graphics
@@ -79,7 +80,7 @@ export class StackOverlay {
         app: Application,
         cardLayer: Container,
         getStackNames: () => Record<string, string> = (): Record<string, string> => ({}),
-        getResolvedTheme: () => ResolvedTheme = (): ResolvedTheme => 'light',
+        getResolvedTheme: GetResolvedTheme = DEFAULT_GET_RESOLVED_THEME,
     ) {
         this.app = app
         this.cardLayer = cardLayer
@@ -391,7 +392,7 @@ export class StackOverlay {
         entries: Array<{ stack: Card[]; point: Position }>,
         pool: Text[],
         container: Container,
-        palette: ReturnType<typeof getPixiThemeColors>['stackOverlay'],
+        palette: PixiThemePalette['stackOverlay'],
     ): void {
         const stackNames = this.getStackNames()
         let used = 0
@@ -435,7 +436,7 @@ export class StackOverlay {
         }
     }
 
-    private drawSingleCardMergeIndicator(draggingCard: Card, palette: ReturnType<typeof getPixiThemeColors>['stackOverlay']): void {
+    private drawSingleCardMergeIndicator(draggingCard: Card, palette: PixiThemePalette['stackOverlay']): void {
         this.mergeIndicator.clear()
         this.mergePlus.clear()
 

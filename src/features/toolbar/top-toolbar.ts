@@ -1,5 +1,6 @@
 import { Container, Texture } from 'pixi.js'
 import type { ToolbarHost } from '../../types/toolbar.types'
+import type { ToolbarState } from '../../types/toolbar-state.types'
 import { initHistoryShortcuts } from '../history/history'
 import { CanvasTooltip } from '../../shared/ui/canvas-tooltip'
 import { createOnboarding } from '../onboarding/onboarding'
@@ -12,7 +13,6 @@ import { createHelpIcon, createIcon } from '../../shared/ui/icons'
 import { I18n, switchLocale } from '../../i18n/I18n'
 import type { Locale } from '../../i18n/i18n.types'
 import { createLocaleMenu } from './locale-menu'
-import type { LocaleMenu } from './locale-menu'
 import { BUTTON_SIZE, LOGO_EMOJI_SIZE, applyButtonTheme, applyLogoTheme, applyShareButtonTheme, createButton, createLogo, createShareButton, setButtonEnabled, setShareIndicators } from './toolbar-view'
 import type { ThemeService } from '../theme/theme-service'
 import type { ResolvedTheme } from '../../types/theme.types'
@@ -20,31 +20,6 @@ import type { ResolvedTheme } from '../../types/theme.types'
 const GAP = 8
 const TOP_MARGIN = 16
 const SIDE_MARGIN = 16
-
-/**
- * Plain data bag standing in for what would otherwise be a toolbar instance's
- * fields. Built in two steps by `createToolbarState` (buttons are created after
- * the state variable exists, then assigned onto it) so their click handlers can
- * close over the same object and see the final button references.
- */
-type ToolbarState = {
-    host: ToolbarHost
-    tooltip: CanvasTooltip
-    logo: Container
-    undoIcon: ReturnType<typeof createIcon>
-    redoIcon: ReturnType<typeof createIcon>
-    shareIcon: Container
-    shareActiveIndicator: ReturnType<typeof createShareButton>['activeIndicator']
-    shareViewerIndicator: ReturnType<typeof createShareButton>['viewerIndicator']
-    undoButton: ReturnType<typeof createButton>
-    redoButton: ReturnType<typeof createButton>
-    helpButton: ReturnType<typeof createButton>
-    settingsButton: ReturnType<typeof createButton>
-    localeMenu: LocaleMenu
-    shareButton: ReturnType<typeof createShareButton>['button']
-    onDismissOnboarding: () => void
-    themeService: ThemeService
-}
 
 function createToolbarState(host: ToolbarHost, onDismissOnboarding: () => void, iconTextures: Record<string, Texture>, themeService: ThemeService): ToolbarState {
     const resolvedTheme = themeService.getResolvedTheme()

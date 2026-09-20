@@ -1,10 +1,4 @@
-import type { Locale } from './i18n.types'
-
-export interface LocaleOption {
-    code: Locale
-    /** The language's own name, written in that language (e.g. "Français", "English"). */
-    nativeName: string
-}
+import type { LocaleOption } from './i18n.types'
 
 /**
  * Every locale the app ships translations for, in display order. This is the

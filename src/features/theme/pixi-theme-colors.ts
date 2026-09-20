@@ -1,64 +1,5 @@
-import type { ResolvedTheme } from '../../types/theme.types'
-
-/**
- * Every numeric Pixi color used to draw the scene (cards, toolbar, stack
- * overlay, name editor, tooltip, canvas background), grouped by the feature
- * that owns it. This is the single source of truth: no controller should
- * keep its own `0x...` literal or locally-named color constant anymore,
- * they all read through `getPixiThemeColors(resolvedTheme)` instead.
- *
- * The share button's blue and the amber/green status dots are intentionally
- * identical across both themes: they carry meaning (brand action, "sharing
- * active", "viewer connected") that graying out in dark mode would blur.
- */
-export interface PixiThemePalette {
-    /** Flat fill passed to `app.init({ backgroundColor })`; the closest thing to a canvas "background" in this app. */
-    canvasBackground: number
-    card: {
-        /** Sprite tint applied on card hover. */
-        hoverTint: number
-        /** Drop-shadow fill behind a card; kept identical across themes since a soft shadow reads the same regardless of background. */
-        shadow: number
-    }
-    /** Shared by toolbar icons and the help "?" glyph. */
-    icon: number
-    toolbar: {
-        title: number
-        buttonDefault: number
-        buttonHover: number
-        buttonPressed: number
-        buttonDisabled: number
-        shareButton: number
-        shareButtonHover: number
-        shareButtonPressed: number
-        shareButtonDisabled: number
-        shareLabel: number
-        shareActiveIndicator: number
-        shareViewerIndicator: number
-        shareIndicatorStroke: number
-        shareIndicatorShadow: number
-    }
-    stackOverlay: {
-        border: number
-        handle: number
-        controlIcon: number
-        mergeDim: number
-        mergePlus: number
-        labelText: number
-        labelStroke: number
-    }
-    stackNameEditor: {
-        background: number
-        text: number
-        border: number
-        clearButton: number
-        clearIcon: number
-    }
-    tooltip: {
-        background: number
-        text: number
-    }
-}
+import type { GetResolvedTheme, ResolvedTheme } from '../../types/theme.types'
+import type { PixiThemePalette } from '../../types/pixi-theme-palette.types'
 
 const LIGHT_PIXI_THEME_COLORS: PixiThemePalette = {
     canvasBackground: 0xa9a9a9,
@@ -154,3 +95,6 @@ const DARK_PIXI_THEME_COLORS: PixiThemePalette = {
 export function getPixiThemeColors(resolvedTheme: ResolvedTheme): PixiThemePalette {
     return resolvedTheme === 'dark' ? DARK_PIXI_THEME_COLORS : LIGHT_PIXI_THEME_COLORS
 }
+
+/** Shared fallback for constructors that accept an optional `GetResolvedTheme`, so a standalone instance (e.g. in a test) still renders with a sensible palette. */
+export const DEFAULT_GET_RESOLVED_THEME: GetResolvedTheme = (): ResolvedTheme => 'light'

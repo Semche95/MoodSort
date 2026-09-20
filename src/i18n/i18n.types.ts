@@ -2,6 +2,12 @@ import en from './locales/en.json'
 
 export type Locale = 'de' | 'en' | 'eo' | 'es' | 'fr' | 'nl'
 
+export interface LocaleOption {
+    code: Locale
+    /** The language's own name, written in that language (e.g. "Français", "English"). */
+    nativeName: string
+}
+
 /**
  * Recursively flattens a nested translation dictionary's shape into a union
  * of dotted-path keys (e.g. `toolbar.undo`), so `TranslationKey` gives
