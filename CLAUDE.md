@@ -11,6 +11,7 @@
 - Don't expose a class whose instance is built with `new` and immediately discarded: use a plain init function unless the instance is kept and its methods called later.
 - Don't nest named functions inside another function to share its locals: that's a class in disguise. Extract them to top-level functions taking the shared state as an explicit parameter.
 - File and folder names are always kebab-case, no exceptions for files that export a class (`stack-overlay.ts`, not `StackOverlay.ts`). PascalCase is reserved for the TypeScript identifiers (class names, types) exported from those files.
+- Default to no comments. Only add one when the *why* is non-obvious (a hidden constraint, a subtle invariant, a workaround for a specific bug); never to restate what well-named code already shows. When a comment is warranted, keep it to a single short line: no multi-paragraph docstrings or multi-line comment blocks.
 
 # Project structure conventions
 - `src/app/`: composition root only: entry point and the top-level scene that ties features together. No business logic here beyond wiring; delegate to `src/features/`.
@@ -20,7 +21,7 @@
 - `src/i18n/locales/`: one JSON file per locale (currently `de`, `en`, `eo`, `es`, `fr`, `nl`), validated against `locale.schema.json`. More locales are expected to be added over time; don't assume English and French are the only ones.
 - Wherever locales are listed, order them alphabetically rather than by relevance or historical addition order: technical lists keyed by locale code (e.g. the `Locale` type union, `AVAILABLE_LOCALES`, and anything deriving from it like the language picker) sort by code; prose or UI text naming languages by their displayed name (e.g. README sentences, a rendered language list) sorts by that displayed name instead, since the two orders don't coincide.
 - `src/cards/`: source emotion card images, one per emotion, consumed by `scripts/generate-atlas.mjs` to build the per-locale spritesheet atlas at dev/build time.
-- `src/__tests__/`: cross-feature/integration-style tests that don't belong to a single feature file's colocated test.
+- `src/__tests__/`: all test files live here, with no exceptions. Never colocate a test next to the source file it covers, even for a single-feature file; name it after what it tests (e.g. `settings.test.ts`, `screen-share-viewer.test.ts`).
 
 # Architecture decisions
 - The whole scene renders through PixiJS onto a single real `<canvas>` element (`CanvasScene` in `src/app/`), not DOM/CSS. This is deliberate: canvas sharing (`src/features/screen-share/`) works by calling `canvas.captureStream()` directly on that element, which only captures actual canvas pixels. Any UI that needs to appear in a shared session (cards, stacks, toolbar buttons drawn in-scene, stack name editor, etc.) must be drawn in Pixi on this canvas, not as overlaid HTML/CSS, or it silently won't show up for the remote viewer. DOM elements are only acceptable for things that are intentionally host-local and never meant to be seen by a viewer, such as the settings modal (`src/features/settings/settings.ts`) or the legal notices modal (`src/features/footer/legal.ts`).
