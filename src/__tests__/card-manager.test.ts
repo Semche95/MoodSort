@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { Application, Container, Spritesheet, Texture } from 'pixi.js'
 import { CardManager, createCard, CARD_REFERENCE_WIDTH } from '../features/card/card-manager'
 import { STACK_HANDLE_TOP_CLEARANCE } from '../features/stack/stack'
+import { getPixiThemeColors } from '../features/theme/pixi-theme-colors'
 import { Card } from '../types/card.types'
 import { CardState } from '../types/card-state.types'
 
@@ -28,8 +29,15 @@ vi.mock('pixi.js', () => {
         }
     }
     class MockGraphics extends MockContainer {
+        fillColor: number = 0
+        fillAlpha: number = 0
+        clear(): this { return this }
         roundRect(): this { return this }
-        fill(): this { return this }
+        fill(options: { color: number; alpha: number }): this {
+            this.fillColor = options.color
+            this.fillAlpha = options.alpha
+            return this
+        }
     }
     class MockSprite extends MockContainer {
         texture: unknown
@@ -45,7 +53,10 @@ vi.mock('pixi.js', () => {
         Container: MockContainer,
         Graphics: MockGraphics,
         Sprite: MockSprite,
-        BlurFilter: class MockBlurFilter { constructor() {} },
+        BlurFilter: class MockBlurFilter {
+            strength: number
+            constructor(options: { strength: number }) { this.strength = options.strength }
+        },
     }
 })
 
@@ -228,6 +239,24 @@ describe('CardManager', () => {
             manager.updateTextures(cards as unknown as Card[], { textures: {} } as unknown as Spritesheet)
 
             expect(cards[0].innerSprite.texture).toBe(originalTexture)
+        })
+    })
+
+    describe('updateShadows', () => {
+        it('redraws each card\'s shadow to match the newly resolved theme\'s color, alpha, and blur strength', () => {
+            const spritesheet = { textures: { a: { width: 200, height: 300 } } }
+            const cards = manager.loadCards(['a'], {}, vi.fn(), spritesheet as unknown as Spritesheet) as unknown as Array<
+                Container & { shadow: { fillColor: number; fillAlpha: number; filters: Array<{ strength: number }> } }
+            >
+
+            manager.setResolvedTheme('dark')
+            manager.updateShadows(cards as unknown as Card[])
+
+            const darkShadowTheme = getPixiThemeColors('dark').card.shadow
+            const shadow = cards[0].shadow
+            expect(shadow.fillColor).toBe(darkShadowTheme.color)
+            expect(shadow.fillAlpha).toBe(darkShadowTheme.alpha)
+            expect(shadow.filters[0].strength).toBe(darkShadowTheme.blurStrength)
         })
     })
 

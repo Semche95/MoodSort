@@ -94,6 +94,7 @@ export class CanvasScene {
     applyTheme(resolved: ResolvedTheme): void {
         this.resolvedTheme = resolved
         this.cardManager.setResolvedTheme(resolved)
+        this.cardManager.updateShadows(this.cards)
         const renderer = this.app.renderer as unknown as { background?: { color: number } } | undefined
         if (renderer?.background) {
             renderer.background.color = getPixiThemeColors(resolved).canvasBackground

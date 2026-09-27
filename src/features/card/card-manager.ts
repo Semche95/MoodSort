@@ -3,6 +3,7 @@ import { Card } from '../../types/card.types'
 import { AnimationTarget } from '../../types/animation.types'
 import { CardState } from '../../types/card-state.types'
 import { Position } from '../../types/position.types'
+import { PixiThemePalette } from '../../types/pixi-theme-palette.types'
 import { GetResolvedTheme, ResolvedTheme } from '../../types/theme.types'
 import { clampCardPosition } from '../stack/stack'
 import { DEFAULT_GET_RESOLVED_THEME, getPixiThemeColors } from '../theme/pixi-theme-colors'
@@ -19,6 +20,15 @@ function jitteredPosition(centerX: number, centerY: number): Position {
     }
 }
 
+function drawCardShadow(shadow: Graphics, texture: Texture, shadowTheme: PixiThemePalette['card']['shadow']): void {
+    shadow.clear()
+    shadow.roundRect(0, 0, texture.width, texture.height, 8)
+    shadow.fill({ color: shadowTheme.color, alpha: shadowTheme.alpha })
+    shadow.filters = [new BlurFilter({ strength: shadowTheme.blurStrength })]
+    shadow.x = shadowTheme.offsetX
+    shadow.y = shadowTheme.offsetY
+}
+
 export function createCard(
     frameName: string,
     texture: Texture,
@@ -30,12 +40,9 @@ export function createCard(
 
     const shadowTheme = getPixiThemeColors(getResolvedTheme()).card.shadow
     const shadow = new Graphics()
-    shadow.roundRect(0, 0, texture.width, texture.height, 8)
-    shadow.fill({ color: shadowTheme.color, alpha: shadowTheme.alpha })
-    shadow.filters = [new BlurFilter({ strength: shadowTheme.blurStrength })]
-    shadow.x = shadowTheme.offsetX
-    shadow.y = shadowTheme.offsetY
+    drawCardShadow(shadow, texture, shadowTheme)
     card.addChild(shadow)
+    card.shadow = shadow
 
     const sprite = new Sprite(texture)
     card.addChild(sprite)
@@ -101,6 +108,14 @@ export class CardManager {
             if (texture) {
                 card.innerSprite.texture = texture
             }
+        }
+    }
+
+    /** Redraws every card's shadow with the current resolved theme's colors, e.g. after a theme change. */
+    updateShadows(cards: Card[]): void {
+        const shadowTheme = getPixiThemeColors(this.resolvedTheme).card.shadow
+        for (const card of cards) {
+            drawCardShadow(card.shadow, card.innerSprite.texture, shadowTheme)
         }
     }
 
