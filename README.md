@@ -61,7 +61,7 @@ Either way it runs at `http://localhost:8080`.
 
 ## CI
 
-`.github/workflows/ci.yml` runs on every push to `main` and every pull request: install dependencies, regenerate the atlas and icons, typecheck, lint, and run the test suite.
+`.github/workflows/ci.yml` runs on every push to `main` and every pull request. The `verify` job installs dependencies, then caches the card atlas between runs (the key hashes the contents of `scripts/generate-atlas.mjs`, `src/cards/`, `src/i18n/locales/`, and `scripts/fonts/`, so it's only regenerated when that content changes), regenerates the icons, typechecks, lints, and runs the test suite. A `dependabot` job, which depends on `verify` (`needs: [verify]`), then auto-approves and auto-merges non-major Dependabot PRs.
 
 ## Deployment
 

@@ -27,8 +27,21 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate assets
-        run: pnpm atlas && pnpm icons
+      - name: Cache atlas
+        id: atlas-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            src/assets/atlas.*.webp
+            src/assets/atlas.json
+          key: atlas-${{ hashFiles('scripts/generate-atlas.mjs', 'src/cards/**', 'src/i18n/locales/**', 'scripts/fonts/**') }}
+
+      - name: Generate atlas
+        if: steps.atlas-cache.outputs.cache-hit != 'true'
+        run: pnpm atlas
+
+      - name: Generate icons
+        run: pnpm icons
 
       - name: Typecheck
         run: pnpm typecheck
