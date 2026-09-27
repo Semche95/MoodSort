@@ -7,7 +7,7 @@ const LIGHT_PIXI_THEME_COLORS: PixiThemePalette = {
         hoverTint: 0xffeedd,
         shadow: {
             color: 0x000000,
-            alpha: 0.25,
+            alpha: 0.18,
             blurStrength: 4,
             offsetX: 0,
             offsetY: 0,

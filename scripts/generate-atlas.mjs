@@ -24,9 +24,11 @@ const LABEL_LINE_HEIGHT_RATIO = 1.15
 // Themes to render an atlas for: every locale gets both, unconditionally.
 const THEMES = ['light', 'dark']
 
+// A gap under ~32 levels between top and bottom leaves too few 8-bit steps for a smooth
+// gradient over the card's height and produces visible banding.
 const THEME_BACKGROUND_COLORS = {
     light: { top: '#d4f4e5', bottom: '#fcf4e1' },
-    dark: { top: '#454545', bottom: '#353535' },
+    dark: { top: '#606060', bottom: '#404040' },
 }
 
 const THEME_TEXT_COLORS = {
@@ -131,19 +133,42 @@ async function buildLabelOverlay(label, fontFaceCss, theme) {
     return sharp(Buffer.from(svg)).png().toBuffer()
 }
 
+function hexToRgb(hex) {
+    const value = Number.parseInt(hex.slice(1), 16)
+    return [(value >> 16) & 0xff, (value >> 8) & 0xff, value & 0xff]
+}
+
+// A linear gradient quantizes to a visible handful of 8-bit steps over the card's height;
+// a blur can't fix this, since blurring a linear ramp converges back to the same ramp and
+// re-rounding it to 8-bit reproduces the same steps. A small triangular-distributed random
+// offset per pixel (sum of two uniform randoms, less patterned than a single one) breaks up
+// the steps into a smooth-looking gradient while staying imperceptible as grain.
+const DITHER_NOISE_AMPLITUDE = 4
+
+function triangularNoise(amplitude) {
+    return (Math.random() + Math.random() - 1) * amplitude
+}
+
 function buildBackgroundBuffer(theme) {
     const { top, bottom } = THEME_BACKGROUND_COLORS[theme]
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${FRAME_W}" height="${FRAME_H}">
-        <defs>
-            <linearGradient id="background" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="${top}" />
-                <stop offset="1" stop-color="${bottom}" />
-            </linearGradient>
-        </defs>
-        <rect x="0" y="0" width="${FRAME_W}" height="${FRAME_H}" fill="url(#background)" />
-    </svg>`
+    const topRgb = hexToRgb(top)
+    const bottomRgb = hexToRgb(bottom)
+    const channels = 3
+    const data = Buffer.alloc(FRAME_W * FRAME_H * channels)
 
-    return sharp(Buffer.from(svg)).png().toBuffer()
+    for (let y = 0; y < FRAME_H; y++) {
+        const t = y / (FRAME_H - 1)
+        for (let x = 0; x < FRAME_W; x++) {
+            const noise = triangularNoise(DITHER_NOISE_AMPLITUDE)
+            const rowOffset = (y * FRAME_W + x) * channels
+            for (let c = 0; c < channels; c++) {
+                const value = topRgb[c] + (bottomRgb[c] - topRgb[c]) * t + noise
+                data[rowOffset + c] = Math.max(0, Math.min(255, Math.round(value)))
+            }
+        }
+    }
+
+    return sharp(data, { raw: { width: FRAME_W, height: FRAME_H, channels } }).png().toBuffer()
 }
 
 function buildShadowBuffer(theme) {
