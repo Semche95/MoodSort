@@ -3,7 +3,13 @@ export interface PixiThemePalette {
     canvasBackground: number
     card: {
         hoverTint: number
-        shadow: number
+        shadow: {
+            color: number
+            alpha: number
+            blurStrength: number
+            offsetX: number
+            offsetY: number
+        }
     }
     icon: number
     toolbar: {

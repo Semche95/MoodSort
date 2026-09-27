@@ -102,6 +102,24 @@ describe('createCard', () => {
         pointerover.handler()
         expect(card.innerSprite.tint).toBe(0xffd9a8)
     })
+
+    it('centers the shadow under the card in the light theme, so it spreads evenly on every side', () => {
+        const texture = { width: 200, height: 300 }
+        const card = createCard('card-a', texture as unknown as Texture, vi.fn()) as unknown as Container & { children: Array<{ x: number; y: number }> }
+
+        const shadow = card.children[0]
+        expect(shadow.x).toBe(0)
+        expect(shadow.y).toBe(0)
+    })
+
+    it('centers the shadow under the card in the dark theme, so it spreads evenly on every side', () => {
+        const texture = { width: 200, height: 300 }
+        const card = createCard('card-a', texture as unknown as Texture, vi.fn(), () => 'dark') as unknown as Container & { children: Array<{ x: number; y: number }> }
+
+        const shadow = card.children[0]
+        expect(shadow.x).toBe(0)
+        expect(shadow.y).toBe(0)
+    })
 })
 
 describe('CardManager', () => {
@@ -182,6 +200,34 @@ describe('CardManager', () => {
             expect(cards[0].x).toBeLessThanOrEqual(centerX + 25)
             expect(cards[0].y).toBeGreaterThanOrEqual(centerY - 25)
             expect(cards[0].y).toBeLessThanOrEqual(centerY + 25)
+        })
+    })
+
+    describe('updateTextures', () => {
+        it('swaps each card\'s sprite texture for the frame matching its imageUrl in the new spritesheet', () => {
+            const spritesheet = { textures: { a: { width: 200, height: 300 }, b: { width: 200, height: 300 } } }
+            const cards = manager.loadCards(['a', 'b'], {}, vi.fn(), spritesheet as unknown as Spritesheet) as unknown as Array<
+                Container & { imageUrl: string; innerSprite: { texture: unknown } }
+            >
+            const newTexture = { width: 200, height: 300 }
+            const newSpritesheet = { textures: { a: newTexture, b: newTexture } }
+
+            manager.updateTextures(cards as unknown as Card[], newSpritesheet as unknown as Spritesheet)
+
+            expect(cards[0].innerSprite.texture).toBe(newTexture)
+            expect(cards[1].innerSprite.texture).toBe(newTexture)
+        })
+
+        it('leaves a card\'s texture untouched when the new spritesheet has no frame for its imageUrl', () => {
+            const spritesheet = { textures: { a: { width: 200, height: 300 } } }
+            const cards = manager.loadCards(['a'], {}, vi.fn(), spritesheet as unknown as Spritesheet) as unknown as Array<
+                Container & { imageUrl: string; innerSprite: { texture: unknown } }
+            >
+            const originalTexture = cards[0].innerSprite.texture
+
+            manager.updateTextures(cards as unknown as Card[], { textures: {} } as unknown as Spritesheet)
+
+            expect(cards[0].innerSprite.texture).toBe(originalTexture)
         })
     })
 

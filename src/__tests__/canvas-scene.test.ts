@@ -17,6 +17,10 @@ const { mockSpritesheet } = vi.hoisted(() => {
     }
 })
 
+vi.mock('../i18n/card-atlas', () => ({
+    loadCardAtlasSpritesheet: vi.fn().mockResolvedValue(mockSpritesheet),
+}))
+
 vi.mock('pixi.js', () => {
     const tickers: Array<() => void> = []
     const mockApp: Record<string, unknown> = {
@@ -229,6 +233,34 @@ describe('CanvasScene', () => {
         listener?.('light')
 
         expect(mockApp.renderer.background.color).toBe(0xa9a9a9)
+    })
+
+    it('reloads the atlas for the scene\'s locale and swaps every card texture when the theme changes', async () => {
+        const store = seedStore()
+        let listener: ((resolved: 'light' | 'dark') => void) | undefined
+        const fakeThemeService = {
+            getResolvedTheme: (): 'light' | 'dark' => 'light',
+            onChange: (fn: (resolved: 'light' | 'dark') => void): (() => void) => {
+                listener = fn
+                return (): void => {}
+            },
+        }
+        const cardAtlas = await import('../i18n/card-atlas')
+        const loadCardAtlasSpritesheet = cardAtlas.loadCardAtlasSpritesheet as unknown as ReturnType<typeof vi.fn>
+        const darkTexture = { width: 200, height: 300 }
+        const darkSpritesheet = { textures: { 'card-a': darkTexture, 'card-b': darkTexture } }
+        loadCardAtlasSpritesheet.mockResolvedValueOnce(darkSpritesheet)
+
+        const scene = new CanvasScene(store, historyStore, fakeThemeService as never, 'fr')
+        await scene.init(['card-a', 'card-b'], mockSpritesheet as unknown as Spritesheet)
+
+        listener?.('dark')
+        await Promise.resolve()
+        await Promise.resolve()
+
+        expect(loadCardAtlasSpritesheet).toHaveBeenCalledWith('fr', 'dark')
+        const testable = scene as unknown as TestableScene
+        expect((testable.cards[0] as unknown as { innerSprite: { texture: unknown } }).innerSprite.texture).toBe(darkTexture)
     })
 
     it('exposes the current screen size after init, resized to the window dimensions', async () => {

@@ -2,6 +2,8 @@
 - Install deps: `pnpm install`
 - Start dev server: `pnpm dev`
 - Run tests: `pnpm test`
+- Generate atlas: `pnpm atlas`
+- Generate icons: `pnpm icons`
 
 # Code style
 - TypeScript strict mode
@@ -25,7 +27,7 @@
 
 # Architecture decisions
 - The whole scene renders through PixiJS onto a single real `<canvas>` element (`CanvasScene` in `src/app/`), not DOM/CSS. This is deliberate: canvas sharing (`src/features/screen-share/`) works by calling `canvas.captureStream()` directly on that element, which only captures actual canvas pixels. Any UI that needs to appear in a shared session (cards, stacks, toolbar buttons drawn in-scene, stack name editor, etc.) must be drawn in Pixi on this canvas, not as overlaid HTML/CSS, or it silently won't show up for the remote viewer. DOM elements are only acceptable for things that are intentionally host-local and never meant to be seen by a viewer, such as the settings modal (`src/features/settings/settings.ts`) or the legal notices modal (`src/features/footer/legal.ts`).
-- Card images are pre-baked into one spritesheet atlas per locale at dev/build time (`scripts/generate-atlas.mjs`, loaded via `src/i18n/card-atlas.ts`) rather than loaded individually at runtime. This keeps card rendering and locale switching free of per-card network/loading stalls; adding or changing a card image or label means regenerating the atlas, not just dropping a file in `src/cards/`.
+- Card images are pre-baked into one spritesheet atlas per locale and per theme (`light`/`dark`) at dev/build time (`scripts/generate-atlas.mjs`, loaded via `src/i18n/card-atlas.ts`), sharing a single frame-layout manifest across every locale/theme combination, rather than loaded individually at runtime. This keeps card rendering, locale switching, and theme switching free of per-card network/loading stalls; adding or changing a card image or label means regenerating the atlas, not just dropping a file in `src/cards/`.
 - Positions, history, and stack names persist to `localStorage` only (`src/shared/utils/store.ts`); there is no backend and no account system by design. Canvas sharing is the one deliberate exception where data leaves the browser, and even then it's peer-to-peer over WebRTC (via Trystero) with no server-side storage or relay of app state: only the two peers involved in a session ever see it.
 
 # Consistency check on every code change

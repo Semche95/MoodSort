@@ -28,12 +28,13 @@ export function createCard(
     const card = new Container() as Card
     card.imageUrl = frameName
 
+    const shadowTheme = getPixiThemeColors(getResolvedTheme()).card.shadow
     const shadow = new Graphics()
     shadow.roundRect(0, 0, texture.width, texture.height, 8)
-    shadow.fill({ color: getPixiThemeColors(getResolvedTheme()).card.shadow, alpha: 0.25 })
-    shadow.filters = [new BlurFilter({ strength: 4 })]
-    shadow.x = 4
-    shadow.y = 4
+    shadow.fill({ color: shadowTheme.color, alpha: shadowTheme.alpha })
+    shadow.filters = [new BlurFilter({ strength: shadowTheme.blurStrength })]
+    shadow.x = shadowTheme.offsetX
+    shadow.y = shadowTheme.offsetY
     card.addChild(shadow)
 
     const sprite = new Sprite(texture)
@@ -91,6 +92,16 @@ export class CardManager {
             this.cardLayer.addChild(card)
         }
         return cards
+    }
+
+    /** Swaps each card's sprite texture for the matching frame in `spritesheet`, e.g. after a theme change reloads the atlas. */
+    updateTextures(cards: Card[], spritesheet: Spritesheet): void {
+        for (const card of cards) {
+            const texture = spritesheet.textures[card.imageUrl]
+            if (texture) {
+                card.innerSprite.texture = texture
+            }
+        }
     }
 
     applyScale(card: Card): void {

@@ -1,4 +1,3 @@
-import { Assets, Spritesheet } from 'pixi.js'
 import { CanvasScene } from './canvas-scene'
 import { Store } from '../shared/utils/store'
 import { initOnboarding, dismissOnboarding } from '../features/onboarding/onboarding'
@@ -7,7 +6,7 @@ import { loadIconTextures } from '../shared/ui/icons'
 import { createFooter } from '../features/footer/footer'
 import { createLoadingOverlay } from '../shared/ui/loading-overlay'
 import { CardStateService } from '../features/card/card-state-service'
-import { loadCardAtlas } from '../i18n/card-atlas'
+import { loadCardAtlasSpritesheet } from '../i18n/card-atlas'
 import type { Locale } from '../i18n/i18n.types'
 import { ThemeService } from '../features/theme/theme-service'
 
@@ -18,13 +17,10 @@ export async function bootApp(locale: Locale): Promise<void> {
     const cardStateService = new CardStateService()
     const themeService = new ThemeService()
 
-    const { atlasData, atlasImageUrl } = await loadCardAtlas(locale)
-    const baseTexture = await Assets.load(atlasImageUrl)
-    const spritesheet = new Spritesheet(baseTexture, atlasData)
-    await spritesheet.parse()
+    const spritesheet = await loadCardAtlasSpritesheet(locale, themeService.getResolvedTheme())
 
     const frameNames = Object.keys(spritesheet.textures)
-    const scene = new CanvasScene(cardStateService, new Store(), themeService)
+    const scene = new CanvasScene(cardStateService, new Store(), themeService, locale)
     await scene.init(frameNames, spritesheet)
 
     if (overlay.parentElement) {

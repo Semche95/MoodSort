@@ -3,6 +3,8 @@ import { Card } from '../types/card.types'
 import { Position } from '../types/position.types'
 import { AnimationTarget } from '../types/animation.types'
 import { ResolvedTheme } from '../types/theme.types'
+import type { Locale } from '../i18n/i18n.types'
+import { loadCardAtlasSpritesheet } from '../i18n/card-atlas'
 import type { ThemeService } from '../features/theme/theme-service'
 import { getPixiThemeColors } from '../features/theme/pixi-theme-colors'
 import { CardManager } from '../features/card/card-manager'
@@ -42,8 +44,9 @@ export class CanvasScene {
     private onHistoryChange: () => void
     private onResize: () => void
     private resolvedTheme: ResolvedTheme
+    private locale: Locale
 
-    constructor(store: CardStateService, historyStore: IStore, themeService?: ThemeService) {
+    constructor(store: CardStateService, historyStore: IStore, themeService?: ThemeService, locale: Locale = 'en') {
         this.app = new Application()
         this.cardLayer = new Container()
         this.cardLayer.label = 'card-layer'
@@ -52,6 +55,7 @@ export class CanvasScene {
         this.onHistoryChange = (): void => {}
         this.onResize = (): void => {}
         this.resolvedTheme = themeService?.getResolvedTheme() ?? 'light'
+        this.locale = locale
         this.positionPersistence = new PositionPersistence(store)
         this.cardManager = new CardManager(this.app, this.cardLayer)
         this.cardManager.setResolvedTheme(this.resolvedTheme)
@@ -80,7 +84,10 @@ export class CanvasScene {
         this.overlay.initHandle(this.handleDragHandlePointerDown)
         this.overlay.initCompactButton(this.handleCompactButtonPointerDown)
         this.overlay.initNameButton(this.handleNameButtonPointerDown)
-        themeService?.onChange((resolved: ResolvedTheme): void => this.applyTheme(resolved))
+        themeService?.onChange((resolved: ResolvedTheme): void => {
+            this.applyTheme(resolved)
+            void this.swapCardAtlas(resolved)
+        })
     }
 
     /** Single entry point for recoloring the scene on a theme change; card manager and overlay read the new theme lazily. */
@@ -91,6 +98,12 @@ export class CanvasScene {
         if (renderer?.background) {
             renderer.background.color = getPixiThemeColors(resolved).canvasBackground
         }
+    }
+
+    /** Reloads the atlas for the current locale under `resolved` and swaps every card's texture, so a theme change updates card backgrounds/text without a page reload. */
+    private async swapCardAtlas(resolved: ResolvedTheme): Promise<void> {
+        const spritesheet = await loadCardAtlasSpritesheet(this.locale, resolved)
+        this.cardManager.updateTextures(this.cards, spritesheet)
     }
 
     setOnHistoryChange(callback: () => void): void {

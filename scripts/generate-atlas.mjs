@@ -13,7 +13,6 @@ const FRAME_W = 256
 const FRAME_H = 382
 const COLS = 10
 
-const TEXT_COLOR = '#6E5C4F'
 const FONT_FAMILY = 'Poppins Medium'
 const FONT_SIZE = FRAME_H * 0.068
 const FONT_SIZE_MIN = FRAME_H * 0.05
@@ -21,6 +20,27 @@ const BASELINE_Y = FRAME_H * 0.93
 const LABEL_SIDE_MARGIN = FRAME_W * 0.08
 const LABEL_MAX_WIDTH = FRAME_W - LABEL_SIDE_MARGIN * 2
 const LABEL_LINE_HEIGHT_RATIO = 1.15
+
+// Themes to render an atlas for: every locale gets both, unconditionally.
+const THEMES = ['light', 'dark']
+
+const THEME_BACKGROUND_COLORS = {
+    light: { top: '#d4f4e5', bottom: '#fcf4e1' },
+    dark: { top: '#454545', bottom: '#353535' },
+}
+
+const THEME_TEXT_COLORS = {
+    light: '#80655a',
+    dark: '#e8dcc8',
+}
+
+const SHADOW_ELLIPSE = { cx: 128, cy: 304.5, rx: 68, ry: 8.5 }
+const SHADOW_COLOR = '#EDCAC3'
+
+const THEME_SHADOW_OPACITY = {
+    light: 0.75,
+    dark: 0.22,
+}
 
 // Languages to render an atlas for: derived from the single locale registry
 // (src/i18n/locales.ts), so adding a language there is enough.
@@ -74,8 +94,9 @@ async function resolveLabelLayout(label, fontFaceCss) {
     return { fontSize: FONT_SIZE_MIN, lines: splitLabelIntoTwoLines(label) }
 }
 
-async function buildLabelOverlay(label, fontFaceCss) {
+async function buildLabelOverlay(label, fontFaceCss, theme) {
     const { fontSize, lines } = await resolveLabelLayout(label, fontFaceCss)
+    const textColor = THEME_TEXT_COLORS[theme]
 
     const textElements =
         lines.length === 1
@@ -84,7 +105,7 @@ async function buildLabelOverlay(label, fontFaceCss) {
                 y="${BASELINE_Y}"
                 font-family="${FONT_FAMILY}"
                 font-size="${fontSize}"
-                fill="${TEXT_COLOR}"
+                fill="${textColor}"
                 text-anchor="middle"
             >${escapeXml(lines[0])}</text>`
             : lines
@@ -96,7 +117,7 @@ async function buildLabelOverlay(label, fontFaceCss) {
                         y="${y}"
                         font-family="${FONT_FAMILY}"
                         font-size="${fontSize}"
-                        fill="${TEXT_COLOR}"
+                        fill="${textColor}"
                         text-anchor="middle"
                     >${escapeXml(line)}</text>`
                   })
@@ -110,15 +131,40 @@ async function buildLabelOverlay(label, fontFaceCss) {
     return sharp(Buffer.from(svg)).png().toBuffer()
 }
 
-async function generateAtlasForLang(lang, cardNames, fontFaceCss) {
+function buildBackgroundBuffer(theme) {
+    const { top, bottom } = THEME_BACKGROUND_COLORS[theme]
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${FRAME_W}" height="${FRAME_H}">
+        <defs>
+            <linearGradient id="background" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="${top}" />
+                <stop offset="1" stop-color="${bottom}" />
+            </linearGradient>
+        </defs>
+        <rect x="0" y="0" width="${FRAME_W}" height="${FRAME_H}" fill="url(#background)" />
+    </svg>`
+
+    return sharp(Buffer.from(svg)).png().toBuffer()
+}
+
+function buildShadowBuffer(theme) {
+    const { cx, cy, rx, ry } = SHADOW_ELLIPSE
+    const opacity = THEME_SHADOW_OPACITY[theme]
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${FRAME_W}" height="${FRAME_H}">
+        <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${SHADOW_COLOR}" fill-opacity="${opacity}" />
+    </svg>`
+
+    return sharp(Buffer.from(svg)).png().toBuffer()
+}
+
+async function generateAtlas(lang, theme, cardNames, fontFaceCss) {
     const dictionary = (await import(`../src/i18n/locales/${lang}.json`, { with: { type: 'json' } })).default
     const cardLabels = dictionary.cards
+    const backgroundBuffer = await buildBackgroundBuffer(theme)
 
     const rows = Math.ceil(cardNames.length / COLS)
     const atlasW = COLS * FRAME_W
     const atlasH = rows * FRAME_H
 
-    const frames = {}
     const composites = []
 
     for (let i = 0; i < cardNames.length; i++) {
@@ -142,22 +188,18 @@ async function generateAtlasForLang(lang, cardNames, fontFaceCss) {
             throw new Error(`Missing image file for card "${name}" (expected src/cards/${name}.webp)`)
         }
 
-        const cardBuffer = await sharp(imagePath)
-            .composite([{ input: await buildLabelOverlay(label, fontFaceCss) }])
+        const cardBuffer = await sharp(backgroundBuffer)
+            .composite([
+                { input: await buildShadowBuffer(theme) },
+                { input: imagePath },
+                { input: await buildLabelOverlay(label, fontFaceCss, theme) },
+            ])
             .toBuffer()
 
         composites.push({ input: cardBuffer, left, top })
-
-        frames[name] = {
-            frame: { x: left, y: top, w: FRAME_W, h: FRAME_H },
-            rotated: false,
-            trimmed: false,
-            spriteSourceSize: { x: 0, y: 0, w: FRAME_W, h: FRAME_H },
-            sourceSize: { w: FRAME_W, h: FRAME_H },
-        }
     }
 
-    const imageName = `${ATLAS_NAME}.${lang}.webp`
+    const imageName = `${ATLAS_NAME}.${lang}.${theme}.webp`
 
     await sharp({
         create: { width: atlasW, height: atlasH, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
@@ -166,18 +208,41 @@ async function generateAtlasForLang(lang, cardNames, fontFaceCss) {
         .webp({ quality: 90 })
         .toFile(resolve(OUT_DIR, imageName))
 
+    console.log(`Atlas image generated [${lang}/${theme}]: ${cardNames.length} frames → ${atlasW}×${atlasH}px`)
+}
+
+/** Frame layout depends only on `cardNames`, never on locale or theme, so it's written once and shared by every webp. */
+async function writeAtlasManifest(cardNames) {
+    const rows = Math.ceil(cardNames.length / COLS)
+    const atlasW = COLS * FRAME_W
+    const atlasH = rows * FRAME_H
+
+    const frames = {}
+    for (let i = 0; i < cardNames.length; i++) {
+        const col = i % COLS
+        const row = Math.floor(i / COLS)
+        const left = col * FRAME_W
+        const top = row * FRAME_H
+
+        frames[cardNames[i]] = {
+            frame: { x: left, y: top, w: FRAME_W, h: FRAME_H },
+            rotated: false,
+            trimmed: false,
+            spriteSourceSize: { x: 0, y: 0, w: FRAME_W, h: FRAME_H },
+            sourceSize: { w: FRAME_W, h: FRAME_H },
+        }
+    }
+
     const manifest = {
         frames,
         meta: {
-            image: imageName,
             size: { w: atlasW, h: atlasH },
             scale: 1,
         },
     }
 
-    await writeFile(resolve(OUT_DIR, `${ATLAS_NAME}.${lang}.json`), JSON.stringify(manifest))
-
-    console.log(`Atlas generated [${lang}]: ${cardNames.length} frames → ${atlasW}×${atlasH}px`)
+    await writeFile(resolve(OUT_DIR, `${ATLAS_NAME}.json`), JSON.stringify(manifest))
+    console.log(`Atlas manifest generated: ${cardNames.length} frames`)
 }
 
 async function computeSharedKey(cardNames) {
@@ -198,9 +263,16 @@ async function computeSharedKey(cardNames) {
     })
 }
 
-async function computeLangKey(lang, sharedKey) {
+async function computeComboKey(lang, theme, sharedKey) {
     const dictionary = (await import(`../src/i18n/locales/${lang}.json`, { with: { type: 'json' } })).default
-    return JSON.stringify({ shared: sharedKey, cards: dictionary.cards })
+    return JSON.stringify({
+        shared: sharedKey,
+        theme,
+        cards: dictionary.cards,
+        background: THEME_BACKGROUND_COLORS[theme],
+        textColor: THEME_TEXT_COLORS[theme],
+        shadowOpacity: THEME_SHADOW_OPACITY[theme],
+    })
 }
 
 async function readCache() {
@@ -223,16 +295,27 @@ async function main() {
     const previousCache = await readCache()
     const nextCache = {}
 
-    const langsToGenerate = []
+    // Every locale × theme combination is a build target, unconditionally: adding
+    // a locale or a theme is enough to have it generated, the cache below only
+    // skips regenerating a combination whose own inputs haven't changed.
+    const combosToGenerate = []
     for (const lang of LANGUAGES) {
-        const langKey = await computeLangKey(lang, sharedKey)
-        nextCache[lang] = langKey
-        if (previousCache[lang] !== langKey) {
-            langsToGenerate.push(lang)
+        for (const theme of THEMES) {
+            const cacheKey = `${lang}.${theme}`
+            const comboKey = await computeComboKey(lang, theme, sharedKey)
+            nextCache[cacheKey] = comboKey
+            if (previousCache[cacheKey] !== comboKey) {
+                combosToGenerate.push({ lang, theme })
+            }
         }
     }
 
-    if (langsToGenerate.length === 0) {
+    // The manifest (frame coordinates) depends only on `cardNames`, so it's a single
+    // shared build target instead of one per locale or per locale × theme.
+    nextCache.manifest = sharedKey
+    const manifestNeedsGeneration = previousCache.manifest !== sharedKey
+
+    if (combosToGenerate.length === 0 && !manifestNeedsGeneration) {
         console.log('Atlas up to date, skipping generation.')
         return
     }
@@ -243,8 +326,12 @@ async function main() {
         src: url(data:font/ttf;base64,${fontBase64}) format('truetype');
     }`
 
-    for (const lang of langsToGenerate) {
-        await generateAtlasForLang(lang, cardNames, fontFaceCss)
+    for (const { lang, theme } of combosToGenerate) {
+        await generateAtlas(lang, theme, cardNames, fontFaceCss)
+    }
+
+    if (manifestNeedsGeneration) {
+        await writeAtlasManifest(cardNames)
     }
 
     await writeFile(CACHE_PATH, JSON.stringify(nextCache))

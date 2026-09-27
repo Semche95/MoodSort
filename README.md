@@ -72,7 +72,7 @@ See the comments at the top of `deploy.yml` for the one-time bootstrap step need
 
 ## Scripts
 
-`pnpm dev` and `pnpm build` regenerate two things before starting: the card spritesheet atlas (one `atlas.<locale>.webp` + `atlas.<locale>.json` pair per language in `LANGUAGES`, in `scripts/generate-atlas.mjs`, built from `src/cards/`) and the app icons (`src/assets/icons/`, rasterized from `lucide-static`). Both outputs are git-ignored. Atlas generation is cached per locale (keyed on the source card images and labels), so a rebuild only regenerates the locales whose inputs actually changed.
+`pnpm dev` and `pnpm build` regenerate two things before starting: the card spritesheet atlas (one `atlas.<locale>.<theme>.webp` per language in `LANGUAGES` and per theme, `light` and `dark`, plus a single shared `atlas.json` manifest, since the frame layout never depends on locale or theme, all in `scripts/generate-atlas.mjs`, built from `src/cards/`) and the app icons (`src/assets/icons/`, rasterized from `lucide-static`). Both outputs are git-ignored. Atlas generation is cached per locale/theme combination for the images and once for the shared manifest (keyed on the source card images and labels), so a rebuild only regenerates what actually changed.
 
 | Command | Description |
 |---|---|
@@ -106,7 +106,7 @@ src/
 
 ### Cards
 
-A `Card` is a Pixi `Container` with an image sprite and a blurred drop-shadow layer. All cards are cut from a single pre-built atlas for the resolved locale (`atlas.<locale>.webp` + `atlas.<locale>.json`), loaded once in `bootstrap.ts` and handed to `CardManager` as frame names + textures. No per-card loading at runtime. Scaling is proportional to a 2560px reference width.
+A `Card` is a Pixi `Container` with an image sprite and a blurred drop-shadow layer. Each card frame is baked from three layers: an opaque light/dark gradient background, the character illustration, and the label text in a theme-matching color. Cards are cut from a single pre-built atlas for the resolved locale and theme (`atlas.<locale>.<theme>.webp` paired with the single shared `atlas.json` manifest, since the frame layout is the same for every locale and theme, see `loadCardAtlas`/`loadCardAtlasSpritesheet` in `src/i18n/card-atlas.ts`), loaded once in `bootstrap.ts` and handed to `CardManager` as frame names + textures. No per-card loading at runtime. Scaling is proportional to a 2560px reference width. Switching locale still reloads the page, but switching theme reloads the matching atlas and swaps every card's texture in place (`CanvasScene.swapCardAtlas`), with no reload.
 
 ### Stacks
 

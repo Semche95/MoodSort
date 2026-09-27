@@ -5,7 +5,13 @@ const LIGHT_PIXI_THEME_COLORS: PixiThemePalette = {
     canvasBackground: 0xa9a9a9,
     card: {
         hoverTint: 0xffeedd,
-        shadow: 0x000000,
+        shadow: {
+            color: 0x000000,
+            alpha: 0.25,
+            blurStrength: 4,
+            offsetX: 0,
+            offsetY: 0,
+        },
     },
     icon: 0x111111,
     toolbar: {
@@ -50,7 +56,13 @@ const DARK_PIXI_THEME_COLORS: PixiThemePalette = {
     canvasBackground: 0x1e1e1e,
     card: {
         hoverTint: 0xffd9a8,
-        shadow: 0x000000,
+        shadow: {
+            color: 0x000000,
+            alpha: 0.55,
+            blurStrength: 6,
+            offsetX: 0,
+            offsetY: 0,
+        },
     },
     icon: 0xf2f2f2,
     toolbar: {
