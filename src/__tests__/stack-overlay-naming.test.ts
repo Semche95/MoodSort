@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Application, Container } from 'pixi.js'
-import { StackOverlay, truncateLabel } from '../features/stack/stack-overlay/stack-overlay'
-import { computeNameButtonBox } from '../features/stack/stack'
+import { StackOverlay } from '../features/stack/stack-overlay/stack-overlay'
+import { computeNameButtonBox } from '../features/stack/stack-hit-testing'
 import { DRAGGING_OPACITY } from '../features/drag/card-drag'
 import { Card } from '../types/card.types'
 import { I18n } from '../i18n/I18n'
@@ -458,17 +458,5 @@ describe('StackOverlay name label and button', () => {
         const labelContainer = overlay['labelContainer'] as unknown as { children: Array<{ text: string; visible: boolean }> }
         const label = labelContainer.children.find((t: { text: string }): boolean => t.text === 'Joie')
         expect(label?.visible).toBe(true)
-    })
-})
-
-describe('truncateLabel', () => {
-    const measure = (text: string): number => text.length
-
-    it('returns the label unchanged when it already fits', () => {
-        expect(truncateLabel('Joie', 10, measure)).toBe('Joie')
-    })
-
-    it('shortens the label and appends an ellipsis when it overflows', () => {
-        expect(truncateLabel('Joie + Colère', 10, measure)).toBe('Joie + Co…')
     })
 })

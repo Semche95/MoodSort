@@ -2,10 +2,16 @@ import { describe, it, expect } from 'vitest'
 import {
     computeCompactButtonBox,
     findStackByCompactButtonAtPoint,
+    computeNameButtonBox,
+    findStackByNameButtonAtPoint,
+} from '../features/stack/stack-hit-testing'
+import {
     STACK_HANDLE_HEIGHT,
     STACK_HIGHLIGHT_PADDING,
     STACK_COMPACT_BUTTON_SIZE,
     STACK_COMPACT_BUTTON_GAP,
+    STACK_NAME_BUTTON_SIZE,
+    STACK_NAME_BUTTON_GAP,
 } from '../features/stack/stack'
 import { Card } from '../types/card.types'
 
@@ -63,5 +69,48 @@ describe('findStackByCompactButtonAtPoint', () => {
         const point = { x: box.x + 1, y: box.y + 1 }
 
         expect(findStackByCompactButtonAtPoint([single, stackB], point)).toBe(stackB)
+    })
+})
+
+describe('computeNameButtonBox', () => {
+    it('sits symmetrically opposite the compact button, on the other side of the handle', () => {
+        const stack = [makeCard(0, 0, 100, 100, 'a'), makeCard(10, 10, 100, 100, 'b')]
+
+        const pad = STACK_HIGHLIGHT_PADDING
+        const bx = -pad
+        const by = -pad
+        const bw = 110 + pad * 2
+        const handleWidth = Math.min(bw, 80)
+        const hx = bx + (bw - handleWidth) / 2
+        const hy = by - STACK_HANDLE_HEIGHT / 2
+
+        expect(computeNameButtonBox(stack)).toEqual({
+            x: hx - STACK_NAME_BUTTON_GAP - STACK_NAME_BUTTON_SIZE,
+            y: hy + (STACK_HANDLE_HEIGHT - STACK_NAME_BUTTON_SIZE) / 2,
+            width: STACK_NAME_BUTTON_SIZE,
+            height: STACK_NAME_BUTTON_SIZE,
+        })
+    })
+
+    it('is also defined for a single-card stack, unlike the compact button', () => {
+        const stack = [makeCard(0, 0, 100, 100, 'a')]
+
+        expect(computeNameButtonBox(stack)).not.toBeNull()
+    })
+})
+
+describe('findStackByNameButtonAtPoint', () => {
+    it('finds the stack whose name button contains the point, including a single-card stack', () => {
+        const single = [makeCard(0, 0, 100, 100, 'a')]
+        const box = computeNameButtonBox(single)
+        const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
+
+        expect(findStackByNameButtonAtPoint([single], point)).toBe(single)
+    })
+
+    it('returns null when the point is outside every name button', () => {
+        const single = [makeCard(0, 0, 100, 100, 'a')]
+
+        expect(findStackByNameButtonAtPoint([single], { x: -9999, y: -9999 })).toBeNull()
     })
 })

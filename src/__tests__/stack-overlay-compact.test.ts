@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Application, Container } from 'pixi.js'
 import { StackOverlay } from '../features/stack/stack-overlay/stack-overlay'
-import { computeCompactButtonBox } from '../features/stack/stack'
+import { computeCompactButtonBox } from '../features/stack/stack-hit-testing'
 import { Card } from '../types/card.types'
 import { I18n } from '../i18n/I18n'
 

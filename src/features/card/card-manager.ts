@@ -5,7 +5,7 @@ import { CardState } from '../../types/card-state.types'
 import { Position } from '../../types/position.types'
 import { PixiThemePalette } from '../../types/pixi-theme-palette.types'
 import { GetResolvedTheme, ResolvedTheme } from '../../types/theme.types'
-import { clampCardPosition } from '../stack/stack'
+import { clampCardPosition } from '../stack/stack-geometry'
 import { DEFAULT_GET_RESOLVED_THEME, getPixiThemeColors } from '../theme/pixi-theme-colors'
 
 /** Screen width (in px) at which cards render at native size */

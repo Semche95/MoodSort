@@ -4,7 +4,8 @@ import { CanvasScene } from '../app/canvas-scene'
 import { CardStateService } from '../features/card/card-state-service'
 import { InMemoryStore } from './in-memory-store'
 import { Card } from '../types/card.types'
-import { computeNameButtonBox, computeStackLabel } from '../features/stack/stack'
+import { computeNameButtonBox } from '../features/stack/stack-hit-testing'
+import { computeStackLabel } from '../features/stack/stack-naming'
 import { HistoryData, HISTORY_KEY } from '../types/history.types'
 
 const { mockSpritesheet } = vi.hoisted(() => {

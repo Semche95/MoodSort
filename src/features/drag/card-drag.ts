@@ -2,7 +2,7 @@ import { Container, FederatedPointerEvent } from 'pixi.js'
 import { Card } from '../../types/card.types'
 import { CardDragState } from '../../types/drag.types'
 import { Position } from '../../types/position.types'
-import { clampCardPosition } from '../stack/stack'
+import { clampCardPosition } from '../stack/stack-geometry'
 
 /** Opacity of a card while it is being dragged */
 export const DRAGGING_OPACITY: number = 0.5

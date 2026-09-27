@@ -1,6 +1,8 @@
 import { Graphics } from 'pixi.js'
 import { Card } from '../../../types/card.types'
-import { computeBoundingBox, computeCompactButtonBox, computeNameButtonBox, STACK_HIGHLIGHT_PADDING, STACK_HANDLE_HEIGHT } from '../stack'
+import { computeBoundingBox } from '../stack-geometry'
+import { computeCompactButtonBox, computeNameButtonBox } from '../stack-hit-testing'
+import { STACK_HIGHLIGHT_PADDING, STACK_HANDLE_HEIGHT } from '../stack'
 import { getPixiThemeColors } from '../../theme/pixi-theme-colors'
 import type { PixiThemePalette } from '../../../types/pixi-theme-palette.types'
 

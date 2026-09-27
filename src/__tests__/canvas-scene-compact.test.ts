@@ -210,7 +210,7 @@ describe('CanvasScene compact stack action', () => {
 
     it('leaves the top card in place and disperses the others around it, without touching unrelated cards or z-order', async () => {
         const { testable, tick } = await setup()
-        const { computeCompactButtonBox } = await import('../features/stack/stack')
+        const { computeCompactButtonBox } = await import('../features/stack/stack-hit-testing')
 
         const box = computeCompactButtonBox([
             { x: 100, y: 100, width: 200, height: 300 } as unknown as Card,
@@ -259,7 +259,7 @@ describe('CanvasScene compact stack action', () => {
             },
         }
         const { scene, testable, tick } = await setup(priorEntry)
-        const { computeCompactButtonBox } = await import('../features/stack/stack')
+        const { computeCompactButtonBox } = await import('../features/stack/stack-hit-testing')
 
         const box = computeCompactButtonBox([
             { x: 100, y: 100, width: 200, height: 300 } as unknown as Card,

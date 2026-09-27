@@ -1,6 +1,5 @@
 import { Application, Container, FederatedPointerEvent, Spritesheet } from 'pixi.js'
 import { Card } from '../types/card.types'
-import { Position } from '../types/position.types'
 import { AnimationTarget } from '../types/animation.types'
 import { ResolvedTheme } from '../types/theme.types'
 import type { Locale } from '../i18n/i18n.types'
@@ -16,17 +15,11 @@ import { StackDragManager } from '../features/stack/stack-drag-manager'
 import { CardStateService } from '../features/card/card-state-service'
 import { ActionHistory } from '../features/history/action-history'
 import { IStore } from '../types/store.types'
-import {
-    computeStacks,
-    findStackAtPoint,
-    findStackByCompactButtonAtPoint,
-    findStackByNameButtonAtPoint,
-    findNameAnchor,
-    computeLabelAnchorPoint,
-    resolveNameSplits,
-    resolveNameMerges,
-} from '../features/stack/stack'
+import { computeStacks } from '../features/stack/stack'
+import { resolveNameSplits, resolveNameMerges } from '../features/stack/stack-naming'
 import { snapshotCards, applyHistoryEntry, applyStackNameChanges } from '../features/history/history'
+import { createPointerInteractions } from '../features/interactions/pointer-interactions'
+import type { PointerInteractions } from '../types/pointer-interactions.types'
 
 export class CanvasScene {
     private app: Application
@@ -38,6 +31,7 @@ export class CanvasScene {
     private overlay: StackOverlay
     private stackDragManager: StackDragManager
     private actionHistory: ActionHistory
+    private pointerInteractions: PointerInteractions
     private isCompacting: boolean
     private stacks: Card[][]
     private stackNames: Record<string, string>
@@ -81,6 +75,20 @@ export class CanvasScene {
             this.actionHistory,
         )
         this.stacks = []
+        this.pointerInteractions = createPointerInteractions({
+            cardLayer: this.cardLayer,
+            dragHandler: this.dragHandler,
+            overlay: this.overlay,
+            stackDragManager: this.stackDragManager,
+            actionHistory: this.actionHistory,
+            getStacks: (): Card[][] => this.stacks,
+            getStackNames: (): Record<string, string> => this.stackNames,
+            isBusy: (): boolean => this.isBusy,
+            isCompacting: (): boolean => this.isCompacting,
+            onCompactButton: (stack: Card[]): void => this.compactStack(stack),
+            onCommitStackName: (anchor: Card, value: string): void => this.commitStackName(anchor, value),
+            onCancelStackNameEdit: (): void => this.cancelStackNameEdit(),
+        })
         this.overlay.initHandle(this.handleDragHandlePointerDown)
         this.overlay.initCompactButton(this.handleCompactButtonPointerDown)
         this.overlay.initNameButton(this.handleNameButtonPointerDown)
@@ -236,96 +244,24 @@ export class CanvasScene {
         this.stacks = computeStacks(this.cards)
     }
 
-    private handleStagePointerDown: () => void = (): void => {
-        this.overlay.commitNameEditorIfOpen()
-    }
+    private handleStagePointerDown: () => void = (): void => this.pointerInteractions.handleStagePointerDown()
 
-    private handleCardPointerDown: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void => {
-        if (this.isCompacting) {
-            return
-        }
-        this.overlay.commitNameEditorIfOpen()
-        this.dragHandler.handleDragStart(e)
-    }
+    private handleCardPointerDown: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void =>
+        this.pointerInteractions.handleCardPointerDown(e)
 
-    private handlePointerMove: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void => {
-        if (this.dragHandler.isDragging) {
-            this.overlay.hide()
-            this.overlay.setHoveredStack(null)
-            return
-        }
-        if (this.stackDragManager.isDragging) {
-            return
-        }
-        const point: Position = { x: e.global.x, y: e.global.y }
-        const stack = findStackAtPoint(this.stacks, point)
-        this.overlay.setHoveredStack(stack)
-        if (stack) {
-            this.overlay.showHighlight(stack)
-            return
-        }
-        this.overlay.hide()
-    }
+    private handlePointerMove: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void =>
+        this.pointerInteractions.handlePointerMove(e)
 
-    private handlePointerOut: () => void = (): void => {
-        if (!this.stackDragManager.isDragging) {
-            this.overlay.hide()
-            this.overlay.setHoveredStack(null)
-        }
-    }
+    private handlePointerOut: () => void = (): void => this.pointerInteractions.handlePointerOut()
 
-    private handleDragHandlePointerDown: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void => {
-        if (this.dragHandler.isDragging || this.isCompacting) {
-            return
-        }
-        const point: Position = { x: e.global.x, y: e.global.y }
-        const stack = findStackAtPoint(this.stacks, point)
-        if (!stack) {
-            return
-        }
-        this.overlay.commitNameEditorIfOpen()
-        this.stackDragManager.startDrag(
-            stack,
-            stack,
-            point,
-        )
-    }
+    private handleDragHandlePointerDown: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void =>
+        this.pointerInteractions.handleDragHandlePointerDown(e)
 
-    private handleCompactButtonPointerDown: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void => {
-        if (this.isBusy) {
-            return
-        }
-        const point: Position = { x: e.global.x, y: e.global.y }
-        const stack = findStackByCompactButtonAtPoint(this.stacks, point)
-        if (!stack) {
-            return
-        }
-        this.overlay.commitNameEditorIfOpen()
-        this.compactStack(stack)
-    }
+    private handleCompactButtonPointerDown: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void =>
+        this.pointerInteractions.handleCompactButtonPointerDown(e)
 
-    private handleNameButtonPointerDown: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void => {
-        if (this.isBusy) {
-            return
-        }
-        const point: Position = { x: e.global.x, y: e.global.y }
-        const stack = findStackByNameButtonAtPoint(this.stacks, point)
-        if (!stack) {
-            return
-        }
-        this.overlay.commitNameEditorIfOpen()
-        const anchor = findNameAnchor(stack, this.cardLayer, this.stackNames)
-        const currentName = this.stackNames[anchor.imageUrl] ?? null
-        const labelPoint = computeLabelAnchorPoint(stack)
-        this.actionHistory.captureBefore([], { [anchor.imageUrl]: currentName })
-        this.overlay.openNameEditor(
-            labelPoint.x,
-            labelPoint.y,
-            currentName ?? '',
-            (value: string): void => this.commitStackName(anchor, value),
-            (): void => this.cancelStackNameEdit(),
-        )
-    }
+    private handleNameButtonPointerDown: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void =>
+        this.pointerInteractions.handleNameButtonPointerDown(e)
 
     private commitStackName(anchor: Card, value: string): void {
         const trimmed = value.trim()

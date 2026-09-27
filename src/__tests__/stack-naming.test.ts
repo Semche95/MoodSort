@@ -3,13 +3,12 @@ import type { Container } from 'pixi.js'
 import {
     getStackAnchor,
     computeStackLabel,
-    computeNameButtonBox,
-    findStackByNameButtonAtPoint,
+    findNameAnchor,
     computeLabelAnchorPoint,
     resolveNameSplits,
     resolveNameMerges,
-    STACK_NAME_BUTTON_SIZE,
-    STACK_NAME_BUTTON_GAP,
+} from '../features/stack/stack-naming'
+import {
     STACK_HANDLE_HEIGHT,
     STACK_HIGHLIGHT_PADDING,
     STACK_LABEL_HANDLE_GAP,
@@ -76,46 +75,22 @@ describe('computeStackLabel', () => {
     })
 })
 
-describe('computeNameButtonBox', () => {
-    it('sits symmetrically opposite the compact button, on the other side of the handle', () => {
-        const stack = [makeCard(0, 0, 100, 100, 'a'), makeCard(10, 10, 100, 100, 'b')]
+describe('findNameAnchor', () => {
+    it('returns the already-named anchor when one exists', () => {
+        const a = makeCard(0, 0, 100, 100, 'a')
+        const b = makeCard(0, 0, 100, 100, 'b')
+        const cardLayer = makeCardLayer([b, a])
+        const stackNames: Record<string, string> = { a: 'Joie' }
 
-        const pad = STACK_HIGHLIGHT_PADDING
-        const bx = -pad
-        const by = -pad
-        const bw = 110 + pad * 2
-        const handleWidth = Math.min(bw, 80)
-        const hx = bx + (bw - handleWidth) / 2
-        const hy = by - STACK_HANDLE_HEIGHT / 2
-
-        expect(computeNameButtonBox(stack)).toEqual({
-            x: hx - STACK_NAME_BUTTON_GAP - STACK_NAME_BUTTON_SIZE,
-            y: hy + (STACK_HANDLE_HEIGHT - STACK_NAME_BUTTON_SIZE) / 2,
-            width: STACK_NAME_BUTTON_SIZE,
-            height: STACK_NAME_BUTTON_SIZE,
-        })
+        expect(findNameAnchor([a, b], cardLayer, stackNames)).toBe(a)
     })
 
-    it('is also defined for a single-card stack, unlike the compact button', () => {
-        const stack = [makeCard(0, 0, 100, 100, 'a')]
+    it('falls back to getStackAnchor when no card in the stack is named', () => {
+        const a = makeCard(0, 0, 100, 100, 'a')
+        const b = makeCard(0, 0, 100, 100, 'b')
+        const cardLayer = makeCardLayer([b, a])
 
-        expect(computeNameButtonBox(stack)).not.toBeNull()
-    })
-})
-
-describe('findStackByNameButtonAtPoint', () => {
-    it('finds the stack whose name button contains the point, including a single-card stack', () => {
-        const single = [makeCard(0, 0, 100, 100, 'a')]
-        const box = computeNameButtonBox(single)
-        const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
-
-        expect(findStackByNameButtonAtPoint([single], point)).toBe(single)
-    })
-
-    it('returns null when the point is outside every name button', () => {
-        const single = [makeCard(0, 0, 100, 100, 'a')]
-
-        expect(findStackByNameButtonAtPoint([single], { x: -9999, y: -9999 })).toBeNull()
+        expect(findNameAnchor([a, b], cardLayer, {})).toBe(b)
     })
 })
 

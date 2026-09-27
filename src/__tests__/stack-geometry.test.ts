@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { clampCardPosition, computeGroupClampOffset, STACK_HANDLE_TOP_CLEARANCE } from '../features/stack/stack'
+import { clampCardPosition, computeGroupClampOffset, boxesOverlap, computeBoundingBox } from '../features/stack/stack-geometry'
+import { STACK_HANDLE_TOP_CLEARANCE } from '../features/stack/stack'
 import { Card } from '../types/card.types'
 
 function makeCard(x: number, y: number, width: number, height: number, imageUrl: string): Card {
@@ -63,5 +64,43 @@ describe('computeGroupClampOffset', () => {
 
         // Bounding box top is -10, so the group must move down by STACK_HANDLE_TOP_CLEARANCE + 10.
         expect(computeGroupClampOffset(cards, appWidth, appHeight)).toEqual({ x: 0, y: STACK_HANDLE_TOP_CLEARANCE + 10 })
+    })
+})
+
+describe('boxesOverlap', () => {
+    it('returns true for two overlapping boxes', () => {
+        const a = { x: 0, y: 0, width: 100, height: 100 }
+        const b = { x: 50, y: 50, width: 100, height: 100 }
+
+        expect(boxesOverlap(a, b)).toBe(true)
+    })
+
+    it('returns false for two boxes that do not overlap', () => {
+        const a = { x: 0, y: 0, width: 100, height: 100 }
+        const b = { x: 200, y: 200, width: 100, height: 100 }
+
+        expect(boxesOverlap(a, b)).toBe(false)
+    })
+
+    it('returns false for boxes that only touch at an edge', () => {
+        const a = { x: 0, y: 0, width: 100, height: 100 }
+        const b = { x: 100, y: 0, width: 100, height: 100 }
+
+        expect(boxesOverlap(a, b)).toBe(false)
+    })
+})
+
+describe('computeBoundingBox', () => {
+    it('returns the card itself as the box for a single card', () => {
+        const a = makeCard(10, 20, 100, 50, 'a')
+
+        expect(computeBoundingBox([a])).toEqual({ x: 10, y: 20, width: 100, height: 50 })
+    })
+
+    it('spans the combined extent of multiple cards', () => {
+        const a = makeCard(0, 0, 50, 50, 'a')
+        const b = makeCard(100, 100, 50, 50, 'b')
+
+        expect(computeBoundingBox([a, b])).toEqual({ x: 0, y: 0, width: 150, height: 150 })
     })
 })
