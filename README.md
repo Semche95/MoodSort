@@ -23,6 +23,7 @@ The interface is available in Dutch, English, Esperanto, French, German, and Spa
 - Footer link to a legal notices modal (LCEN)
 - Everything except an active screen share stays in the browser: nothing else is sent or stored externally
 - Multi-language UI with browser auto-detection and a toolbar language picker; the choice is persisted across sessions
+- Light/Dark/Auto theme toggle in the settings modal; the choice is persisted across sessions and swaps the card atlas immediately, with no page reload
 
 ## Tech stack
 
@@ -95,7 +96,7 @@ src/
   assets/       # Generated atlas + icons (git-ignored)
   app/          # Composition root: entry point, canvas scene
   features/     # One folder per feature: card, drag, stack, history,
-                # toolbar, onboarding, settings, footer, screen-share
+                # toolbar, onboarding, settings, footer, screen-share, theme
   shared/       # Cross-feature UI widgets and utilities: icons (used app-wide),
                 # tooltip, loading overlay, geometry, localStorage wrapper
   types/        # One file per domain type (card, drag, stack, history, etc.)

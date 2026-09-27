@@ -15,6 +15,10 @@
 - File and folder names are always kebab-case, no exceptions for files that export a class (`stack-overlay.ts`, not `StackOverlay.ts`). PascalCase is reserved for the TypeScript identifiers (class names, types) exported from those files.
 - Default to no comments. Only add one when the *why* is non-obvious (a hidden constraint, a subtle invariant, a workaround for a specific bug); never to restate what well-named code already shows. When a comment is warranted, keep it to a single short line: no multi-paragraph docstrings or multi-line comment blocks.
 
+# Sub-agent usage
+- For any code research task (exploring the codebase, locating files or symbols) or any implementation task (writing or modifying code), always delegate it to a sub-agent instead of doing it directly in the main conversation context.
+- Give the sub-agent only the minimal context it needs to complete its task, not the full conversation history.
+
 # Project structure conventions
 - `src/app/`: composition root only: entry point and the top-level scene that ties features together. No business logic here beyond wiring; delegate to `src/features/`.
 - `src/features/`: one folder per feature (card, drag, stack, history, toolbar, onboarding, settings, footer, screen-share). Each feature is organized by domain, not by technical layer, no service/controller/ui split inside a feature. Constants used only within one feature live directly in that feature's main file, not in a separate `constants.ts`. If a feature file has multiple responsibilities and outgrows itself (e.g. orchestration vs. pure Pixi drawing/animation helpers), split it into a subfolder named after the feature (e.g. `features/stack/stack-overlay/`) instead of overloading a single file.
