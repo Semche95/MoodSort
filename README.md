@@ -24,6 +24,7 @@ The interface is available in Dutch, English, Esperanto, French, German, and Spa
 - Everything except an active screen share stays in the browser: nothing else is sent or stored externally
 - Multi-language UI with browser auto-detection and a toolbar language picker; the choice is persisted across sessions
 - Light/Dark/Auto theme toggle in the settings modal; the choice is persisted across sessions and swaps the card atlas immediately, with no page reload
+- Minimum screen width guard: below 1024px (smartphones and portrait tablets), a full-screen block overlay prevents any use of the app, since it's tuned for landscape-tablet and desktop use; it re-checks live on window resize and tablet rotation, so the app unlocks or locks automatically without a reload
 
 ## Tech stack
 
@@ -96,7 +97,8 @@ src/
   assets/       # Generated atlas + icons (git-ignored)
   app/          # Composition root: entry point, canvas scene
   features/     # One folder per feature: card, drag, stack, history,
-                # toolbar, onboarding, settings, footer, screen-share, theme
+                # toolbar, onboarding, settings, footer, screen-share, theme,
+                # screen-size
   shared/       # Cross-feature UI widgets and utilities: icons (used app-wide),
                 # tooltip, loading overlay, geometry, localStorage wrapper
   types/        # One file per domain type (card, drag, stack, history, etc.)

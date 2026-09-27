@@ -9,6 +9,29 @@ import { CardStateService } from '../features/card/card-state-service'
 import { loadCardAtlasSpritesheet } from '../i18n/card-atlas'
 import type { Locale } from '../i18n/i18n.types'
 import { ThemeService } from '../features/theme/theme-service'
+import { getRoomCodeFromHash } from '../features/screen-share/screen-share-url'
+import { initScreenShareViewer } from '../features/screen-share/screen-share-viewer'
+
+export function startApp(locale: Locale): void {
+    const initialRoomCode = getRoomCodeFromHash(window.location.hash)
+
+    window.addEventListener('hashchange', (): void => {
+        const roomCode = getRoomCodeFromHash(window.location.hash)
+        if (roomCode && roomCode !== initialRoomCode) {
+            window.location.reload()
+        }
+    })
+
+    if (initialRoomCode) {
+        initScreenShareViewer(initialRoomCode, (): void => {
+            window.location.hash = ''
+            void bootApp(locale)
+        })
+        return
+    }
+
+    void bootApp(locale)
+}
 
 export async function bootApp(locale: Locale): Promise<void> {
     const overlay = createLoadingOverlay()

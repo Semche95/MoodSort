@@ -660,6 +660,30 @@ body {
     color: var(--footer-link-hover-color);
 }
 
+/* Screen size guard overlay */
+.screen-size-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--overlay-backdrop-strong);
+    color: var(--modal-text);
+    z-index: 10001;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
+}
+
+.screen-size-content {
+    background: var(--modal-bg);
+    color: var(--modal-text);
+    border-radius: 16px;
+    padding: 24px 32px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 8px 32px var(--modal-shadow);
+}
+
 /* Legal modal */
 .legal-overlay {
     position: fixed;
