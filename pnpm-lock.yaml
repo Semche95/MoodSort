@@ -10,10 +10,10 @@ importers:
     dependencies:
       '@pixi/ui':
         specifier: ^2.3.2
-        version: 2.3.2(pixi.js@8.20.1)
+        version: 2.3.2(pixi.js@8.21.0)
       pixi.js:
-        specifier: ^8.20.1
-        version: 8.20.1
+        specifier: ^8.21.0
+        version: 8.21.0
       trystero:
         specifier: ^0.25.4
         version: 0.25.4
@@ -1033,8 +1033,8 @@ packages:
     resolution: {integrity: sha512-qcJu88Q2IWqJsDD529JKMdwGm/dvInW4HvQnRwiH9JtihJvzGOscDtHE3x1pBKeUOTysQ8kVmLnJ2kJu7yhcGA==}
     engines: {node: '>=12'}
 
-  pixi.js@8.20.1:
-    resolution: {integrity: sha512-akLVBMLvQbaEViqsmVraK0Njer1q4Q4lm4iNKuzvBiFrV8q+6/+HluJN3sWIwO663IBeQtUUS/CaXFJZs6ffXQ==}
+  pixi.js@8.21.0:
+    resolution: {integrity: sha512-GJ/KqBtUuWDBPMQu2D0ZHsRCYOcWRjjKrpyC+3jPQI5JTqHMC5dH8l9sSyvoUT4qJidvRzs1fwFWRWceno2Ltw==}
 
   postcss@8.5.28:
     resolution: {integrity: sha512-RRuzqDtt5Y9h3quz5hWhK+TPnsmVs6WwSU6LkJMeY4HstUEDuYTG8UJSdawMRzmzAtV+KEoG8N3Qg2qLy5vM/A==}
@@ -1559,9 +1559,9 @@ snapshots:
 
   '@pixi/colord@2.9.6': {}
 
-  '@pixi/ui@2.3.2(pixi.js@8.20.1)':
+  '@pixi/ui@2.3.2(pixi.js@8.21.0)':
     dependencies:
-      pixi.js: 8.20.1
+      pixi.js: 8.21.0
       tweedle.js: 2.1.0
       typed-signals: 2.5.0
 
@@ -2232,7 +2232,7 @@ snapshots:
 
   picomatch@4.0.7: {}
 
-  pixi.js@8.20.1:
+  pixi.js@8.21.0:
     dependencies:
       '@pixi/colord': 2.9.6
       '@types/earcut': 3.0.0
