@@ -43,6 +43,12 @@
         "settings": {
           "type": "string"
         },
+        "fullscreenEnter": {
+          "type": "string"
+        },
+        "fullscreenExit": {
+          "type": "string"
+        },
         "share": {
           "type": "string"
         },
@@ -64,6 +70,8 @@
         "redo",
         "help",
         "settings",
+        "fullscreenEnter",
+        "fullscreenExit",
         "share",
         "shareTooltip",
         "shareTooltipUnsupported",

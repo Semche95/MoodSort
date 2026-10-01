@@ -4,10 +4,12 @@ import redoIconUrl from '../../assets/icons/redo-2.webp?url'
 import settingsIconUrl from '../../assets/icons/sliders-horizontal.webp?url'
 import screenShareIconUrl from '../../assets/icons/screen-share.webp?url'
 import globeIconUrl from '../../assets/icons/globe.webp?url'
+import maximizeIconUrl from '../../assets/icons/maximize.webp?url'
+import minimizeIconUrl from '../../assets/icons/minimize.webp?url'
 import type { ResolvedTheme } from '../../types/theme.types'
 import { getPixiThemeColors } from '../../features/theme/pixi-theme-colors'
 
-export const ICON_NAMES = ['undo-2', 'redo-2', 'sliders-horizontal', 'screen-share', 'globe'] as const
+export const ICON_NAMES = ['undo-2', 'redo-2', 'sliders-horizontal', 'screen-share', 'globe', 'maximize', 'minimize'] as const
 
 export type IconName = (typeof ICON_NAMES)[number]
 
@@ -20,6 +22,8 @@ export async function loadIconTextures(): Promise<Record<string, Texture>> {
         'sliders-horizontal': settingsIconUrl,
         'screen-share': screenShareIconUrl,
         globe: globeIconUrl,
+        maximize: maximizeIconUrl,
+        minimize: minimizeIconUrl,
     }
     const textures: Record<string, Texture> = {}
     for (const name of ICON_NAMES) {

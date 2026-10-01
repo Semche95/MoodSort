@@ -10,6 +10,8 @@
     "redo": "Wiederholen",
     "help": "Hilfe",
     "settings": "Einstellungen",
+    "fullscreenEnter": "Vollbild",
+    "fullscreenExit": "Vollbild beenden",
     "share": "Teilen",
     "shareTooltip": "Anordnung teilen",
     "shareTooltipUnsupported": "Dieser Browser unterstützt das Teilen der Anordnung nicht",

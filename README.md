@@ -18,6 +18,7 @@ The interface is available in Dutch, English, Esperanto, French, German, and Spa
 - Reset animates cards back to the center
 - Named stack labels: click a stack's name button to open an inline editor (native paste/IME support, a clear button, width-capped with horizontal scrolling); names merge when stacks merge and follow the right group when a stack splits
 - Canvas sharing over peer-to-peer WebRTC: toggle it from the toolbar to get a shareable room link, no signup or account needed. This streams the app's canvas only, not the viewer's whole screen
+- Fullscreen toggle (toolbar button, hidden when the browser lacks the Fullscreen API); the whole page goes fullscreen so modals stay usable, and leaving with Escape is reflected on the button
 - Settings modal (toolbar button) with a confirmation-gated "reset positions" action
 - First-time onboarding overlay
 - Footer link to a legal notices modal (LCEN)
@@ -98,7 +99,7 @@ src/
   app/          # Composition root: entry point, canvas scene
   features/     # One folder per feature: card, drag, stack, history,
                 # toolbar, onboarding, settings, footer, screen-share, theme,
-                # screen-size
+                # screen-size, fullscreen
   shared/       # Cross-feature UI widgets and utilities: icons (used app-wide),
                 # tooltip, loading overlay, geometry, localStorage wrapper
   types/        # One file per domain type (card, drag, stack, history, etc.)
@@ -133,7 +134,7 @@ Each stack can also carry a name. A dedicated button next to the drag handle ope
 
 ### Toolbar
 
-`TopToolbar` renders directly on the Pixi canvas rather than as HTML: a logo on the left, and undo/redo/help/settings buttons on the right that stay pinned on resize. Hovering a button shows a `CanvasTooltip`, a small reusable rounded label. Keyboard shortcuts (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, Ctrl/Cmd+Y) are wired independently in `initHistoryShortcuts`. The settings button opens a modal (`createSettingsModal`) with an appearance section (a Light/Dark/Auto theme toggle backed by `ThemeService`) and a cards section whose only action is resetting all card positions, gated behind a confirmation step.
+`TopToolbar` renders directly on the Pixi canvas rather than as HTML: a logo on the left, and undo/redo/help/language/fullscreen/settings buttons on the right that stay pinned on resize. The fullscreen button (`src/features/fullscreen/`) only appears when the Fullscreen API (standard or `webkit`-prefixed) is available; it targets `document.documentElement` rather than the canvas so DOM modals remain visible, its icon and label follow `fullscreenchange` only (so an exit via Escape is picked up), and fullscreen is never restored on load since browsers require a user gesture. Entering or leaving fullscreen goes through the same `window` resize handling as any other viewport change, and an active canvas share keeps streaming at the new canvas size. Hovering a button shows a `CanvasTooltip`, a small reusable rounded label. Keyboard shortcuts (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, Ctrl/Cmd+Y) are wired independently in `initHistoryShortcuts`. The settings button opens a modal (`createSettingsModal`) with an appearance section (a Light/Dark/Auto theme toggle backed by `ThemeService`) and a cards section whose only action is resetting all card positions, gated behind a confirmation step.
 
 ### Localization
 

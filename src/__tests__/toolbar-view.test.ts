@@ -200,6 +200,17 @@ describe('toolbar-view', () => {
         expect(tooltip.hide).toHaveBeenCalled()
     })
 
+    it('shows the current accessible title on hover when it was changed after creation', () => {
+        const tooltip = createFakeTooltip()
+
+        const button = createButton(tooltip, new pixi.Container() as never, vi.fn(), 'my-button', 'My label')
+        const fake = button as unknown as { hover(): void; accessibleTitle: string; x: number; y: number }
+        fake.accessibleTitle = 'Updated label'
+
+        fake.hover()
+        expect(tooltip.show).toHaveBeenCalledWith(fake.x, fake.y + 48 / 2 + 8, 'Updated label')
+    })
+
     it('defaults the icon scale to roughly a third of the button size, unless overridden', () => {
         const tooltip = createFakeTooltip()
 

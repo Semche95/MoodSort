@@ -10,6 +10,8 @@
     "redo": "Redo",
     "help": "Help",
     "settings": "Settings",
+    "fullscreenEnter": "Full screen",
+    "fullscreenExit": "Exit full screen",
     "share": "Share",
     "shareTooltip": "Share the layout",
     "shareTooltipUnsupported": "Sharing the layout is not supported by this browser",

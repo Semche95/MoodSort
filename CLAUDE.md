@@ -24,7 +24,7 @@
 - `src/features/`: one folder per feature (card, drag, stack, history, toolbar, onboarding, settings, footer, screen-share). Each feature is organized by domain, not by technical layer, no service/controller/ui split inside a feature. Constants used only within one feature live directly in that feature's main file, not in a separate `constants.ts`. If a feature file has multiple responsibilities and outgrows itself (e.g. orchestration vs. pure Pixi drawing/animation helpers), split it into a subfolder named after the feature (e.g. `features/stack/stack-overlay/`) instead of overloading a single file.
 - `src/shared/`: code used by two or more features, cross-feature UI widgets in `shared/ui/`, stateless utility functions in `shared/utils/`. Don't move something here preemptively; wait until a second feature actually needs it.
 - `src/types/`: one type or interface per file, named `<concept>.types.ts`. Only group declarations when inseparable in practice (e.g. `card-state.types.ts` pairs `CardState` with the storage-key constants it's always used with). No interface lives inline in `app/`, `features/`, or `shared/`.
-- `src/i18n/locales/`: one JSON file per locale (currently `de`, `en`, `eo`, `es`, `fr`, `nl`), validated against `locale.schema.json`. More locales are expected to be added over time; don't assume English and French are the only ones. Every JSON file there (schema included) stays pretty-printed with 2-space indentation, one key per line, and a trailing newline, so diffs only show the lines that actually changed; never write them minified. `src/__tests__/locale-formatting.test.ts` enforces this.
+- `src/i18n/locales/`: one JSON file per locale (currently `de`, `en`, `eo`, `es`, `fr`, `nl`), validated against `locale.schema.json`. Every JSON file there (schema included) stays pretty-printed with 2-space indentation, one key per line, and a trailing newline, so diffs only show the lines that actually changed; never write them minified. `src/__tests__/locale-formatting.test.ts` enforces this.
 - Wherever locales are listed, order them alphabetically rather than by relevance or historical addition order: technical lists keyed by locale code (e.g. the `Locale` type union, `AVAILABLE_LOCALES`, and anything deriving from it like the language picker) sort by code; prose or UI text naming languages by their displayed name (e.g. README sentences, a rendered language list) sorts by that displayed name instead, since the two orders don't coincide.
 - `src/cards/`: source emotion card images, one per emotion, consumed by `scripts/generate-atlas.mjs` to build the per-locale spritesheet atlas at dev/build time.
 - `src/__tests__/`: all test files live here, with no exceptions. Never colocate a test next to the source file it covers, even for a single-feature file; name it after what it tests (e.g. `settings.test.ts`, `screen-share-viewer.test.ts`).
@@ -52,18 +52,20 @@ Do NOT run `vite build`, `pnpm build`, `npm run build`, or any equivalent produc
 
 Reason: `pnpm dev` is expected to be running continuously in this project. A concurrent build process conflicts with the dev server (port usage, Vite cache, file watchers) and breaks it.
 
-The only way to validate changes is: `pnpm typecheck`, `pnpm lint`, `pnpm test`. If you believe a production build is genuinely necessary to verify something, STOP and ask me explicitly first: do not run it preemptively "just to check."
+Validate changes with `pnpm typecheck`, `pnpm lint`, `pnpm test`, plus a Playwright MCP check against the dev server (see below). If you believe a production build is genuinely necessary to verify something, STOP and ask me explicitly first: do not run it preemptively "just to check."
 
-# Strict prohibition: browser automation
+# Browser testing with the Playwright MCP server
 
-It is FORBIDDEN, without my explicit, one-off request, to:
+After any change that affects what the app renders or how it behaves (UI, canvas, interactions, i18n text, theme, layout), test it yourself in the browser through the already-configured Playwright MCP server (`mcp__playwright__*` tools), without waiting to be asked. `pnpm typecheck`, `pnpm lint`, and `pnpm test` stay mandatory on top of it, not replaced by it.
+- Target the running dev server (`http://localhost:5170/`, see `vite.config.ts`); never start another one or a build for this.
+- If the onboarding modal opens on load, close it with its "Get started" button before testing anything, rather than removing it from the DOM.
+- Toolbar buttons and cards are drawn in Pixi, not the DOM: interact with them through mouse coordinates, computed from the toolbar layout constants.
+- Restore any setting you change while testing (theme, locale, viewport size...).
+- Report what was actually checked, and say explicitly what the automated browser can't reproduce (e.g. native Escape exiting fullscreen, a real window size change), so it can be checked by hand.
+
+It is still FORBIDDEN, without my explicit, one-off request, to:
 - Install Playwright, Puppeteer, headless Chromium, or any browser driver (`pnpm exec playwright install`, `npx playwright install`, etc.), even through a wrapper command (`timeout`, `nohup`, `env`, an intermediate script...)
-- Write a "driver script" or any script whose purpose is to launch the app in a browser to "exercise", "visually verify", "test the flow", or "make sure it works"
-- Justify installing a browser by a successful exit code or by the need to "validate" a change
-
-If you think a visual check would be useful, STOP and ask me explicitly before running anything browser-related. Do not propose a workaround (a different headless tool, a different package manager, a custom script that invokes a browser under the hood).
-
-The only automated validation that is acceptable is: `pnpm typecheck`, `pnpm lint`, `pnpm test`. Nothing else counts as valid proof that something works without my approval.
+- Use any browser tooling other than the Playwright MCP server (a standalone driver script, a different headless tool, a different package manager)
 
 # Filesystem scope
 - STRICTLY FORBIDDEN to leave the project directory (`cd ..`, absolute paths outside the repo, `find /`, etc.)
@@ -76,4 +78,4 @@ The only automated validation that is acceptable is: `pnpm typecheck`, `pnpm lin
 - If unsure whether a tool is available, ask before running an exploratory command
 
 ## General principle
-If an action is not directly necessary to edit or test the project's code (typecheck, lint, unit tests), do not run it without my explicit approval.
+If an action is not directly necessary to edit or test the project's code (typecheck, lint, unit tests, Playwright MCP check), do not run it without my explicit approval.

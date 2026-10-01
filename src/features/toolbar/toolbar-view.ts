@@ -116,7 +116,8 @@ function attachTooltipBehavior(button: FancyButton, tooltip: CanvasTooltip, onCl
         tooltip.hide()
     })
     button.onHover.connect((): void => {
-        tooltip.show(button.x, button.y + BUTTON_SIZE / 2 + TOOLTIP_GAP, tooltipLabel)
+        // Read at hover time so a label swapped later through accessibleTitle (fullscreen toggle) is shown
+        tooltip.show(button.x, button.y + BUTTON_SIZE / 2 + TOOLTIP_GAP, button.accessibleTitle ?? tooltipLabel)
     })
     button.onOut.connect((): void => { tooltip.hide() })
 }

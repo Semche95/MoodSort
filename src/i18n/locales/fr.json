@@ -10,6 +10,8 @@
     "redo": "Rétablir",
     "help": "Aide",
     "settings": "Réglages",
+    "fullscreenEnter": "Plein écran",
+    "fullscreenExit": "Quitter le plein écran",
     "share": "Partager",
     "shareTooltip": "Partager la disposition",
     "shareTooltipUnsupported": "Partage de la disposition non supporté par ce navigateur",

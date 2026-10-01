@@ -6,6 +6,8 @@ import { I18n } from '../i18n/I18n'
 import { AVAILABLE_LOCALES } from '../i18n/locales'
 import { ThemeService } from '../features/theme/theme-service'
 import { InMemoryStore } from './in-memory-store'
+import { mockFullscreenApi } from './fullscreen-api-mock'
+import type { FullscreenApiMock } from './fullscreen-api-mock'
 
 const { pixi, ui, buttons } = vi.hoisted(() => {
     class Texture {
@@ -115,6 +117,7 @@ const { pixi, ui, buttons } = vi.hoisted(() => {
 
     class FancyButton {
         enabled: boolean = true
+        accessibleTitle: string | null = null
         label: string = ''
         x: number = 0
         y: number = 0
@@ -266,6 +269,8 @@ function createTextures(): Record<string, Texture> {
         'sliders-horizontal': new pixi.Texture() as unknown as Texture,
         'screen-share': new pixi.Texture() as unknown as Texture,
         globe: new pixi.Texture() as unknown as Texture,
+        maximize: new pixi.Texture() as unknown as Texture,
+        minimize: new pixi.Texture() as unknown as Texture,
     }
 }
 
@@ -558,5 +563,109 @@ describe('TopToolbar', () => {
 
         expect(document.querySelectorAll('.screen-share-overlay')).toHaveLength(1)
         document.querySelector('.screen-share-overlay')?.remove()
+    })
+
+    it('should not render the fullscreen button when the Fullscreen API is unsupported', () => {
+        const host = createHost()
+        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
+
+        expect(buttons.some((button: { label: string }): boolean => button.label === 'toolbar-fullscreenbutton')).toBe(false)
+    })
+
+    describe('fullscreen button', () => {
+        let api: FullscreenApiMock
+
+        beforeEach(() => {
+            api = mockFullscreenApi('standard')
+            vi.spyOn(I18n, 't').mockImplementation((key: string): string => key)
+        })
+
+        afterEach(() => {
+            api.restore()
+            vi.restoreAllMocks()
+        })
+
+        function findFullscreenButton(): (typeof buttons)[number] {
+            return buttons.find((button: { label: string }): boolean => button.label === 'toolbar-fullscreenbutton')!
+        }
+
+        function fullscreenIconTexture(): unknown {
+            return (findFullscreenButton().iconView as { texture: unknown }).texture
+        }
+
+        it('should sit between the settings and locale buttons, shifting the rest of the right-hand group', () => {
+            const host = createHost()
+            initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
+
+            const [undo, , , settings] = buttons
+            const locale = buttons.find((button: { label: string }): boolean => button.label === 'toolbar-localebutton')!
+            expect(settings.x).toBe(800 - 16 - 24)
+            expect(findFullscreenButton().x).toBe(800 - 16 - 24 - 56)
+            expect(findFullscreenButton().y).toBe(40)
+            expect(locale.x).toBe(800 - 16 - 24 - 2 * 56)
+            expect(undo.x).toBe(800 - 16 - 24 - 5 * 56)
+        })
+
+        it('should start in the enter state with the maximize icon', () => {
+            const textures = createTextures()
+            initTopToolbar(createHost(), vi.fn(), textures, createThemeService())
+
+            expect(findFullscreenButton().accessibleTitle).toBe('toolbar.fullscreenEnter')
+            expect(fullscreenIconTexture()).toBe(textures.maximize)
+        })
+
+        it('should request fullscreen on press without changing its state before fullscreenchange fires', () => {
+            const textures = createTextures()
+            initTopToolbar(createHost(), vi.fn(), textures, createThemeService())
+
+            findFullscreenButton().press()
+
+            expect(api.request).toHaveBeenCalledOnce()
+            expect(api.request.mock.contexts[0]).toBe(document.documentElement)
+            expect(findFullscreenButton().accessibleTitle).toBe('toolbar.fullscreenEnter')
+            expect(fullscreenIconTexture()).toBe(textures.maximize)
+        })
+
+        it('should switch to the exit state when fullscreenchange reports fullscreen is active', () => {
+            const host = createHost()
+            const textures = createTextures()
+            initTopToolbar(host, vi.fn(), textures, createThemeService())
+
+            api.setElement(document.documentElement)
+            document.dispatchEvent(new Event('fullscreenchange'))
+
+            const button = findFullscreenButton()
+            expect(button.accessibleTitle).toBe('toolbar.fullscreenExit')
+            expect(fullscreenIconTexture()).toBe(textures.minimize)
+
+            button.hover()
+            const toolbar = host.stage.children[0] as { children: unknown[] }
+            const tooltip = toolbar.children[toolbar.children.length - 1] as { children: Array<{ text?: unknown }> }
+            expect(tooltip.children[1].text).toBe('toolbar.fullscreenExit')
+        })
+
+        it('should exit fullscreen on press while fullscreen is active', () => {
+            initTopToolbar(createHost(), vi.fn(), createTextures(), createThemeService())
+            api.setElement(document.documentElement)
+
+            findFullscreenButton().press()
+
+            expect(api.exit).toHaveBeenCalledOnce()
+            expect(api.request).not.toHaveBeenCalled()
+        })
+
+        it('should return to the enter state when fullscreen is left outside the button, e.g. with Escape', () => {
+            const textures = createTextures()
+            initTopToolbar(createHost(), vi.fn(), textures, createThemeService())
+            api.setElement(document.documentElement)
+            document.dispatchEvent(new Event('fullscreenchange'))
+
+            api.setElement(null)
+            document.dispatchEvent(new Event('fullscreenchange'))
+
+            expect(api.exit).not.toHaveBeenCalled()
+            expect(findFullscreenButton().accessibleTitle).toBe('toolbar.fullscreenEnter')
+            expect(fullscreenIconTexture()).toBe(textures.maximize)
+        })
     })
 })

@@ -10,6 +10,8 @@
     "redo": "Rehacer",
     "help": "Ayuda",
     "settings": "Ajustes",
+    "fullscreenEnter": "Pantalla completa",
+    "fullscreenExit": "Salir de pantalla completa",
     "share": "Compartir",
     "shareTooltip": "Compartir la disposición",
     "shareTooltipUnsupported": "Este navegador no admite compartir la disposición",

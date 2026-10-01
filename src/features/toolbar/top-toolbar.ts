@@ -1,12 +1,15 @@
 import { Container, Texture } from 'pixi.js'
+import type { FancyButton } from '@pixi/ui'
 import type { ToolbarHost } from '../../types/toolbar.types'
 import type { ToolbarState } from '../../types/toolbar-state.types'
+import type { FullscreenControl } from '../../types/fullscreen-control.types'
 import { initHistoryShortcuts } from '../history/history'
 import { CanvasTooltip } from '../../shared/ui/canvas-tooltip'
 import { createOnboarding } from '../onboarding/onboarding'
 import { createSettingsModal } from '../settings/settings'
 import { createScreenShareModal } from '../screen-share/screen-share-modal'
 import { isScreenShareHostSupported } from '../screen-share/compat'
+import { isFullscreenActive, isFullscreenSupported, onFullscreenChange, toggleFullscreen } from '../fullscreen/fullscreen'
 import { resumeSharingIfWasActive, subscribeToSharing } from '../screen-share/screen-share-session'
 import type { SharingState } from '../../types/screen-share.types'
 import { createHelpIcon, createIcon } from '../../shared/ui/icons'
@@ -50,6 +53,8 @@ function createToolbarState(host: ToolbarHost, onDismissOnboarding: () => void, 
     state.shareViewerIndicator = share.viewerIndicator
     setButtonEnabled(state.shareButton, state.shareIcon, shareSupported, tooltip)
 
+    state.fullscreen = isFullscreenSupported() ? createFullscreenControl(tooltip, iconTextures, resolvedTheme) : null
+
     state.localeMenu = createLocaleMenu(tooltip, iconTextures.globe, I18n.getLocale(), (locale: Locale): void => switchLocale(locale), resolvedTheme)
 
     if (shareSupported) {
@@ -61,6 +66,21 @@ function createToolbarState(host: ToolbarHost, onDismissOnboarding: () => void, 
     }
 
     return state
+}
+
+function createFullscreenControl(tooltip: CanvasTooltip, iconTextures: Record<string, Texture>, resolvedTheme: ResolvedTheme): FullscreenControl {
+    const icon = createIcon(iconTextures.maximize, resolvedTheme)
+    const button = createButton(tooltip, icon, (): void => { void toggleFullscreen() }, 'toolbar-fullscreenbutton', I18n.t('toolbar.fullscreenEnter'), undefined, resolvedTheme)
+    const control = { button, icon, enterTexture: iconTextures.maximize, exitTexture: iconTextures.minimize }
+    syncFullscreenControl(control)
+    return control
+}
+
+// Driven only by the actual fullscreen state, so exits via Escape or browser UI are reflected too.
+function syncFullscreenControl(control: FullscreenControl): void {
+    const active = isFullscreenActive()
+    control.icon.texture = active ? control.exitTexture : control.enterTexture
+    control.button.accessibleTitle = I18n.t(active ? 'toolbar.fullscreenExit' : 'toolbar.fullscreenEnter')
 }
 
 function updateHistoryButtons(state: ToolbarState): void {
@@ -104,6 +124,9 @@ function applyToolbarTheme(state: ToolbarState, resolved: ResolvedTheme): void {
     applyButtonTheme(state.redoButton, resolved)
     applyButtonTheme(state.helpButton, resolved)
     applyButtonTheme(state.settingsButton, resolved)
+    if (state.fullscreen !== null) {
+        applyButtonTheme(state.fullscreen.button, resolved)
+    }
     applyButtonTheme(state.localeMenu.button, resolved)
     applyShareButtonTheme(state.shareButton, state.shareIcon, state.shareActiveIndicator, state.shareViewerIndicator, resolved)
 }
@@ -125,7 +148,8 @@ function resizeToolbar(state: ToolbarState): void {
     state.tooltip.hide()
     let x = state.host.screenWidth - SIDE_MARGIN
 
-    const buttons = [state.settingsButton, state.localeMenu.button, state.helpButton, state.redoButton, state.undoButton]
+    const buttons = [state.settingsButton, state.fullscreen?.button, state.localeMenu.button, state.helpButton, state.redoButton, state.undoButton]
+        .filter((button: FancyButton | undefined): button is FancyButton => button !== undefined)
     for (const button of buttons) {
         button.position.set(x - BUTTON_SIZE / 2, TOP_MARGIN + BUTTON_SIZE / 2)
         x -= BUTTON_SIZE + GAP
@@ -153,6 +177,9 @@ export function initTopToolbar(host: ToolbarHost, onDismissOnboarding: () => voi
     container.addChild(state.redoButton)
     container.addChild(state.helpButton)
     container.addChild(state.settingsButton)
+    if (state.fullscreen !== null) {
+        container.addChild(state.fullscreen.button)
+    }
     container.addChild(state.shareButton)
     container.addChild(state.localeMenu.button)
     container.addChild(state.tooltip.view)
@@ -162,6 +189,13 @@ export function initTopToolbar(host: ToolbarHost, onDismissOnboarding: () => voi
     host.setOnHistoryChange((): void => updateHistoryButtons(state))
     host.registerOnResize((): void => resizeToolbar(state))
     window.addEventListener('scroll', (): void => state.localeMenu.updatePosition(state.host.canvasElement), true)
+    const fullscreen = state.fullscreen
+    if (fullscreen !== null) {
+        onFullscreenChange((): void => {
+            state.tooltip.hide()
+            syncFullscreenControl(fullscreen)
+        })
+    }
     themeService.onChange((resolved: ResolvedTheme): void => applyToolbarTheme(state, resolved))
     resizeToolbar(state)
     updateHistoryButtons(state)
