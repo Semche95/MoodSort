@@ -37,6 +37,6 @@
   "dependencies": {
     "@pixi/ui": "^2.4.1",
     "pixi.js": "^8.22.0",
-    "trystero": "^0.25.4"
+    "trystero": "^0.26.0"
   }
 }
