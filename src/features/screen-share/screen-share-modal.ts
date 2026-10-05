@@ -1,5 +1,6 @@
 import { buildRoomUrl } from './screen-share-url'
 import { isScreenShareHostSupported } from './compat'
+import { isRoomConfigValid } from './room-config'
 import { activateSharing, getSharingState, regenerateSharingCode, stopSharing, subscribeToSharing } from './screen-share-session'
 import type { SharingState, SharingStatus } from '../../types/screen-share.types'
 import { I18n } from '../../i18n/I18n'
@@ -99,6 +100,8 @@ export function createScreenShareModal(canvas: HTMLCanvasElement): HTMLDivElemen
     if (!isScreenShareHostSupported()) {
         activateBtn.disabled = true
         statusEl.textContent = I18n.t('screenShare.unsupported')
+    } else if (!isRoomConfigValid()) {
+        activateBtn.disabled = true
     } else {
         unsubscribe = subscribeToSharing(canvas, render)
         render(getSharingState(canvas))

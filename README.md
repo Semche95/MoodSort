@@ -148,7 +148,16 @@ Reset shuffles the card order, computes new target positions, then `CanvasScene.
 
 A toolbar toggle opens a modal to start or stop sharing. The stream comes from `canvas.captureStream()` on the app's own Pixi canvas, not the browser's `getDisplayMedia` screen picker, so only the card canvas is sent, never the rest of the host's screen. Starting a share generates a random room code, embeds it in a shareable URL hash, and connects host and viewer peer-to-peer over WebRTC via Trystero (no custom signaling server, no account). Only one host and one viewer are allowed per room; a second viewer is rejected. A room with no connected peer for 10 minutes is torn down automatically. The host's room code and sharing state are kept in their own `localStorage` entries, separate from card positions, so resetting the canvas doesn't end an active share, and a page refresh can silently resume it.
 
-By default WebRTC connections rely on STUN only, which can fail on restrictive networks. To add a TURN relay, set `VITE_TURN_URL`, `VITE_TURN_USERNAME`, and `VITE_TURN_CREDENTIAL` (all three are required together) as environment variables at build time.
+#### Signaling and STUN
+
+By default Trystero signals over its public Nostr relays and WebRTC relies on its default STUN servers. There is no relay server for the media itself: the connection is always direct between the two peers, so it can fail on restrictive networks (strict NATs, corporate firewalls). Signaling relays and STUN servers can be overridden at build time through the environment variables below (see `.env.example`), read in `src/features/screen-share/room-config.ts`. An empty or absent variable keeps the default behavior. Custom relays must accept the ephemeral Nostr events Trystero publishes without authentication (no restricted writes, no pubkey whitelist).
+
+| Variable | Format | Effect |
+| --- | --- | --- |
+| `VITE_SIGNALING_RELAYS` | Comma-separated `ws://` or `wss://` URLs | Replaces Trystero's default Nostr relays, with a redundancy of 5 capped to the number of relays provided |
+| `VITE_STUN_URLS` | Comma-separated `stun:` or `stuns:` URLs | Replaces Trystero's default STUN servers |
+
+When `VITE_STUN_URLS` is set, its servers are passed as `rtcConfig.iceServers`, replacing Trystero's default STUN list. An entry with the wrong scheme never falls back to the defaults: the error is logged to the console and sharing can't start, on the host or the viewer side.
 
 ## License
 

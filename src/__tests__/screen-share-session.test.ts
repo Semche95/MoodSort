@@ -52,6 +52,8 @@ describe('screen-share-session', () => {
 
     afterEach(() => {
         vi.useRealTimers()
+        vi.unstubAllEnvs()
+        vi.restoreAllMocks()
     })
 
     it('starts inactive with a stable room code before anything is activated', () => {
@@ -139,6 +141,18 @@ describe('screen-share-session', () => {
         const canvas = createCanvas()
 
         resumeSharingIfWasActive(canvas)
+
+        expect(joinRoom).not.toHaveBeenCalled()
+        expect(getSharingState(canvas).status).toBe('inactive')
+    })
+
+    it('neither activates nor resumes sharing when the signaling configuration is invalid', () => {
+        vi.spyOn(console, 'error').mockImplementation((): void => {})
+        vi.stubEnv('VITE_SIGNALING_RELAYS', 'https://relay.test')
+        const canvas = createCanvas()
+
+        activateSharing(canvas)
+        resumeSharingIfWasActive(createCanvas())
 
         expect(joinRoom).not.toHaveBeenCalled()
         expect(getSharingState(canvas).status).toBe('inactive')

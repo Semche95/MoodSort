@@ -1,7 +1,7 @@
 import { joinRoom } from 'trystero'
 import type { Room } from 'trystero'
 import type { ConnectionStatus } from '../../types/screen-share.types'
-import { buildRoomConfig, ROOM_BUSY_ACTION, SCREEN_SHARE_GRACE_TIMEOUT_MS } from './room-config'
+import { buildRoomConfig, isRoomConfigValid, ROOM_BUSY_ACTION, SCREEN_SHARE_GRACE_TIMEOUT_MS } from './room-config'
 import { isWebRtcSupported } from './compat'
 import { GraceTimeout } from './grace-timeout'
 import { I18n } from '../../i18n/I18n'
@@ -108,6 +108,13 @@ export function initScreenShareViewer(roomCode: string, onClose: () => void): vo
 
     if (!isWebRtcSupported()) {
         status.textContent = I18n.t('screenShareViewer.unsupported')
+        return
+    }
+
+    // No translation describes a build misconfiguration, so the banner is hidden rather than misleading.
+    if (!isRoomConfigValid()) {
+        status.textContent = ''
+        status.classList.remove('screen-share-viewer-status--visible')
         return
     }
 

@@ -17,8 +17,4 @@ export interface ActiveSession {
     listeners: Set<(state: SharingState) => void>
 }
 
-export interface TurnServerConfig {
-    urls: string | string[]
-    username: string
-    credential: string
-}
+export type SignalingEnv = Pick<ImportMetaEnv, 'VITE_SIGNALING_RELAYS' | 'VITE_STUN_URLS'>

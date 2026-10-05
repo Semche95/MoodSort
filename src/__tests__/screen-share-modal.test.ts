@@ -53,6 +53,18 @@ describe('createScreenShareModal', () => {
     afterEach(() => {
         Reflect.deleteProperty(globalThis, 'RTCPeerConnection')
         Reflect.deleteProperty(HTMLCanvasElement.prototype, 'captureStream')
+        vi.unstubAllEnvs()
+        vi.restoreAllMocks()
+    })
+
+    it('disables activation without the unsupported browser message when the signaling configuration is invalid', () => {
+        vi.spyOn(console, 'error').mockImplementation((): void => {})
+        vi.stubEnv('VITE_STUN_URLS', 'http://stun.test')
+
+        const overlay = createScreenShareModal(createFakeCanvas())
+
+        expect(overlay.querySelector<HTMLButtonElement>('.screen-share-activate')!.disabled).toBe(true)
+        expect(overlay.querySelector('.screen-share-status')!.textContent).toBe('')
     })
 
     it('shows the "Activer le partage" button and no link before sharing is activated', () => {

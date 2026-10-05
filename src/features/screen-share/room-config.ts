@@ -1,4 +1,5 @@
-import type { TurnServerConfig } from '../../types/screen-share.types'
+import type { JoinRoomConfig } from 'trystero'
+import type { SignalingEnv } from '../../types/screen-share.types'
 
 export const SCREEN_SHARE_APP_ID = 'moodsort-screen-share'
 
@@ -11,27 +12,39 @@ export const SCREEN_SHARE_GRACE_TIMEOUT_MS = 10 * 60 * 1000
 // More relays than Trystero's default gives the signaling handshake more chances to succeed.
 const RELAY_REDUNDANCY = 5
 
-// Optional TURN server for peers behind restrictive NATs, where WebRTC ICE negotiation
-// would otherwise fail. Set VITE_TURN_URL, VITE_TURN_USERNAME, VITE_TURN_CREDENTIAL to enable.
-function getTurnConfig(): TurnServerConfig[] | undefined {
-    const url = import.meta.env.VITE_TURN_URL
-    const username = import.meta.env.VITE_TURN_USERNAME
-    const credential = import.meta.env.VITE_TURN_CREDENTIAL
-    if (!url || !username || !credential) {
-        return undefined
+const RELAY_SCHEMES = ['ws:', 'wss:']
+const STUN_SCHEMES = ['stun:', 'stuns:']
+
+export function parseUrlList(value: string | undefined, schemes: string[], variableName: string): string[] {
+    const entries = (value ?? '').split(',').map((entry: string): string => entry.trim()).filter((entry: string): boolean => entry.length > 0)
+    for (const entry of entries) {
+        if (!schemes.some((scheme: string): boolean => entry.startsWith(scheme))) {
+            const expected = schemes.map((scheme: string): string => `"${scheme}"`).join(' or ')
+            throw new Error(`${variableName}: invalid entry "${entry}", expected ${expected} URL`)
+        }
     }
-    return [{ urls: url, username, credential }]
+    return entries
 }
 
-export function buildRoomConfig(): {
-    appId: string
-    relayConfig: { redundancy: number }
-    turnConfig?: TurnServerConfig[]
-} {
-    const turnConfig = getTurnConfig()
+// Throws on a misconfigured URL rather than silently falling back to Trystero's default servers.
+export function buildRoomConfig(env: SignalingEnv = import.meta.env): JoinRoomConfig {
+    const relayUrls = parseUrlList(env.VITE_SIGNALING_RELAYS, RELAY_SCHEMES, 'VITE_SIGNALING_RELAYS')
+    const stunUrls = parseUrlList(env.VITE_STUN_URLS, STUN_SCHEMES, 'VITE_STUN_URLS')
     return {
         appId: SCREEN_SHARE_APP_ID,
-        relayConfig: { redundancy: RELAY_REDUNDANCY },
-        ...(turnConfig ? { turnConfig } : {}),
+        relayConfig: relayUrls.length > 0
+            ? { redundancy: Math.min(RELAY_REDUNDANCY, relayUrls.length), urls: relayUrls }
+            : { redundancy: RELAY_REDUNDANCY },
+        ...(stunUrls.length > 0 ? { rtcConfig: { iceServers: [{ urls: stunUrls }] } } : {}),
+    }
+}
+
+export function isRoomConfigValid(env: SignalingEnv = import.meta.env): boolean {
+    try {
+        buildRoomConfig(env)
+        return true
+    } catch (error) {
+        console.error(`Screen sharing disabled, invalid signaling configuration: ${error instanceof Error ? error.message : String(error)}`)
+        return false
     }
 }

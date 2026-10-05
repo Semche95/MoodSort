@@ -1,5 +1,6 @@
 import { generateRoomCode, RoomCodeStore, SharingActiveStore } from './room-code'
 import { ScreenShareHost } from './screen-share-host'
+import { isRoomConfigValid } from './room-config'
 import type { ActiveSession, ConnectionStatus, SharingState, SharingStatus } from '../../types/screen-share.types'
 
 export const SCREEN_SHARE_FPS = 18
@@ -51,7 +52,7 @@ export function subscribeToSharing(canvas: HTMLCanvasElement, listener: (state: 
 
 export function activateSharing(canvas: HTMLCanvasElement): void {
     const session = getSession(canvas)
-    if (session.host) {
+    if (session.host || !isRoomConfigValid()) {
         return
     }
     session.host = new ScreenShareHost(
