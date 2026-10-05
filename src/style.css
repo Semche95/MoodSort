@@ -570,6 +570,15 @@ body {
     color: var(--button-danger-bg);
 }
 
+.screen-share-body .screen-share-error {
+    color: var(--button-danger-bg);
+    font-weight: 600;
+}
+
+.screen-share-body .screen-share-error:empty {
+    display: none;
+}
+
 .screen-share-status {
     font-size: 0.85rem;
     color: var(--modal-text);

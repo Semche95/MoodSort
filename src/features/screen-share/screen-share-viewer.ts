@@ -1,8 +1,8 @@
 import { joinRoom } from 'trystero'
 import type { Room } from 'trystero'
 import type { ConnectionStatus } from '../../types/screen-share.types'
-import { buildRoomConfig, isRoomConfigValid, ROOM_BUSY_ACTION, SCREEN_SHARE_GRACE_TIMEOUT_MS } from './room-config'
-import { isWebRtcSupported } from './compat'
+import { buildRoomConfig, getIceServers, isRoomConfigValid, ROOM_BUSY_ACTION, SCREEN_SHARE_GRACE_TIMEOUT_MS } from './room-config'
+import { isWebRtcBlocked, isWebRtcSupported } from './compat'
 import { GraceTimeout } from './grace-timeout'
 import { I18n } from '../../i18n/I18n'
 import { Store } from '../../shared/utils/store'
@@ -118,21 +118,30 @@ export function initScreenShareViewer(roomCode: string, onClose: () => void): vo
         return
     }
 
-    viewer = new ScreenShareViewer(
-        roomCode,
-        (stream: MediaStream): void => {
-            video.srcObject = stream
-        },
-        (status2: ConnectionStatus): void => {
-            const message = describeStatus(status2)
-            status.textContent = message
-            status.classList.toggle('screen-share-viewer-status--visible', message.length > 0)
-        },
-        undefined,
-        (): void => {
-            status.textContent = I18n.t('screenShareViewer.roomBusy')
-            status.classList.add('screen-share-viewer-status--visible')
-        },
-    )
-    viewer.start()
+    void isWebRtcBlocked(getIceServers()).then((blocked: boolean): void => {
+        if (!container.isConnected) {
+            return
+        }
+        if (blocked) {
+            status.textContent = I18n.t('screenShareViewer.webRtcBlocked')
+            return
+        }
+        viewer = new ScreenShareViewer(
+            roomCode,
+            (stream: MediaStream): void => {
+                video.srcObject = stream
+            },
+            (status2: ConnectionStatus): void => {
+                const message = describeStatus(status2)
+                status.textContent = message
+                status.classList.toggle('screen-share-viewer-status--visible', message.length > 0)
+            },
+            undefined,
+            (): void => {
+                status.textContent = I18n.t('screenShareViewer.roomBusy')
+                status.classList.add('screen-share-viewer-status--visible')
+            },
+        )
+        viewer.start()
+    })
 }

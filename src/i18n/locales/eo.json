@@ -85,6 +85,7 @@
     "copySuccess": "Ligilo kopiita en la tondujon.",
     "copyError": "Kopiado de la ligilo malsukcesis.",
     "unsupported": "Via retumilo ne subtenas la kunhavigon de la aranĝo.",
+    "webRtcBlocked": "Via retumilo blokas WebRTC-konektojn (privateca etendaĵo, VPN aŭ agordo de la retumilo), do la kunhavigo ne povas funkcii. Permesu WebRTC aŭ uzu alian retumilon.",
     "statusWaiting": "Atendante spektanton...",
     "statusConnected": "Spektanto konektita.",
     "statusStopped": "Kunhavigo ĉesigita: neniu konektiĝis ĝustatempe. Alklaku \"Aktivigi la kunhavigon\" por reprovi."
@@ -93,6 +94,7 @@
     "closeAriaLabel": "Fermi la kunhavigon kaj reveni al la aranĝo de la kartoj",
     "connecting": "Konektante al la gastiganto...",
     "unsupported": "Via retumilo ne subtenas la kunhavigon de la aranĝo (WebRTC nedisponebla).",
+    "webRtcBlocked": "Via retumilo blokas WebRTC-konektojn (privateca etendaĵo, VPN aŭ agordo de la retumilo), do la kunhavigita aranĝo ne povas esti montrata. Permesu WebRTC aŭ malfermu la ligilon en alia retumilo.",
     "statusWaiting": "Atendante konekton al la gastiganto...",
     "statusStopped": "Konekto perdita kun la gastiganto. Petu novan kunhavigan ligilon.",
     "roomBusy": "Ĉi tiu kunhavigo jam estas sekvata de iu alia. Reprovu poste."

@@ -85,6 +85,7 @@
     "copySuccess": "Lien copié dans le presse-papier.",
     "copyError": "Échec de la copie du lien.",
     "unsupported": "Votre navigateur ne supporte pas le partage de la disposition.",
+    "webRtcBlocked": "Votre navigateur bloque les connexions WebRTC (extension de confidentialité, VPN ou réglage du navigateur) : le partage ne peut pas fonctionner. Autorisez WebRTC ou utilisez un autre navigateur.",
     "statusWaiting": "En attente d'un spectateur...",
     "statusConnected": "Spectateur connecté.",
     "statusStopped": "Partage arrêté : personne ne s'est connecté à temps. Cliquez sur \"Activer le partage\" pour réessayer."
@@ -93,6 +94,7 @@
     "closeAriaLabel": "Fermer le partage et revenir à la disposition des cartes",
     "connecting": "Connexion à l'hôte...",
     "unsupported": "Votre navigateur ne supporte pas le partage de la disposition (WebRTC indisponible).",
+    "webRtcBlocked": "Votre navigateur bloque les connexions WebRTC (extension de confidentialité, VPN ou réglage du navigateur) : la disposition partagée ne peut pas s'afficher. Autorisez WebRTC ou ouvrez le lien dans un autre navigateur.",
     "statusWaiting": "En attente de la connexion à l'hôte...",
     "statusStopped": "Connexion perdue avec l'hôte. Demandez un nouveau lien de partage.",
     "roomBusy": "Ce partage est déjà suivi par quelqu'un d'autre. Réessayez plus tard."

@@ -85,6 +85,7 @@
     "copySuccess": "Link in die Zwischenablage kopiert.",
     "copyError": "Der Link konnte nicht kopiert werden.",
     "unsupported": "Dein Browser unterstützt das Teilen der Anordnung nicht.",
+    "webRtcBlocked": "Dein Browser blockiert WebRTC-Verbindungen (Datenschutz-Erweiterung, VPN oder Browsereinstellung), daher kann das Teilen nicht funktionieren. Erlaube WebRTC oder verwende einen anderen Browser.",
     "statusWaiting": "Warten auf einen Zuschauer...",
     "statusConnected": "Zuschauer verbunden.",
     "statusStopped": "Teilen beendet: Niemand hat sich rechtzeitig verbunden. Klicke auf „Teilen aktivieren“, um es erneut zu versuchen."
@@ -93,6 +94,7 @@
     "closeAriaLabel": "Geteilte Ansicht schließen und zur Kartenanordnung zurückkehren",
     "connecting": "Verbindung zum Host wird hergestellt...",
     "unsupported": "Dein Browser unterstützt das Teilen der Anordnung nicht (WebRTC nicht verfügbar).",
+    "webRtcBlocked": "Dein Browser blockiert WebRTC-Verbindungen (Datenschutz-Erweiterung, VPN oder Browsereinstellung), daher kann die geteilte Anordnung nicht angezeigt werden. Erlaube WebRTC oder öffne den Link in einem anderen Browser.",
     "statusWaiting": "Warten auf die Verbindung zum Host...",
     "statusStopped": "Verbindung zum Host verloren. Fordere einen neuen Freigabelink an.",
     "roomBusy": "Diese Freigabe wird bereits von jemand anderem verfolgt. Bitte versuche es später erneut."

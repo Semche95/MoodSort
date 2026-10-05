@@ -1,6 +1,6 @@
 import { buildRoomUrl } from './screen-share-url'
-import { isScreenShareHostSupported } from './compat'
-import { isRoomConfigValid } from './room-config'
+import { isScreenShareHostSupported, isWebRtcBlocked } from './compat'
+import { getIceServers, isRoomConfigValid } from './room-config'
 import { activateSharing, getSharingState, regenerateSharingCode, stopSharing, subscribeToSharing } from './screen-share-session'
 import type { SharingState, SharingStatus } from '../../types/screen-share.types'
 import { I18n } from '../../i18n/I18n'
@@ -32,6 +32,7 @@ export function createScreenShareModal(canvas: HTMLCanvasElement): HTMLDivElemen
         </div>
         <div class="screen-share-body">
             <p>${I18n.t('screenShare.description')}</p>
+            <p class="screen-share-error"></p>
             <button class="screen-share-activate">${I18n.t('screenShare.activateButton')}</button>
             <button class="screen-share-stop" hidden>${I18n.t('screenShare.stopButton')}</button>
             <div class="screen-share-live">
@@ -56,6 +57,7 @@ export function createScreenShareModal(canvas: HTMLCanvasElement): HTMLDivElemen
     const urlInput = modal.querySelector<HTMLInputElement>('.screen-share-url')!
     const copyFeedback = modal.querySelector<HTMLParagraphElement>('.screen-share-copy-feedback')!
     const statusEl = modal.querySelector<HTMLParagraphElement>('.screen-share-status')!
+    const errorEl = modal.querySelector<HTMLParagraphElement>('.screen-share-error')!
 
     const render = (state: SharingState): void => {
         const isLive = state.status === 'waiting' || state.status === 'connected'
@@ -99,12 +101,19 @@ export function createScreenShareModal(canvas: HTMLCanvasElement): HTMLDivElemen
 
     if (!isScreenShareHostSupported()) {
         activateBtn.disabled = true
-        statusEl.textContent = I18n.t('screenShare.unsupported')
+        errorEl.textContent = I18n.t('screenShare.unsupported')
     } else if (!isRoomConfigValid()) {
         activateBtn.disabled = true
     } else {
         unsubscribe = subscribeToSharing(canvas, render)
         render(getSharingState(canvas))
+
+        void isWebRtcBlocked(getIceServers()).then((blocked: boolean): void => {
+            if (blocked) {
+                activateBtn.disabled = true
+                errorEl.textContent = I18n.t('screenShare.webRtcBlocked')
+            }
+        })
 
         activateBtn.addEventListener('click', (): void => {
             activateSharing(canvas)

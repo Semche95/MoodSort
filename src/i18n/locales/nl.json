@@ -85,6 +85,7 @@
     "copySuccess": "Link naar het klembord gekopieerd.",
     "copyError": "De link kon niet worden gekopieerd.",
     "unsupported": "Je browser ondersteunt het delen van de indeling niet.",
+    "webRtcBlocked": "Je browser blokkeert WebRTC-verbindingen (privacy-extensie, VPN of browserinstelling), waardoor delen niet kan werken. Sta WebRTC toe of gebruik een andere browser.",
     "statusWaiting": "Wachten op een kijker...",
     "statusConnected": "Kijker verbonden.",
     "statusStopped": "Delen gestopt: niemand heeft op tijd verbinding gemaakt. Klik op \"Delen inschakelen\" om het opnieuw te proberen."
@@ -93,6 +94,7 @@
     "closeAriaLabel": "Gedeelde weergave sluiten en terugkeren naar de kaartindeling",
     "connecting": "Verbinden met de host...",
     "unsupported": "Je browser ondersteunt het delen van de indeling niet (WebRTC niet beschikbaar).",
+    "webRtcBlocked": "Je browser blokkeert WebRTC-verbindingen (privacy-extensie, VPN of browserinstelling), waardoor de gedeelde indeling niet kan worden weergegeven. Sta WebRTC toe of open de link in een andere browser.",
     "statusWaiting": "Wachten op verbinding met de host...",
     "statusStopped": "Verbinding met de host verbroken. Vraag een nieuwe deellink aan.",
     "roomBusy": "Deze gedeelde sessie wordt al door iemand anders gevolgd. Probeer het later opnieuw."

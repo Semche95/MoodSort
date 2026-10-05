@@ -335,6 +335,9 @@
         "unsupported": {
           "type": "string"
         },
+        "webRtcBlocked": {
+          "type": "string"
+        },
         "statusWaiting": {
           "type": "string"
         },
@@ -358,6 +361,7 @@
         "copySuccess",
         "copyError",
         "unsupported",
+        "webRtcBlocked",
         "statusWaiting",
         "statusConnected",
         "statusStopped"
@@ -376,6 +380,9 @@
         "unsupported": {
           "type": "string"
         },
+        "webRtcBlocked": {
+          "type": "string"
+        },
         "statusWaiting": {
           "type": "string"
         },
@@ -390,6 +397,7 @@
         "closeAriaLabel",
         "connecting",
         "unsupported",
+        "webRtcBlocked",
         "statusWaiting",
         "statusStopped",
         "roomBusy"

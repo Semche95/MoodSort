@@ -85,6 +85,7 @@
     "copySuccess": "Enlace copiado al portapapeles.",
     "copyError": "Error al copiar el enlace.",
     "unsupported": "Tu navegador no admite compartir la disposición.",
+    "webRtcBlocked": "Tu navegador está bloqueando las conexiones WebRTC (extensión de privacidad, VPN o ajuste del navegador), por lo que no se puede compartir. Permite WebRTC o usa otro navegador.",
     "statusWaiting": "Esperando a un espectador...",
     "statusConnected": "Espectador conectado.",
     "statusStopped": "Compartir detenido: nadie se conectó a tiempo. Haz clic en «Activar el compartir» para volver a intentarlo."
@@ -93,6 +94,7 @@
     "closeAriaLabel": "Cerrar el compartir y volver a la disposición de las cartas",
     "connecting": "Conectando con el anfitrión...",
     "unsupported": "Tu navegador no admite compartir la disposición (WebRTC no disponible).",
+    "webRtcBlocked": "Tu navegador está bloqueando las conexiones WebRTC (extensión de privacidad, VPN o ajuste del navegador), por lo que no se puede mostrar la disposición compartida. Permite WebRTC o abre el enlace en otro navegador.",
     "statusWaiting": "Esperando la conexión con el anfitrión...",
     "statusStopped": "Se perdió la conexión con el anfitrión. Solicita un nuevo enlace de compartir.",
     "roomBusy": "Este compartir ya está siendo seguido por otra persona. Vuelve a intentarlo más tarde."

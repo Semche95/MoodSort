@@ -13,6 +13,13 @@ const { joinRoom, rooms } = vi.hoisted(() => {
 
 vi.mock('trystero', () => ({ joinRoom }))
 
+const { isWebRtcBlocked } = vi.hoisted(() => ({ isWebRtcBlocked: vi.fn(async (): Promise<boolean> => false) }))
+
+vi.mock('../features/screen-share/compat', async (importOriginal: () => Promise<typeof import('../features/screen-share/compat')>) => ({
+    ...(await importOriginal()),
+    isWebRtcBlocked,
+}))
+
 function createFakeCanvas(): HTMLCanvasElement {
     return document.createElement('canvas')
 }
@@ -64,7 +71,37 @@ describe('createScreenShareModal', () => {
         const overlay = createScreenShareModal(createFakeCanvas())
 
         expect(overlay.querySelector<HTMLButtonElement>('.screen-share-activate')!.disabled).toBe(true)
-        expect(overlay.querySelector('.screen-share-status')!.textContent).toBe('')
+        expect(overlay.querySelector('.screen-share-error')!.textContent).toBe('')
+    })
+
+    it('shows the unsupported browser message outside the hidden live section and disables activation when canvas capture is missing', () => {
+        Reflect.deleteProperty(HTMLCanvasElement.prototype, 'captureStream')
+
+        const overlay = createScreenShareModal(createFakeCanvas())
+
+        expect(overlay.querySelector<HTMLButtonElement>('.screen-share-activate')!.disabled).toBe(true)
+        const error = overlay.querySelector('.screen-share-error')!
+        expect(error.textContent).toBe('Your browser does not support layout sharing.')
+        expect(error.closest('.screen-share-live')).toBeNull()
+    })
+
+    it('disables activation and explains that the browser blocks WebRTC when no ICE candidate can be gathered', async () => {
+        isWebRtcBlocked.mockResolvedValueOnce(true)
+
+        const overlay = createScreenShareModal(createFakeCanvas())
+
+        await vi.waitFor(() => expect(overlay.querySelector<HTMLButtonElement>('.screen-share-activate')!.disabled).toBe(true))
+        expect(overlay.querySelector('.screen-share-error')!.textContent).toBe('Your browser is blocking WebRTC connections (privacy extension, VPN or browser setting), so sharing cannot work. Allow WebRTC or use another browser.')
+    })
+
+    it('keeps activation available and shows no error when WebRTC is usable', async () => {
+        const overlay = createScreenShareModal(createFakeCanvas())
+
+        await vi.waitFor(() => expect(isWebRtcBlocked).toHaveBeenCalled())
+        await Promise.resolve()
+
+        expect(overlay.querySelector<HTMLButtonElement>('.screen-share-activate')!.disabled).toBe(false)
+        expect(overlay.querySelector('.screen-share-error')!.textContent).toBe('')
     })
 
     it('shows the "Activer le partage" button and no link before sharing is activated', () => {

@@ -20,6 +20,13 @@ const { joinRoom, rooms } = vi.hoisted(() => {
 
 vi.mock('trystero', () => ({ joinRoom }))
 
+const { isWebRtcBlocked } = vi.hoisted(() => ({ isWebRtcBlocked: vi.fn(async (): Promise<boolean> => false) }))
+
+vi.mock('../features/screen-share/compat', async (importOriginal: () => Promise<typeof import('../features/screen-share/compat')>) => ({
+    ...(await importOriginal()),
+    isWebRtcBlocked,
+}))
+
 const { ThemeServiceMock } = vi.hoisted(() => {
     const ThemeServiceMock = vi.fn(
         class {
@@ -87,5 +94,52 @@ describe('initScreenShareViewer signaling configuration', () => {
         const status = document.querySelector('.screen-share-viewer-status')!
         expect(status.textContent).toBe('')
         expect(status.classList.contains('screen-share-viewer-status--visible')).toBe(false)
+    })
+})
+
+describe('initScreenShareViewer blocked WebRTC detection', () => {
+    beforeEach(() => {
+        joinRoom.mockClear()
+        isWebRtcBlocked.mockReset()
+        document.body.innerHTML = ''
+        const patchedGlobal = globalThis as { RTCPeerConnection?: unknown }
+        patchedGlobal.RTCPeerConnection = class {}
+    })
+
+    it('explains that the browser blocks WebRTC, without joining a room, when no ICE candidate can be gathered', async () => {
+        isWebRtcBlocked.mockResolvedValue(true)
+        const { initScreenShareViewer } = await import('../features/screen-share/screen-share-viewer')
+
+        initScreenShareViewer('AB12CD', vi.fn())
+        await vi.waitFor(() => expect(isWebRtcBlocked).toHaveBeenCalled())
+        await Promise.resolve()
+
+        expect(joinRoom).not.toHaveBeenCalled()
+        const status = document.querySelector('.screen-share-viewer-status')!
+        expect(status.textContent).toBe('Your browser is blocking WebRTC connections (privacy extension, VPN or browser setting), so the shared layout cannot be displayed. Allow WebRTC or open the link in another browser.')
+        expect(status.classList.contains('screen-share-viewer-status--visible')).toBe(true)
+    })
+
+    it('joins the room once the check confirms WebRTC is usable', async () => {
+        isWebRtcBlocked.mockResolvedValue(false)
+        const { initScreenShareViewer } = await import('../features/screen-share/screen-share-viewer')
+
+        initScreenShareViewer('AB12CD', vi.fn())
+
+        await vi.waitFor(() => expect(joinRoom).toHaveBeenCalledTimes(1))
+    })
+
+    it('does not join the room when the viewer is closed before the check completes', async () => {
+        let resolveCheck: (blocked: boolean) => void = (): void => {}
+        isWebRtcBlocked.mockReturnValue(new Promise<boolean>((resolve: (blocked: boolean) => void): void => { resolveCheck = resolve }))
+        const { initScreenShareViewer } = await import('../features/screen-share/screen-share-viewer')
+
+        initScreenShareViewer('AB12CD', vi.fn())
+        document.querySelector<HTMLButtonElement>('.screen-share-viewer-close')!.click()
+        resolveCheck(false)
+        await Promise.resolve()
+        await Promise.resolve()
+
+        expect(joinRoom).not.toHaveBeenCalled()
     })
 })

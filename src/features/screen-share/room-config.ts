@@ -12,6 +12,12 @@ export const SCREEN_SHARE_GRACE_TIMEOUT_MS = 10 * 60 * 1000
 // More relays than Trystero's default gives the signaling handshake more chances to succeed.
 const RELAY_REDUNDANCY = 5
 
+// Mirrors Trystero's default STUN servers, which it doesn't export.
+const DEFAULT_ICE_SERVERS: RTCIceServer[] = [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun.cloudflare.com:3478' },
+]
+
 const RELAY_SCHEMES = ['ws:', 'wss:']
 const STUN_SCHEMES = ['stun:', 'stuns:']
 
@@ -37,6 +43,10 @@ export function buildRoomConfig(env: SignalingEnv = import.meta.env): JoinRoomCo
             : { redundancy: RELAY_REDUNDANCY },
         ...(stunUrls.length > 0 ? { rtcConfig: { iceServers: [{ urls: stunUrls }] } } : {}),
     }
+}
+
+export function getIceServers(env: SignalingEnv = import.meta.env): RTCIceServer[] {
+    return buildRoomConfig(env).rtcConfig?.iceServers ?? DEFAULT_ICE_SERVERS
 }
 
 export function isRoomConfigValid(env: SignalingEnv = import.meta.env): boolean {

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { buildRoomConfig, isRoomConfigValid, parseUrlList, SCREEN_SHARE_APP_ID } from '../features/screen-share/room-config'
+import { buildRoomConfig, getIceServers, isRoomConfigValid, parseUrlList, SCREEN_SHARE_APP_ID } from '../features/screen-share/room-config'
 
 describe('parseUrlList', () => {
     it('returns an empty list for an absent or empty value', () => {
@@ -62,6 +62,19 @@ describe('buildRoomConfig', () => {
 
     afterEach(() => {
         vi.unstubAllEnvs()
+    })
+})
+
+describe('getIceServers', () => {
+    it('falls back to STUN servers when VITE_STUN_URLS is not set, since an empty list would suppress every remote candidate', () => {
+        const iceServers = getIceServers({})
+
+        expect(iceServers.length).toBeGreaterThan(0)
+        expect(iceServers.every((server: RTCIceServer): boolean => String(server.urls).startsWith('stun:'))).toBe(true)
+    })
+
+    it('returns the configured STUN servers when VITE_STUN_URLS is set', () => {
+        expect(getIceServers({ VITE_STUN_URLS: 'stun:a.test:3478' })).toEqual([{ urls: ['stun:a.test:3478'] }])
     })
 })
 
