@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@pixi/ui':
-        specifier: ^2.3.2
-        version: 2.3.2(pixi.js@8.21.0)
+        specifier: ^2.4.1
+        version: 2.4.1(pixi.js@8.21.0)
       pixi.js:
         specifier: ^8.21.0
         version: 8.21.0
@@ -369,8 +369,8 @@ packages:
   '@pixi/colord@2.9.6':
     resolution: {integrity: sha512-nezytU2pw587fQstUu1AsJZDVEynjskwOL+kibwcdxsMBFqPsFFNA7xl0ii/gXuDi6M0xj3mfRJj8pBSc2jCfA==}
 
-  '@pixi/ui@2.3.2':
-    resolution: {integrity: sha512-HHQtAHxzirfl6bg9HgzyGGLIHqM/q3i0R+raQ9Wmp3VxLJTUviF655Syf9PWYC690xbS9uo0mRkXykoJNkHKhA==}
+  '@pixi/ui@2.4.1':
+    resolution: {integrity: sha512-xA7TbeJlvY/5gA5sAgecNjHhmrREM/wPMQukTuZvN3OxU4BP6PwBGZ28PbNrbfaISxqMgmE6jOW2EPPb5qYn2Q==}
     peerDependencies:
       pixi.js: ^8.6.2
 
@@ -1095,9 +1095,6 @@ packages:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
     engines: {node: '>= 0.8.0'}
 
-  typed-signals@2.5.0:
-    resolution: {integrity: sha512-m9lHc3eBCJerXYdx+G0uWZihyUXdqTzzgOdqiDDsoUo75WjhFJH6vP5/6w/xhyu04zoxHUqgYhf9FEt85dk/Ng==}
-
   typescript-eslint@8.71.0:
     resolution: {integrity: sha512-fBdHYiqQ14RW6mOMXD14Svn82ZsCYAoQSzGRzyEjR59S5A2Krh/l7fGTOQ7iCr8gGy/mHVXtEF7s5fgjEdV0Pw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
@@ -1492,11 +1489,10 @@ snapshots:
 
   '@pixi/colord@2.9.6': {}
 
-  '@pixi/ui@2.3.2(pixi.js@8.21.0)':
+  '@pixi/ui@2.4.1(pixi.js@8.21.0)':
     dependencies:
       pixi.js: 8.21.0
       tweedle.js: 2.1.0
-      typed-signals: 2.5.0
 
   '@rolldown/binding-android-arm-eabi@1.2.11':
     optional: true
@@ -2192,8 +2188,6 @@ snapshots:
   type-check@0.4.0:
     dependencies:
       prelude-ls: 1.2.1
-
-  typed-signals@2.5.0: {}
 
   typescript-eslint@8.71.0(eslint@10.11.0(supports-color@7.2.0))(supports-color@7.2.0)(typescript@5.7.3):
     dependencies:
