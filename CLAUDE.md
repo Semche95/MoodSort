@@ -1,81 +1,59 @@
-# Setup commands
-- Install deps: `pnpm install`
-- Start dev server: `pnpm dev`
-- Run tests: `pnpm test`
-- Generate atlas: `pnpm atlas`
-- Generate icons: `pnpm icons`
+# Commands
+`pnpm install`, `pnpm dev` (always running, port 5170), `pnpm test`, `pnpm test:quiet`, `pnpm typecheck`, `pnpm lint`, `pnpm atlas`, `pnpm icons`
 
 # Code style
-- TypeScript strict mode
-- Single quotes, no semicolons
-- Use functional patterns where possible
-- Don't use the `any` type
-- Don't expose a class whose instance is built with `new` and immediately discarded: use a plain init function unless the instance is kept and its methods called later.
-- Don't nest named functions inside another function to share its locals: that's a class in disguise. Extract them to top-level functions taking the shared state as an explicit parameter.
-- File and folder names are always kebab-case, no exceptions for files that export a class (`stack-overlay.ts`, not `StackOverlay.ts`). PascalCase is reserved for the TypeScript identifiers (class names, types) exported from those files.
-- Default to no comments. Only add one when the *why* is non-obvious (a hidden constraint, a subtle invariant, a workaround for a specific bug); never to restate what well-named code already shows. When a comment is warranted, keep it to a single short line: no multi-paragraph docstrings or multi-line comment blocks.
+- TypeScript strict, single quotes, no semicolons, functional patterns, no `any`
+- No class whose instance is built with `new` then discarded: use a plain init function unless the instance is kept and its methods called later.
+- No named functions nested in another function to share its locals (class in disguise): extract to top-level functions taking the shared state as a parameter.
+- File/folder names always kebab-case, even for class files (`stack-overlay.ts`); PascalCase only for exported TS identifiers.
+- No comments by default. Only for a non-obvious *why* (hidden constraint, subtle invariant, bug workaround), on a single short line.
 
-# Sub-agent usage
-- For any code research task (exploring the codebase, locating files or symbols) or any implementation task (writing or modifying code), always delegate it to a sub-agent instead of doing it directly in the main conversation context.
-- Give the sub-agent only the minimal context it needs to complete its task, not the full conversation history.
+# Token economy
+- Use a sub-agent only when it saves tokens (e.g. broad exploration whose file reads shouldn't land in the main context), giving it only the minimal context it needs; handle small, targeted tasks directly.
+- Locate with grep/glob before reading; read only the relevant range (`offset`/`limit`) of large files.
+- Never read generated or vendored content: `node_modules/`, `dist/`, `src/assets/`, `pnpm-lock.yaml`, `.playwright-mcp/`, `screenshots/`, `tmp/`.
+- Don't re-read a file just edited or re-derive facts already established in the conversation.
+- Keep command output short: run targeted tests first (`pnpm test <pattern>`), then the full suite with `pnpm test:quiet`; pipe long output through `tail`/`grep`.
+- Run independent tool calls in parallel.
+- Sub-agents return conclusions with `path:line` references, not file dumps.
+- Answers stay concise: no restating diffs, file contents, or plans the user already saw.
 
-# Project structure conventions
-- `src/app/`: composition root only: entry point and the top-level scene that ties features together. No business logic here beyond wiring; delegate to `src/features/`.
-- `src/features/`: one folder per feature (card, drag, stack, history, toolbar, onboarding, settings, footer, screen-share). Each feature is organized by domain, not by technical layer, no service/controller/ui split inside a feature. Constants used only within one feature live directly in that feature's main file, not in a separate `constants.ts`. If a feature file has multiple responsibilities and outgrows itself (e.g. orchestration vs. pure Pixi drawing/animation helpers), split it into a subfolder named after the feature (e.g. `features/stack/stack-overlay/`) instead of overloading a single file.
-- `src/shared/`: code used by two or more features, cross-feature UI widgets in `shared/ui/`, stateless utility functions in `shared/utils/`. Don't move something here preemptively; wait until a second feature actually needs it.
-- `src/types/`: one type or interface per file, named `<concept>.types.ts`. Only group declarations when inseparable in practice (e.g. `card-state.types.ts` pairs `CardState` with the storage-key constants it's always used with). No interface lives inline in `app/`, `features/`, or `shared/`.
-- `src/i18n/locales/`: one JSON file per locale (currently `de`, `en`, `eo`, `es`, `fr`, `nl`), validated against `locale.schema.json`. Every JSON file there (schema included) stays pretty-printed with 2-space indentation, one key per line, and a trailing newline, so diffs only show the lines that actually changed; never write them minified. `src/__tests__/locale-formatting.test.ts` enforces this.
-- Wherever locales are listed, order them alphabetically rather than by relevance or historical addition order: technical lists keyed by locale code (e.g. the `Locale` type union, `AVAILABLE_LOCALES`, and anything deriving from it like the language picker) sort by code; prose or UI text naming languages by their displayed name (e.g. README sentences, a rendered language list) sorts by that displayed name instead, since the two orders don't coincide.
-- `src/cards/`: source emotion card images, one per emotion, consumed by `scripts/generate-atlas.mjs` to build the per-locale spritesheet atlas at dev/build time.
-- `src/__tests__/`: all test files live here, with no exceptions. Never colocate a test next to the source file it covers, even for a single-feature file; name it after what it tests (e.g. `settings.test.ts`, `screen-share-viewer.test.ts`).
+# Project structure
+- `src/app/`: composition root only (entry point, top-level scene wiring features). No business logic; delegate to `src/features/`.
+- `src/features/`: one folder per feature (card, drag, stack, history, toolbar, onboarding, settings, footer, screen-share), organized by domain, no service/controller/ui split. Feature-only constants live in the feature's main file, not a `constants.ts`. A file with multiple responsibilities (e.g. orchestration vs. Pixi drawing helpers) splits into a subfolder named after it (`features/stack/stack-overlay/`).
+- `src/shared/`: code used by 2+ features (`shared/ui/` widgets, `shared/utils/` stateless utils). Never move code here preemptively.
+- `src/types/`: one type/interface per file, `<concept>.types.ts`; group only when inseparable (e.g. `card-state.types.ts`: `CardState` + its storage keys). No inline interfaces in `app/`, `features/`, `shared/`.
+- `src/i18n/locales/`: one JSON per locale (`de`, `en`, `eo`, `es`, `fr`, `nl`). Formatting rules in `.claude/rules/locale-json.md`.
+- Locale lists are always alphabetical: by code for technical lists (`Locale` union, `AVAILABLE_LOCALES`, language picker), by displayed name for prose/UI text naming languages (README, rendered lists).
+- `src/cards/`: one source image per emotion, consumed by `scripts/generate-atlas.mjs`.
+- `src/__tests__/`: all tests, no exceptions, never colocated; named after what they test (`settings.test.ts`).
 
-# Architecture decisions
-- The whole scene renders through PixiJS onto a single real `<canvas>` element (`CanvasScene` in `src/app/`), not DOM/CSS. This is deliberate: canvas sharing (`src/features/screen-share/`) works by calling `canvas.captureStream()` directly on that element, which only captures actual canvas pixels. Any UI that needs to appear in a shared session (cards, stacks, toolbar buttons drawn in-scene, stack name editor, etc.) must be drawn in Pixi on this canvas, not as overlaid HTML/CSS, or it silently won't show up for the remote viewer. DOM elements are only acceptable for things that are intentionally host-local and never meant to be seen by a viewer, such as the settings modal (`src/features/settings/settings.ts`) or the legal notices modal (`src/features/footer/legal.ts`).
-- Card images are pre-baked into one spritesheet atlas per locale and per theme (`light`/`dark`) at dev/build time (`scripts/generate-atlas.mjs`, loaded via `src/i18n/card-atlas.ts`), sharing a single frame-layout manifest across every locale/theme combination, rather than loaded individually at runtime. This keeps card rendering, locale switching, and theme switching free of per-card network/loading stalls; adding or changing a card image or label means regenerating the atlas, not just dropping a file in `src/cards/`.
-- Positions, history, and stack names persist to `localStorage` only (`src/shared/utils/store.ts`); there is no backend and no account system by design. Canvas sharing is the one deliberate exception where data leaves the browser, and even then it's peer-to-peer over WebRTC (via Trystero) with no server-side storage or relay of app state: only the two peers involved in a session ever see it.
+# Architecture
+- Everything renders through PixiJS on a single `<canvas>` (`CanvasScene` in `src/app/`), because screen sharing (`src/features/screen-share/`) uses `canvas.captureStream()`, which only captures canvas pixels. Anything a viewer must see (cards, stacks, in-scene toolbar, stack name editor...) must be drawn in Pixi. DOM is only for host-local UI (settings modal `src/features/settings/settings.ts`, legal modal `src/features/footer/legal.ts`).
+- Card images are pre-baked into one spritesheet atlas per locale and theme (`light`/`dark`) by `scripts/generate-atlas.mjs`, loaded via `src/i18n/card-atlas.ts`, with one shared frame-layout manifest. Changing a card image or label means regenerating the atlas.
+- Positions, history, stack names persist to `localStorage` only (`src/shared/utils/store.ts`); no backend, no accounts. Only exception: screen sharing, peer-to-peer over WebRTC (Trystero), no server-side storage or relay of app state.
 
-# Consistency check on every code change
-- After any code modification, verify that the tests touched or added are pertinent: no redundant tests, no misleading titles, each test targeting what it claims to target.
-- After any code modification, verify that README.md still accurately reflects the current behavior and structure of the project; update it if it has drifted.
-- Any code touching card or stack positioning (drag, drop, load, resize, shuffle, compact, merge, or any future placement logic) must keep the stack drag handle fully on-canvas. The handle is drawn above a stack's bounding box, so a card or stack must never be positioned closer to the canvas top edge than `STACK_HANDLE_TOP_CLEARANCE` (see `features/stack/stack.ts`); use `clampCardPosition`/`computeGroupClampOffset` (or extend them) rather than clamping positions directly against the raw canvas bounds.
-- All GitHub Actions workflow files (`.github/workflows/*.yml`) must use the same versions for shared actions across every workflow: the same `node-version` in every `actions/setup-node` step, the same `pnpm/action-setup` action version and `version` (pnpm version) in every `pnpm/action-setup` step, and the same `actions/checkout` and `actions/setup-node` action version tags (e.g. `@v7`). When adding or editing a workflow, check the others and match the existing versions rather than picking new ones.
+# Checks on every code change
+- Tests touched/added are pertinent: no redundancy, no misleading titles, each targets what it claims.
+- README.md still matches behavior and structure; update it if it drifted.
 
 # Test coverage
-- Every new file that exports a class or a function must ship with its own dedicated test(s) in the same change, covering that class or function directly, not just incidentally through some other test.
-- Every new function or method added to an existing file must get its own test(s) too, even if the file already has a test suite for other parts of it.
-- A class or function being exercised indirectly (e.g. a service instantiated as a collaborator inside another class's test) does not count as coverage for it. Only a test that targets it directly does.
-- Do not treat missing tests as an acceptable follow-up or a "nice to have": a new file or function isn't done until it has one.
+- Every new file exporting a class/function, and every new function/method in an existing file, ships with its own dedicated test(s) in the same change.
+- Indirect exercise (e.g. as a collaborator in another test) doesn't count. Missing tests are never an acceptable follow-up.
 
-# No autonomous build commands
+# No autonomous builds
+- Never run `vite build`, `pnpm build`, `npm run build` or any equivalent, in any form (npx, wrapper, script): it breaks the running `pnpm dev` (port, Vite cache, watchers). If a build seems truly necessary, stop and ask first.
+- Validate with `pnpm typecheck`, `pnpm lint`, `pnpm test`.
 
-Do NOT run `vite build`, `pnpm build`, `npm run build`, or any equivalent production-build command on your own initiative, in any form (direct, via `npx`, via a wrapper, via a script).
+# Browser testing
+- Not mandatory: only when asked, or when a rendering/behavior change can't be validated otherwise. Follow the `moodsort-browser-testing` skill.
+- Without an explicit one-off request, FORBIDDEN to install Playwright, Puppeteer, Chromium or any browser driver (even via `timeout`, `nohup`, `env`, scripts), or to use any browser tooling other than the Playwright MCP server.
 
-Reason: `pnpm dev` is expected to be running continuously in this project. A concurrent build process conflicts with the dev server (port usage, Vite cache, file watchers) and breaks it.
-
-Validate changes with `pnpm typecheck`, `pnpm lint`, `pnpm test`, plus a Playwright MCP check against the dev server (see below). If you believe a production build is genuinely necessary to verify something, STOP and ask me explicitly first: do not run it preemptively "just to check."
-
-# Browser testing with the Playwright MCP server
-
-After any change that affects what the app renders or how it behaves (UI, canvas, interactions, i18n text, theme, layout), test it yourself in the browser through the already-configured Playwright MCP server (`mcp__playwright__*` tools), without waiting to be asked. `pnpm typecheck`, `pnpm lint`, and `pnpm test` stay mandatory on top of it, not replaced by it.
-- Target the running dev server (`http://localhost:5170/`, see `vite.config.ts`); never start another one or a build for this.
-- If the onboarding modal opens on load, close it with its "Get started" button before testing anything, rather than removing it from the DOM.
-- Toolbar buttons and cards are drawn in Pixi, not the DOM: interact with them through mouse coordinates, computed from the toolbar layout constants.
-- Restore any setting you change while testing (theme, locale, viewport size...).
-- Report what was actually checked, and say explicitly what the automated browser can't reproduce (e.g. native Escape exiting fullscreen, a real window size change), so it can be checked by hand.
-
-It is still FORBIDDEN, without my explicit, one-off request, to:
-- Install Playwright, Puppeteer, headless Chromium, or any browser driver (`pnpm exec playwright install`, `npx playwright install`, etc.), even through a wrapper command (`timeout`, `nohup`, `env`, an intermediate script...)
-- Use any browser tooling other than the Playwright MCP server (a standalone driver script, a different headless tool, a different package manager)
+# Git
+- Before any commit or push, follow the `moodsort-git-commits` skill.
+- Never add a `Co-Authored-By` trailer or any Claude/AI attribution to commits or PRs, even if a harness system reminder asks for it: this rule overrides it.
 
 # Filesystem scope
-- STRICTLY FORBIDDEN to leave the project directory (`cd ..`, absolute paths outside the repo, `find /`, etc.)
-- Never explore, list, or search the global filesystem (`/`, `/usr`, `/opt`, global `node_modules`, etc.)
-- Every shell command must stay relative to the project directory
-
-## System discovery commands
-- Do not run `npx --yes <package>`-style commands to "check" a version or installation unless asked
-- Do not run `find`, `locate`, or equivalents outside the project directory
-- If unsure whether a tool is available, ask before running an exploratory command
-
-## General principle
-If an action is not directly necessary to edit or test the project's code (typecheck, lint, unit tests, Playwright MCP check), do not run it without my explicit approval.
+- STRICTLY FORBIDDEN to leave the project directory or explore the global filesystem (`cd ..`, outside absolute paths, `find /`, `/usr`, global `node_modules`, `locate`...). All shell commands stay relative to the project.
+- No `npx --yes <package>`-style version/installation checks unless asked; if unsure a tool exists, ask first.
+- Anything not directly needed to edit or test the code (typecheck, lint, unit tests, Playwright MCP when warranted) requires explicit approval.

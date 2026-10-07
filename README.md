@@ -11,7 +11,7 @@ The interface is available in Dutch, English, Esperanto, French, German, and Spa
 ## Features
 
 - Drag and drop cards freely across the canvas
-- Overlapping cards form stacks, with a highlight, a drag handle, and a hover-only button to re-gather the stack around its top card
+- Overlapping cards form stacks, each always shown with a border and a drag handle (a lone card included), plus a hover-only button to re-gather a stack of two or more cards around its top card
 - Undo/redo (toolbar buttons, Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, Ctrl/Cmd+Y), persisted across sessions
 - Positions and history are saved to `localStorage` and restored on the next visit
 - Cards reposition proportionally when the window is resized
@@ -86,6 +86,7 @@ See the comments at the top of `deploy.yml` for the one-time bootstrap step need
 | `pnpm preview` | Preview the production build |
 | `pnpm test` | Run tests |
 | `pnpm test:watch` | Run tests in watch mode |
+| `pnpm test:quiet` | Run tests with compact output |
 | `pnpm typecheck` | Type-check without emitting |
 | `pnpm lint` / `pnpm lint:fix` | Lint |
 
@@ -116,11 +117,11 @@ A `Card` is a Pixi `Container` with an image sprite and a blurred drop-shadow la
 
 Stacks aren't a real entity, just cards whose bounding boxes overlap. `computeStacks` finds them on the fly with a BFS over `cardsOverlap`.
 
-Hovering a stack draws a highlight border (padded 20px) and a handle bar above it that stays clickable even when cards cover the space. A second, hover-only button next to the handle collapses the stack: it re-gathers every card tightly around the current top card without disturbing z-order.
+Every stack, a lone card included, gets a border (padded 20px) and a handle bar above it, redrawn every frame regardless of hover; the handle stays clickable even when cards cover the space. Hovering a stack of two or more cards reveals a button next to the handle that collapses the stack: it re-gathers every card tightly around the current top card without disturbing z-order.
 
 Dragging the handle (or the border) reparents the whole stack to the top of the stage, in the z-order the user already established by clicking individual cards. While dragging, `findMergeTargets` checks AABB overlap against every other stack and highlights all matches at once (dark overlay, border, `+` marker), with the dragged cards always rendered on top. On release, stacks are recomputed and positions saved.
 
-Each stack can also carry a name. A dedicated button next to the drag handle opens `StackNameEditor`, drawn entirely in Pixi (text, caret, selection, a clear button) but backed by a hidden native `<input>` so typing, native copy/paste, and IME composition work as expected. Names are capped by pixel width rather than character count, with the text clipped and scrolled horizontally to keep the caret visible. Names are keyed to the stack's lowest z-order card and persisted alongside positions. When two named stacks merge, their names are fused into one `" + "`-joined string; when a named stack splits, the name follows whichever resulting group contains the originally-named card.
+Each stack can also carry a name. A dedicated button next to the drag handle, shown when hovering any stack (a lone card included), opens `StackNameEditor`, drawn entirely in Pixi (text, caret, selection, a clear button) but backed by a hidden native `<input>` so typing, native copy/paste, and IME composition work as expected. Names are capped by pixel width rather than character count, with the text clipped and scrolled horizontally to keep the caret visible. Names are keyed to the stack's lowest z-order card and persisted alongside positions. When two named stacks merge, their names are fused into one `" + "`-joined string; when a named stack splits, the name follows whichever resulting group contains the originally-named card.
 
 ### Drag and drop
 
