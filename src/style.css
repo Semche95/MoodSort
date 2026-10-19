@@ -210,6 +210,27 @@ canvas[data-forced-cursor='grabbing'] {
     margin-bottom: 4px;
 }
 
+.onboarding-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.onboarding-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--modal-close-color);
+    padding: 0 4px;
+}
+
+.onboarding-close:hover {
+    color: var(--modal-close-hover-color);
+}
+
 .onboarding-dismiss {
     display: block;
     margin-top: 24px;

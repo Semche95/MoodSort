@@ -24,6 +24,5 @@ export type ToolbarState = {
     localeMenu: LocaleMenu
     fullscreen: FullscreenControl | null
     shareButton: ReturnType<typeof createShareButton>['button']
-    onDismissOnboarding: () => void
     themeService: ThemeService
 }

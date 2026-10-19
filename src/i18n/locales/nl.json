@@ -35,7 +35,8 @@
     "step6": "Deel de indeling van je kaarten met iemand.",
     "outro": "Er is geen goede of foute manier om de kaarten te plaatsen. Groepeer ze zoals het jou helpt je emoties te verkennen.",
     "privacy": "🔒 <strong>Je gegevens blijven privé:</strong> alles wat je in MoodSort doet, blijft op je apparaat en wordt nooit verzonden of elders opgeslagen, tenzij je het delen van de indeling inschakelt: de persoon die zich aansluit, kan dan de indeling van je kaarten zien.",
-    "dismissButton": "Aan de slag"
+    "dismissButton": "Aan de slag",
+    "closeAriaLabel": "Help sluiten"
   },
   "settings": {
     "title": "Instellingen",

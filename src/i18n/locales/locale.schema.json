@@ -138,6 +138,9 @@
         },
         "dismissButton": {
           "type": "string"
+        },
+        "closeAriaLabel": {
+          "type": "string"
         }
       },
       "required": [
@@ -152,7 +155,8 @@
         "step6",
         "outro",
         "privacy",
-        "dismissButton"
+        "dismissButton",
+        "closeAriaLabel"
       ],
       "additionalProperties": false
     },

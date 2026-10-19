@@ -1,6 +1,6 @@
 import { CanvasScene } from './canvas-scene'
 import { Store } from '../shared/utils/store'
-import { initOnboarding, dismissOnboarding } from '../features/onboarding/onboarding'
+import { initOnboarding } from '../features/onboarding/onboarding'
 import { initTopToolbar } from '../features/toolbar/top-toolbar'
 import { loadIconTextures } from '../shared/ui/icons'
 import { loadBrandingTextures } from '../features/toolbar/branding'
@@ -57,5 +57,5 @@ export async function bootApp(locale: Locale): Promise<void> {
 
     const iconTextures = await loadIconTextures()
     const brandingTextures = await loadBrandingTextures(scene.resolution)
-    initTopToolbar(scene, (): void => { dismissOnboarding(cardStateService) }, iconTextures, brandingTextures, themeService)
+    initTopToolbar(scene, iconTextures, brandingTextures, themeService)
 }

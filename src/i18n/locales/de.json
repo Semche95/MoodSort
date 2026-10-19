@@ -35,7 +35,8 @@
     "step6": "Teile die Anordnung deiner Karten mit jemandem.",
     "outro": "Es gibt keine richtige oder falsche Art, die Karten anzuordnen. Gruppiere sie so, wie es dir hilft, deine Gefühle zu erkunden.",
     "privacy": "🔒 <strong>Deine Daten bleiben privat:</strong> Alles, was du in MoodSort tust, bleibt auf deinem Gerät und wird niemals gesendet oder anderswo gespeichert, es sei denn, du aktivierst das Teilen der Anordnung: Die Person, die sich verbindet, sieht dann die Anordnung deiner Karten.",
-    "dismissButton": "Loslegen"
+    "dismissButton": "Loslegen",
+    "closeAriaLabel": "Hilfe schließen"
   },
   "settings": {
     "title": "Einstellungen",

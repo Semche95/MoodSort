@@ -35,7 +35,8 @@
     "step6": "Comparte la disposición de tus cartas con alguien.",
     "outro": "No hay una forma correcta o incorrecta de colocar las cartas. Agrúpalas de la manera que te ayude a explorar tus emociones.",
     "privacy": "🔒 <strong>Tus datos siguen siendo privados:</strong> todo lo que haces en MoodSort permanece en tu dispositivo y nada se envía ni se almacena en otro lugar, salvo que actives el compartir la disposición: la persona que se une entonces ve la disposición de tus cartas.",
-    "dismissButton": "Empezar"
+    "dismissButton": "Empezar",
+    "closeAriaLabel": "Cerrar la ayuda"
   },
   "settings": {
     "title": "Ajustes",

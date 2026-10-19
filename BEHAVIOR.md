@@ -61,8 +61,9 @@ How the app behaves and the business rules it must keep. The README covers setup
 
 ## Onboarding
 
-- First visit shows an onboarding overlay. Right after it is first closed, the top card slides out of the pile and back twice to show cards can be moved.
+- First visit shows an onboarding overlay, closed only by its start button (clicking outside does nothing). Right after it is first closed, the top card slides out of the pile and back twice to show cards can be moved.
 - Under `prefers-reduced-motion`, that hint is skipped and card lifts are instant.
+- The help button reopens the same content as a help modal, with no start button, closed by its close cross or by clicking outside it.
 
 ## Language and theme
 

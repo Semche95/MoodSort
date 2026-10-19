@@ -6,7 +6,7 @@ export function isOnboardingDismissed(store: CardStateService): boolean {
     return store.load(ONBOARDING_KEY)
 }
 
-export function dismissOnboarding(store: CardStateService): void {
+function dismissOnboarding(store: CardStateService): void {
     store.save({
         positions: store.load(POSITIONS_KEY),
         order: store.load(ORDER_KEY),
@@ -34,24 +34,7 @@ export function createOnboarding(onDismiss: () => void): HTMLDivElement {
     overlay.innerHTML = `
         <div class="onboarding-card">
             <h1>${I18n.t('onboarding.title')}</h1>
-            <p>
-                ${I18n.t('onboarding.intro')}
-            </p>
-            <h2>${I18n.t('onboarding.howItWorksTitle')}</h2>
-            <ul>
-                <li>${I18n.t('onboarding.step1')}</li>
-                <li>${I18n.t('onboarding.step2')}</li>
-                <li>${I18n.t('onboarding.step3')}</li>
-                <li>${I18n.t('onboarding.step4')}</li>
-                <li>${I18n.t('onboarding.step5')}</li>
-                <li>${I18n.t('onboarding.step6')}</li>
-            </ul>
-            <p>
-                ${I18n.t('onboarding.outro')}
-            </p>
-            <p>
-                ${I18n.t('onboarding.privacy')}
-            </p>
+            ${onboardingContent()}
             <button class="onboarding-dismiss">${I18n.t('onboarding.dismissButton')}</button>
         </div>
     `
@@ -63,4 +46,56 @@ export function createOnboarding(onDismiss: () => void): HTMLDivElement {
     })
 
     return overlay
+}
+
+/** Same content as the onboarding, reopened on demand, so it closes like the other modals. */
+export function createHelpModal(): HTMLDivElement {
+    const overlay = document.createElement('div')
+    overlay.className = 'onboarding-overlay'
+
+    overlay.innerHTML = `
+        <div class="onboarding-card">
+            <div class="onboarding-header">
+                <h1>${I18n.t('onboarding.title')}</h1>
+                <button class="onboarding-close" aria-label="${I18n.t('onboarding.closeAriaLabel')}">&times;</button>
+            </div>
+            ${onboardingContent()}
+        </div>
+    `
+
+    const closeBtn = overlay.querySelector<HTMLButtonElement>('.onboarding-close')!
+    closeBtn.addEventListener('click', (): void => {
+        overlay.remove()
+    })
+
+    overlay.addEventListener('click', (e: MouseEvent): void => {
+        if (e.target === overlay) {
+            overlay.remove()
+        }
+    })
+
+    return overlay
+}
+
+function onboardingContent(): string {
+    return `
+        <p>
+            ${I18n.t('onboarding.intro')}
+        </p>
+        <h2>${I18n.t('onboarding.howItWorksTitle')}</h2>
+        <ul>
+            <li>${I18n.t('onboarding.step1')}</li>
+            <li>${I18n.t('onboarding.step2')}</li>
+            <li>${I18n.t('onboarding.step3')}</li>
+            <li>${I18n.t('onboarding.step4')}</li>
+            <li>${I18n.t('onboarding.step5')}</li>
+            <li>${I18n.t('onboarding.step6')}</li>
+        </ul>
+        <p>
+            ${I18n.t('onboarding.outro')}
+        </p>
+        <p>
+            ${I18n.t('onboarding.privacy')}
+        </p>
+    `
 }

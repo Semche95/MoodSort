@@ -5,7 +5,7 @@ import type { ToolbarState } from '../../types/toolbar-state.types'
 import type { FullscreenControl } from '../../types/fullscreen-control.types'
 import { initHistoryShortcuts } from '../history/history'
 import { CanvasTooltip } from '../../shared/ui/canvas-tooltip'
-import { createOnboarding } from '../onboarding/onboarding'
+import { createHelpModal } from '../onboarding/onboarding'
 import { createSettingsModal } from '../settings/settings'
 import { createScreenShareModal } from '../screen-share/screen-share-modal'
 import { isScreenShareHostSupported } from '../screen-share/compat'
@@ -25,7 +25,7 @@ const GAP = 8
 const TOP_MARGIN = 16
 const SIDE_MARGIN = 16
 
-function createToolbarState(host: ToolbarHost, onDismissOnboarding: () => void, iconTextures: Record<string, Texture>, brandingTextures: BrandingTextures, themeService: ThemeService): ToolbarState {
+function createToolbarState(host: ToolbarHost, iconTextures: Record<string, Texture>, brandingTextures: BrandingTextures, themeService: ThemeService): ToolbarState {
     const resolvedTheme = themeService.getResolvedTheme()
     const tooltip = new CanvasTooltip()
     const logo = createLogo(brandingTextures, resolvedTheme)
@@ -33,11 +33,11 @@ function createToolbarState(host: ToolbarHost, onDismissOnboarding: () => void, 
     const redoIcon = createIcon(iconTextures['redo-2'], resolvedTheme)
     const shareSupported = isScreenShareHostSupported()
 
-    const state = { host, tooltip, logo, undoIcon, redoIcon, onDismissOnboarding, themeService } as ToolbarState
+    const state = { host, tooltip, logo, undoIcon, redoIcon, themeService } as ToolbarState
 
     state.undoButton = createButton(tooltip, undoIcon, (): void => doUndo(state), 'toolbar-undobutton', I18n.t('toolbar.undo'), undefined, resolvedTheme)
     state.redoButton = createButton(tooltip, redoIcon, (): void => doRedo(state), 'toolbar-redobutton', I18n.t('toolbar.redo'), undefined, resolvedTheme)
-    state.helpButton = createButton(tooltip, createHelpIcon(resolvedTheme), (): void => showOnboarding(state), 'toolbar-helpbutton', I18n.t('toolbar.help'), 1, resolvedTheme)
+    state.helpButton = createButton(tooltip, createHelpIcon(resolvedTheme), (): void => showHelp(), 'toolbar-helpbutton', I18n.t('toolbar.help'), 1, resolvedTheme)
     state.settingsButton = createButton(tooltip, createIcon(iconTextures['sliders-horizontal'], resolvedTheme), (): void => openSettings(state), 'toolbar-settingsbutton', I18n.t('toolbar.settings'), undefined, resolvedTheme)
 
     const share = createShareButton(
@@ -99,11 +99,11 @@ function doRedo(state: ToolbarState): void {
     updateHistoryButtons(state)
 }
 
-function showOnboarding(state: ToolbarState): void {
+function showHelp(): void {
     if (document.querySelector('.onboarding-overlay') !== null) {
         return
     }
-    document.body.appendChild(createOnboarding(state.onDismissOnboarding))
+    document.body.appendChild(createHelpModal())
 }
 
 function openSettings(state: ToolbarState): void {
@@ -167,11 +167,11 @@ function resizeToolbar(state: ToolbarState): void {
  * is never needed after setup (everything is wired via `host` callbacks), so
  * it's exposed as an init function rather than a class kept around unused.
  */
-export function initTopToolbar(host: ToolbarHost, onDismissOnboarding: () => void, iconTextures: Record<string, Texture>, brandingTextures: BrandingTextures, themeService: ThemeService): void {
+export function initTopToolbar(host: ToolbarHost, iconTextures: Record<string, Texture>, brandingTextures: BrandingTextures, themeService: ThemeService): void {
     const container = new Container()
     container.label = 'top-toolbar'
 
-    const state = createToolbarState(host, onDismissOnboarding, iconTextures, brandingTextures, themeService)
+    const state = createToolbarState(host, iconTextures, brandingTextures, themeService)
 
     container.addChild(state.logo)
     container.addChild(state.undoButton)

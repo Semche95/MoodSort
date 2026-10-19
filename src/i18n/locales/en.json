@@ -35,7 +35,8 @@
     "step6": "Share the layout of your cards with someone.",
     "outro": "There is no right or wrong way to place the cards. Group them however helps you explore your emotions.",
     "privacy": "🔒 <strong>Your data stays private:</strong> everything you do in MoodSort stays on your device and nothing is ever sent or stored elsewhere, unless you turn on layout sharing: the person who joins you can then see the layout of your cards.",
-    "dismissButton": "Get started"
+    "dismissButton": "Get started",
+    "closeAriaLabel": "Close help"
   },
   "settings": {
     "title": "Settings",

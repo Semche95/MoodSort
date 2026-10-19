@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { initOnboarding, isOnboardingDismissed } from '../features/onboarding/onboarding'
+import { createHelpModal, createOnboarding, initOnboarding, isOnboardingDismissed } from '../features/onboarding/onboarding'
 import { CardStateService } from '../features/card/card-state-service'
 import { InMemoryStore } from './in-memory-store'
 
@@ -62,5 +62,59 @@ describe('initOnboarding', () => {
         initOnboarding(makeStore(false), vi.fn())
 
         expect(document.querySelectorAll('.onboarding-overlay')).toHaveLength(1)
+    })
+})
+
+describe('createOnboarding', () => {
+    afterEach(() => {
+        document.body.innerHTML = ''
+    })
+
+    it('stays open when clicking the backdrop', () => {
+        const onDismiss = vi.fn()
+        const overlay = document.body.appendChild(createOnboarding(onDismiss))
+
+        overlay.click()
+
+        expect(onDismiss).not.toHaveBeenCalled()
+        expect(overlay.isConnected).toBe(true)
+    })
+
+    it('has no close cross', () => {
+        expect(createOnboarding(vi.fn()).querySelector('.onboarding-close')).toBeNull()
+    })
+})
+
+describe('createHelpModal', () => {
+    afterEach(() => {
+        document.body.innerHTML = ''
+    })
+
+    it('has no dismiss button', () => {
+        expect(createHelpModal().querySelector('.onboarding-dismiss')).toBeNull()
+    })
+
+    it('closes when clicking the close cross', () => {
+        const overlay = document.body.appendChild(createHelpModal())
+
+        overlay.querySelector<HTMLButtonElement>('.onboarding-close')!.click()
+
+        expect(overlay.isConnected).toBe(false)
+    })
+
+    it('closes when clicking the backdrop', () => {
+        const overlay = document.body.appendChild(createHelpModal())
+
+        overlay.click()
+
+        expect(overlay.isConnected).toBe(false)
+    })
+
+    it('stays open when clicking inside the card', () => {
+        const overlay = document.body.appendChild(createHelpModal())
+
+        overlay.querySelector<HTMLElement>('.onboarding-card')!.click()
+
+        expect(overlay.isConnected).toBe(true)
     })
 })

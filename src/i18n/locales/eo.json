@@ -35,7 +35,8 @@
     "step6": "Kunhavigu la aranĝon de viaj kartoj kun iu.",
     "outro": "Ne ekzistas ĝusta aŭ malĝusta maniero por meti la kartojn. Grupigu ilin laŭ la maniero, kiu helpas vin esplori viajn emociojn.",
     "privacy": "🔒 <strong>Viaj datumoj restas privataj:</strong> ĉio, kion vi faras en MoodSort, restas sur via aparato kaj nenio estas sendata aŭ konservata aliloke, krom se vi aktivigas la kunhavigon de la aranĝo: la persono, kiu tiam aliĝas al vi, vidas la aranĝon de viaj kartoj.",
-    "dismissButton": "Komenci"
+    "dismissButton": "Komenci",
+    "closeAriaLabel": "Fermi la helpon"
   },
   "settings": {
     "title": "Agordoj",

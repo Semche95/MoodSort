@@ -35,7 +35,8 @@
     "step6": "Partagez la disposition de vos cartes avec quelqu'un.",
     "outro": "Il n'y a pas de bonne ou de mauvaise façon de placer les cartes. Regroupez-les de la manière qui vous aide à explorer vos émotions.",
     "privacy": "🔒 <strong>Vos données restent privées :</strong> tout ce que vous faites dans MoodSort reste sur votre appareil et rien n'est envoyé ni stocké ailleurs, sauf si vous activez le partage de la disposition : la personne qui vous rejoint voit alors la disposition de vos cartes.",
-    "dismissButton": "Commencer"
+    "dismissButton": "Commencer",
+    "closeAriaLabel": "Fermer l'aide"
   },
   "settings": {
     "title": "Réglages",
