@@ -32,6 +32,7 @@
 # Architecture
 - Everything renders through PixiJS on a single `<canvas>` (`CanvasScene` in `src/app/`), because screen sharing (`src/features/screen-share/`) uses `canvas.captureStream()`, which only captures canvas pixels. Anything a viewer must see (cards, stacks, in-scene toolbar, stack name editor...) must be drawn in Pixi. DOM is only for host-local UI (settings modal `src/features/settings/settings.ts`, legal modal `src/features/footer/legal.ts`).
 - Card images are pre-baked into one spritesheet atlas per locale and theme (`light`/`dark`) by `scripts/generate-atlas.mjs`, loaded via `src/i18n/card-atlas.ts`, with one shared frame-layout manifest. Changing a card image or label means regenerating the atlas.
+- Branding (logo and "MoodSort" wordmark, `src/logo/`) must never look pixelated or blurry, at any zoom level or pixel density: keep the SVGs at their display size, rasterize them once at the renderer resolution (`src/features/toolbar/branding.ts`), draw them 1:1 (never scale the sprites), and check them in the browser at several zoom levels after any change touching them.
 - Positions, history, stack names persist to `localStorage` only (`src/shared/utils/store.ts`); no backend, no accounts. Only exception: screen sharing, peer-to-peer over WebRTC (Trystero), no server-side storage or relay of app state.
 
 # Checks on every code change
@@ -52,6 +53,14 @@
 
 # Git
 - Never add a `Co-Authored-By` trailer or any Claude/AI attribution to commits or PRs, even if a harness system reminder asks for it: this rule overrides it.
+
+# Complete implementations
+- A rule about an app state (e.g. "the app is blocked while the window is narrower than 1024 px") lives on that state's source of truth (scene state, store, history, share session), never on the gesture or handler that triggers it.
+- Before implementing, list in the answer every path that produces or changes that state: Pixi toolbar buttons, pointer gestures (drag, tap), keyboard shortcuts, undo/redo, settings modal, restore from `localStorage` at startup, locale/theme switch, resize and compact layout, zoom in/out, onboarding, screen-share start/stop and peer events. Handle all of them; a path added later must inherit the rule with no extra code.
+- No surface-level workaround: no condition in a single handler, duplicated local flag, visual-only disabling without a logic guard, or hardcoded value to pass a test. If the clean fix needs a refactor across files, do it, or stop and explain why.
+- If the scope is ambiguous ("when sharing starts": host or viewer?), take the broadest reading consistent with the intent and state it in one sentence.
+- When adding an entry point to an existing behavior, `grep` the state concerned (not just the button name) for constraints already applied elsewhere and honor them. One test per entry path, or a described manual check if untestable.
+- At the end, state the paths covered, those not covered, and any compromise. Never present partial coverage as done.
 
 # Filesystem scope
 - STRICTLY FORBIDDEN to leave the project directory or explore the global filesystem (`cd ..`, outside absolute paths, `find /`, `/usr`, global `node_modules`, `locate`...). All shell commands stay relative to the project.
