@@ -157,6 +157,65 @@ describe('createPointerInteractions', () => {
         expect(overlay.setHoveredStack).not.toHaveBeenCalled()
     })
 
+    it('findHoveredCard returns nothing before the pointer ever moved over the canvas', () => {
+        const { deps, cardLayer } = makeDeps()
+        cardLayer.children.push(makeCard(0, 0))
+        const interactions = createPointerInteractions(deps)
+
+        expect(interactions.findHoveredCard()).toBeNull()
+    })
+
+    it('findHoveredCard returns the topmost card under the pointer, skipping non-card children', () => {
+        const { deps, cardLayer } = makeDeps()
+        const below = makeCard(0, 0, 200, 300, 'below')
+        const above = makeCard(100, 0, 200, 300, 'above')
+        cardLayer.children.push(below, above, { x: 0, y: 0, width: 1000, height: 1000 })
+        const interactions = createPointerInteractions(deps)
+
+        interactions.handlePointerMove(makeEvent(150, 10))
+        expect(interactions.findHoveredCard()).toBe(above)
+
+        interactions.handlePointerMove(makeEvent(50, 10))
+        expect(interactions.findHoveredCard()).toBe(below)
+
+        interactions.handlePointerMove(makeEvent(500, 10))
+        expect(interactions.findHoveredCard()).toBeNull()
+    })
+
+    it('findHoveredCard follows cards moving under a still pointer, without a new pointer event', () => {
+        const { deps, cardLayer } = makeDeps()
+        const card = makeCard(0, 0)
+        cardLayer.children.push(card)
+        const interactions = createPointerInteractions(deps)
+        interactions.handlePointerMove(makeEvent(50, 10))
+
+        card.x = 500
+
+        expect(interactions.findHoveredCard()).toBeNull()
+    })
+
+    it('findHoveredCard returns nothing while a stack is being dragged', () => {
+        const { deps, cardLayer, stackDragManager } = makeDeps()
+        cardLayer.children.push(makeCard(0, 0))
+        const interactions = createPointerInteractions(deps)
+        interactions.handlePointerMove(makeEvent(50, 10))
+
+        stackDragManager.isDragging = true
+
+        expect(interactions.findHoveredCard()).toBeNull()
+    })
+
+    it('handlePointerLeave forgets the pointer, so no card stays hovered once it leaves the canvas', () => {
+        const { deps, cardLayer } = makeDeps()
+        cardLayer.children.push(makeCard(0, 0))
+        const interactions = createPointerInteractions(deps)
+        interactions.handlePointerMove(makeEvent(50, 10))
+
+        interactions.handlePointerLeave()
+
+        expect(interactions.findHoveredCard()).toBeNull()
+    })
+
     it('handleDragHandlePointerDown no-ops while a card is being dragged', () => {
         const stack = [makeCard(100, 100)]
         const { deps, dragHandler, stackDragManager } = makeDeps({ getStacks: (): Card[][] => [stack] })

@@ -1,11 +1,14 @@
-import { FederatedPointerEvent } from 'pixi.js'
+import { Container, FederatedPointerEvent } from 'pixi.js'
 import { Position } from '../../types/position.types'
 import { PointerInteractions, PointerInteractionsDeps } from '../../types/pointer-interactions.types'
+import { Card } from '../../types/card.types'
 import { findStackAtPoint } from '../stack/stack'
-import { findStackByCompactButtonAtPoint } from '../stack/stack-hit-testing'
+import { findStackByCompactButtonAtPoint, isPointInBox } from '../stack/stack-hit-testing'
 import { findNameAnchor } from '../stack/stack-naming'
 
 export function createPointerInteractions(deps: PointerInteractionsDeps): PointerInteractions {
+    let pointer: Position | null = null
+
     const handleStagePointerDown = (): void => {
         deps.overlay.commitNameEditorIfOpen()
     }
@@ -19,6 +22,7 @@ export function createPointerInteractions(deps: PointerInteractionsDeps): Pointe
     }
 
     const handlePointerMove = (e: FederatedPointerEvent): void => {
+        pointer = { x: e.global.x, y: e.global.y }
         if (deps.dragHandler.isDragging) {
             deps.overlay.hide()
             deps.overlay.setHoveredStack(null)
@@ -42,6 +46,20 @@ export function createPointerInteractions(deps: PointerInteractionsDeps): Pointe
             deps.overlay.hide()
             deps.overlay.setHoveredStack(null)
         }
+    }
+
+    const handlePointerLeave = (): void => {
+        pointer = null
+    }
+
+    /** Topmost card under the last known pointer, by z-order; none while a stack is carried, so the pile it passes over stays unmarked. */
+    const findHoveredCard = (): Card | null => {
+        if (!pointer || deps.stackDragManager.isDragging) {
+            return null
+        }
+        const point = pointer
+        const cards = deps.cardLayer.children.filter((child: Container): child is Card => 'imageUrl' in child)
+        return cards.reverse().find((card: Card): boolean => isPointInBox(point, card)) ?? null
     }
 
     const handleDragHandlePointerDown = (e: FederatedPointerEvent): void => {
@@ -100,6 +118,8 @@ export function createPointerInteractions(deps: PointerInteractionsDeps): Pointe
         handleCardPointerDown,
         handlePointerMove,
         handlePointerOut,
+        handlePointerLeave,
+        findHoveredCard,
         handleDragHandlePointerDown,
         handleCompactButtonPointerDown,
         handleNameButtonPointerDown,

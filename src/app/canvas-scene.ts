@@ -194,6 +194,7 @@ export class CanvasScene {
         this.dragHandler.wireStageHandlers()
         this.app.stage.on('pointermove', this.handlePointerMove)
         this.app.stage.on('pointerout', this.handlePointerOut)
+        this.app.stage.on('pointerleave', this.handlePointerLeave)
         this.app.stage.on('pointerup', this.handleStackDragEnd)
         this.app.stage.on('pointerupoutside', this.handleStackDragEnd)
         this.app.stage.on('pointerdown', this.handleStagePointerDown)
@@ -285,6 +286,7 @@ export class CanvasScene {
 
     private handleTick: () => void = (): void => {
         this.cardManager.updateLifts(this.cards, this.app.ticker.deltaTime)
+        this.cardManager.updateHover(this.cards, this.pointerInteractions.findHoveredCard())
         drawStackShadow(this.stackShadow, this.cards)
     }
 
@@ -297,6 +299,8 @@ export class CanvasScene {
         this.pointerInteractions.handlePointerMove(e)
 
     private handlePointerOut: () => void = (): void => this.pointerInteractions.handlePointerOut()
+
+    private handlePointerLeave: () => void = (): void => this.pointerInteractions.handlePointerLeave()
 
     private handleDragHandlePointerDown: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void =>
         this.pointerInteractions.handleDragHandlePointerDown(e)

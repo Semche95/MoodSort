@@ -25,6 +25,8 @@ export interface PointerInteractions {
     handleCardPointerDown: (e: FederatedPointerEvent) => void
     handlePointerMove: (e: FederatedPointerEvent) => void
     handlePointerOut: () => void
+    handlePointerLeave: () => void
+    findHoveredCard: () => Card | null
     handleDragHandlePointerDown: (e: FederatedPointerEvent) => void
     handleCompactButtonPointerDown: (e: FederatedPointerEvent) => void
     handleNameButtonPointerDown: (e: FederatedPointerEvent) => void

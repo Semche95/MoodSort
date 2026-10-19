@@ -46,6 +46,18 @@ export function drawCardHighlight(highlight: Graphics, width: number, height: nu
     highlight.stroke({ color: outline.color, alpha: outline.alpha, width: outline.width, alignment: 0 })
 }
 
+/** Shows the hover outline on `hovered` alone, redrawn as it appears so a theme flip is picked up. */
+export function applyCardHover(cards: Card[], hovered: Card | null, outline: PixiThemePalette['card']['hoverOutline']): void {
+    for (const card of cards) {
+        const visible = card === hovered
+        if (visible && !card.highlight.visible) {
+            const { width, height } = card.innerSprite.texture
+            drawCardHighlight(card.highlight, width, height, outline)
+        }
+        card.highlight.visible = visible
+    }
+}
+
 export function createCard(
     frameName: string,
     texture: Texture,
@@ -83,12 +95,6 @@ export function createCard(
     card.eventMode = 'static'
     card.cursor = 'grab'
     card.on('pointerdown', onDragStart, card)
-    // Read fresh on every hover so a theme flip is picked up without restyling existing cards.
-    card.on('pointerover', (): void => {
-        drawCardHighlight(highlight, texture.width, texture.height, getPixiThemeColors(getResolvedTheme()).card.hoverOutline)
-        highlight.visible = true
-    })
-    card.on('pointerout', (): void => { highlight.visible = false })
 
     return card
 }
@@ -161,6 +167,10 @@ export class CardManager {
     /** Eases every raised or settling card one frame further; called from the scene's ticker. */
     updateLifts(cards: Card[], deltaFrames: number): void {
         updateCardLifts(cards, deltaFrames, prefersReducedMotion(), getPixiThemeColors(this.resolvedTheme).card.shadow)
+    }
+
+    updateHover(cards: Card[], hovered: Card | null): void {
+        applyCardHover(cards, hovered, getPixiThemeColors(this.resolvedTheme).card.hoverOutline)
     }
 
     applyScale(card: Card): void {

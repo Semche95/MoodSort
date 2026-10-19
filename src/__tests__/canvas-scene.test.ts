@@ -562,6 +562,21 @@ describe('CanvasScene', () => {
         expect(testable.stackShadow.graphics.tint).toBe(getPixiThemeColors('dark').card.stackShadow.color)
     })
 
+    it('outlines the card under the pointer on every frame and drops the outline once the pointer leaves the canvas', async () => {
+        const { testable, tick } = await setup()
+        const handlers = testable as unknown as { handlePointerMove(e: unknown): void; handlePointerLeave(): void }
+        const [cardA, cardB] = testable.cards as unknown as Array<{ highlight: { visible: boolean } }>
+
+        handlers.handlePointerMove({ global: { x: 150, y: 150 } })
+        tick()
+        expect(cardA.highlight.visible).toBe(true)
+        expect(cardB.highlight.visible).toBe(false)
+
+        handlers.handlePointerLeave()
+        tick()
+        expect(cardA.highlight.visible).toBe(false)
+    })
+
     it('offers the drag hint on the topmost card', async () => {
         const { scene, testable } = await setup()
         const app = testable.app as unknown as { ticker: unknown }

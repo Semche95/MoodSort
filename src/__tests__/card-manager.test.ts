@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { Application, Container, Graphics, Spritesheet, Texture } from 'pixi.js'
 import {
     CardManager,
+    applyCardHover,
     createCard,
     drawCardHighlight,
     drawCardShadowShape,
@@ -128,10 +129,6 @@ function buildCard(theme: 'light' | 'dark' = 'light', onDragStart: () => void = 
     return createCard('card-a', texture as unknown as Texture, onDragStart, () => theme) as unknown as CardShape
 }
 
-function fire(card: CardShape, event: string): void {
-    card.listeners.find((l: Listener): boolean => l.event === event)!.handler()
-}
-
 type MockGraphicsShape = Graphics & { roundRects: number[][]; rects: number[][]; fills: unknown[]; strokes: unknown[] }
 
 describe('drawCardShadowShape', () => {
@@ -179,6 +176,40 @@ describe('drawCardHighlight', () => {
     })
 })
 
+describe('applyCardHover', () => {
+    const outline = { color: 0x123456, alpha: 0.5, width: 3 }
+
+    it('outlines only the hovered card, without lifting it, and hides every other outline', () => {
+        const [a, b] = [buildCard(), buildCard()]
+        b.highlight.visible = true
+
+        applyCardHover([a, b] as unknown as Card[], a as unknown as Card, outline)
+
+        expect(a.highlight.visible).toBe(true)
+        expect(a.highlight.strokes).toEqual([{ ...outline, alignment: 0 }])
+        expect(a.lift.reasons.size).toBe(0)
+        expect(b.highlight.visible).toBe(false)
+    })
+
+    it('hides every outline when no card is hovered', () => {
+        const card = buildCard()
+        card.highlight.visible = true
+
+        applyCardHover([card] as unknown as Card[], null, outline)
+
+        expect(card.highlight.visible).toBe(false)
+    })
+
+    it('draws the outline once as it appears, not again on every frame it stays hovered', () => {
+        const card = buildCard()
+
+        applyCardHover([card] as unknown as Card[], card as unknown as Card, outline)
+        applyCardHover([card] as unknown as Card[], card as unknown as Card, { ...outline, color: 0x654321 })
+
+        expect(card.highlight.strokes).toEqual([{ ...outline, alignment: 0 }])
+    })
+})
+
 describe('createCard', () => {
     it('builds a card carrying its frame name, with its shadow, sprite and hover outline grouped in a liftable body', () => {
         const card = buildCard()
@@ -206,34 +237,11 @@ describe('createCard', () => {
         expect(card.listeners.find((l: Listener): boolean => l.event === 'pointerdown')!.handler).toBe(onDragStart)
     })
 
-    it('outlines the card with the accent color on hover, without lifting it, and hides the outline when the pointer leaves', () => {
-        const card = buildCard()
-        expect(card.highlight.visible).toBe(false)
-
-        fire(card, 'pointerover')
-        expect(card.highlight.visible).toBe(true)
-        expect(card.highlight.strokes).toEqual([{ ...getPixiThemeColors('light').card.hoverOutline, alignment: 0 }])
-        expect(card.lift.reasons.size).toBe(0)
-
-        fire(card, 'pointerout')
-        expect(card.highlight.visible).toBe(false)
-    })
-
-    it('reads the dark theme outline from the getResolvedTheme callback given at creation', () => {
-        const card = buildCard('dark')
-
-        fire(card, 'pointerover')
-        expect(card.highlight.strokes).toEqual([{ ...getPixiThemeColors('dark').card.hoverOutline, alignment: 0 }])
-    })
-
-    it('redraws the outline on each hover instead of stacking strokes', () => {
+    it('starts with its hover outline hidden and listens to no hover event of its own', () => {
         const card = buildCard()
 
-        fire(card, 'pointerover')
-        fire(card, 'pointerout')
-        fire(card, 'pointerover')
-
-        expect(card.highlight.strokes).toHaveLength(1)
+        expect(card.highlight.visible).toBe(false)
+        expect(card.listeners.map((l: Listener): string => l.event)).toEqual(['pointerdown'])
     })
 
     it.each(['light', 'dark'] as const)('starts with the %s theme resting halo shadow, unblurred', (theme: 'light' | 'dark') => {
@@ -265,14 +273,17 @@ describe('CardManager', () => {
         manager = new CardManager(app, cardLayer)
     })
 
-    describe('setResolvedTheme', () => {
-        it('changes the hover outline drawn on cards created afterwards through loadCards', () => {
+    describe('updateHover', () => {
+        it('outlines the hovered card in the current resolved theme', () => {
             const spritesheet = { textures: { a: { width: 200, height: 300 } } }
             manager.setResolvedTheme('dark')
-            const cards = manager.loadCards(['a'], {}, null, vi.fn(), spritesheet as unknown as Spritesheet) as unknown as CardShape[]
+            const cards = manager.loadCards(['a'], {}, null, vi.fn(), spritesheet as unknown as Spritesheet)
 
-            fire(cards[0], 'pointerover')
-            expect(cards[0].highlight.strokes).toEqual([{ ...getPixiThemeColors('dark').card.hoverOutline, alignment: 0 }])
+            manager.updateHover(cards, cards[0])
+
+            const highlight = (cards[0] as unknown as CardShape).highlight
+            expect(highlight.visible).toBe(true)
+            expect(highlight.strokes).toEqual([{ ...getPixiThemeColors('dark').card.hoverOutline, alignment: 0 }])
         })
     })
 
