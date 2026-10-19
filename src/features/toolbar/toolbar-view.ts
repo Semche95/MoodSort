@@ -85,6 +85,7 @@ export function createLogo(textures: BrandingTextures, resolvedTheme: ResolvedTh
 
     const logo = new Container()
     logo.label = 'toolbar-logo'
+    logo.eventMode = 'none'
     logo.addChild(shadow)
     logo.addChild(image)
     logo.addChild(titleAccent)

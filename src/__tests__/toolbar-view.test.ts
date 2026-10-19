@@ -202,6 +202,12 @@ describe('toolbar-view', () => {
         expect(image.y).toBe(titleRest.y)
     })
 
+    it('excludes the logo and title from hit testing so cards underneath stay grabbable', () => {
+        const logo = createLogo(logoTextures()) as unknown as { eventMode: string }
+
+        expect(logo.eventMode).toBe('none')
+    })
+
     it('sizes the logo image as a square and starts both title images right after it', () => {
         const logo = createLogo(logoTextures()) as unknown as { children: Array<{ x: number; width: number; height: number }> }
         const [, image, titleAccent, titleRest] = logo.children
