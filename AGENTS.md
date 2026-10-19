@@ -37,7 +37,8 @@
 
 # Checks on every code change
 - Tests touched/added are pertinent: no redundancy, no misleading titles, each targets what it claims.
-- README.md still matches behavior and structure; update it if it drifted.
+- BEHAVIOR.md matches the app's behavior and business rules; update it when a change adds or alters one (rules go there, not in README.md or AGENTS.md).
+- README.md matches setup, structure and architecture; update it if it drifted.
 
 # Test coverage
 - Every new file exporting a class/function, and every new function/method in an existing file, ships with its own dedicated test(s) in the same change.
