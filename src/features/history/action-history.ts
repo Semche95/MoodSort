@@ -1,5 +1,6 @@
 import { CardActionEntry, HistoryData, HistorySnapshot, HISTORY_KEY } from '../../types/history.types'
 import { IStore } from '../../types/store.types'
+import { ViewportSize } from '../../types/viewport-size.types'
 
 const MAX_HISTORY = 50
 
@@ -11,10 +12,12 @@ export class ActionHistory {
     private beforeSnapshot: Map<string, HistorySnapshot> | null
     private beforeNameSnapshot: Record<string, string | null>
     private onUpdate: () => void
+    private getViewport: () => ViewportSize
 
-    constructor(store: IStore, onUpdate: () => void) {
+    constructor(store: IStore, onUpdate: () => void, getViewport: () => ViewportSize) {
         this.store = store
         this.onUpdate = onUpdate
+        this.getViewport = getViewport
         this.beforeSnapshot = null
         this.beforeNameSnapshot = {}
         const saved = this.store.load<HistoryData>(HISTORY_KEY)
@@ -49,7 +52,7 @@ export class ActionHistory {
         if (!this.beforeSnapshot) {
             return
         }
-        const entry: CardActionEntry = { cards: {} }
+        const entry: CardActionEntry = { cards: {}, viewport: this.getViewport() }
         let changed = false
 
         for (const after of snapshots) {
@@ -69,6 +72,8 @@ export class ActionHistory {
                 toX: after.x,
                 toY: after.y,
                 toIndex: after.index,
+                ...(before.anchor ? { fromAnchor: before.anchor } : {}),
+                ...(after.anchor ? { toAnchor: after.anchor } : {}),
             }
         }
 

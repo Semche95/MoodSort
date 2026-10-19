@@ -44,7 +44,7 @@ describe('StackDragManager', () => {
         cardLayer = new MockContainer() as unknown as Container
         app = { stage: new MockContainer(), screen: { width: 800, height: 600 } } as unknown as Application
         overlay = { restoreZOrder: vi.fn(), showDragHighlights: vi.fn() } as unknown as StackOverlay
-        actionHistory = new ActionHistory(new InMemoryStore(), vi.fn())
+        actionHistory = new ActionHistory(new InMemoryStore(), vi.fn(), () => ({ width: 800, height: 600 }))
         manager = new StackDragManager(app, cardLayer, overlay, () => [], actionHistory)
     })
 

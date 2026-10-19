@@ -2,6 +2,9 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { ActionHistory } from '../features/history/action-history'
 import { InMemoryStore } from './in-memory-store'
 import { HistorySnapshot, HistoryData, HISTORY_KEY } from '../types/history.types'
+import { ViewportSize } from '../types/viewport-size.types'
+
+const VIEWPORT: ViewportSize = { width: 1400, height: 900 }
 
 function snap(id: string, x: number, y: number, index: number): HistorySnapshot {
     return { id, x, y, index }
@@ -15,7 +18,7 @@ describe('ActionHistory', () => {
     beforeEach(() => {
         store = new InMemoryStore()
         onUpdate = vi.fn()
-        history = new ActionHistory(store, onUpdate)
+        history = new ActionHistory(store, onUpdate, () => VIEWPORT)
     })
 
     it('starts with empty undo/redo stacks', () => {
@@ -27,7 +30,7 @@ describe('ActionHistory', () => {
         const priorEntry = { cards: { a: { fromX: 0, fromY: 0, fromIndex: 0, toX: 1, toY: 1, toIndex: 0 } } }
         store.save<HistoryData>(HISTORY_KEY, { undoStack: [priorEntry], redoStack: [priorEntry] })
 
-        const restored = new ActionHistory(store, onUpdate)
+        const restored = new ActionHistory(store, onUpdate, () => VIEWPORT)
 
         expect(restored.canUndo).toBe(true)
         expect(restored.canRedo).toBe(true)
@@ -48,14 +51,14 @@ describe('ActionHistory', () => {
         expect(onUpdate).not.toHaveBeenCalled()
     })
 
-    it('pushes an undo entry when a snapshot moved', () => {
+    it('pushes an undo entry tagged with the current canvas size when a snapshot moved', () => {
         history.captureBefore([snap('a', 10, 10, 0)])
         history.recordAfter([snap('a', 50, 60, 1)])
 
         expect(history.canUndo).toBe(true)
         expect(onUpdate).toHaveBeenCalledTimes(1)
         expect(store.load<HistoryData>(HISTORY_KEY)?.undoStack).toEqual([
-            { cards: { a: { fromX: 10, fromY: 10, fromIndex: 0, toX: 50, toY: 60, toIndex: 1 } } },
+            { cards: { a: { fromX: 10, fromY: 10, fromIndex: 0, toX: 50, toY: 60, toIndex: 1 } }, viewport: VIEWPORT },
         ])
     })
 
@@ -96,13 +99,24 @@ describe('ActionHistory', () => {
         expect(undoStack?.[0].cards.a.fromX).toBe(1)
     })
 
+    it('keeps the anchors of the before and after snapshots on the entry', () => {
+        history.captureBefore([{ ...snap('a', 10, 10, 0), anchor: { id: 'p', dx: 1, dy: 2 } }])
+        history.recordAfter([{ ...snap('a', 50, 60, 1), anchor: { id: 'q', dx: 3, dy: 4 } }])
+
+        expect(store.load<HistoryData>(HISTORY_KEY)?.undoStack[0].cards.a).toEqual({
+            fromX: 10, fromY: 10, fromIndex: 0, toX: 50, toY: 60, toIndex: 1,
+            fromAnchor: { id: 'p', dx: 1, dy: 2 },
+            toAnchor: { id: 'q', dx: 3, dy: 4 },
+        })
+    })
+
     it('undo returns the last entry and moves it to the redo stack', () => {
         history.captureBefore([snap('a', 0, 0, 0)])
         history.recordAfter([snap('a', 5, 5, 0)])
 
         const entry = history.undo()
 
-        expect(entry).toEqual({ cards: { a: { fromX: 0, fromY: 0, fromIndex: 0, toX: 5, toY: 5, toIndex: 0 } } })
+        expect(entry).toEqual({ cards: { a: { fromX: 0, fromY: 0, fromIndex: 0, toX: 5, toY: 5, toIndex: 0 } }, viewport: VIEWPORT })
         expect(history.canUndo).toBe(false)
         expect(history.canRedo).toBe(true)
     })
@@ -121,7 +135,7 @@ describe('ActionHistory', () => {
 
         const entry = history.redo()
 
-        expect(entry).toEqual({ cards: { a: { fromX: 0, fromY: 0, fromIndex: 0, toX: 5, toY: 5, toIndex: 0 } } })
+        expect(entry).toEqual({ cards: { a: { fromX: 0, fromY: 0, fromIndex: 0, toX: 5, toY: 5, toIndex: 0 } }, viewport: VIEWPORT })
         expect(history.canUndo).toBe(true)
         expect(history.canRedo).toBe(false)
     })
@@ -139,7 +153,7 @@ describe('ActionHistory', () => {
 
         expect(history.canUndo).toBe(true)
         expect(store.load<HistoryData>(HISTORY_KEY)?.undoStack).toEqual([
-            { cards: {}, stackNameChanges: { anchor: { from: null, to: 'Joie' } } },
+            { cards: {}, stackNameChanges: { anchor: { from: null, to: 'Joie' } }, viewport: VIEWPORT },
         ])
     })
 
@@ -159,6 +173,7 @@ describe('ActionHistory', () => {
         expect(store.load<HistoryData>(HISTORY_KEY)?.undoStack).toEqual([
             {
                 cards: { a: { fromX: 10, fromY: 10, fromIndex: 0, toX: 50, toY: 60, toIndex: 1 } },
+                viewport: VIEWPORT,
                 stackNameChanges: { a: { from: 'Joie', to: null }, b: { from: null, to: 'Joie' } },
             },
         ])
@@ -169,7 +184,7 @@ describe('ActionHistory', () => {
         history.recordAfter([], { anchor: 'Joie' })
 
         expect(store.load<HistoryData>(HISTORY_KEY)?.undoStack).toEqual([
-            { cards: {}, stackNameChanges: { anchor: { from: null, to: 'Joie' } } },
+            { cards: {}, stackNameChanges: { anchor: { from: null, to: 'Joie' } }, viewport: VIEWPORT },
         ])
     })
 

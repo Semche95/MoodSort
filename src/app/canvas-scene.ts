@@ -3,6 +3,7 @@ import { Card } from '../types/card.types'
 import { AnimationTarget } from '../types/animation.types'
 import { ResolvedTheme } from '../types/theme.types'
 import { ViewportSize } from '../types/viewport-size.types'
+import { CardActionEntry } from '../types/history.types'
 import type { Locale } from '../i18n/i18n.types'
 import { loadCardAtlasSpritesheet } from '../i18n/card-atlas'
 import type { ThemeService } from '../features/theme/theme-service'
@@ -66,7 +67,7 @@ export class CanvasScene {
         this.cardManager.setResolvedTheme(this.resolvedTheme)
         this.actionHistory = new ActionHistory(historyStore, (): void => {
             this.onHistoryChange()
-        })
+        }, (): ViewportSize => this.viewport)
         this.isCompacting = false
         this.dragHandler = new DragHandler(new CardDrag(), this.app, this.cardLayer, (): void => {
             this.recomputeStacks()
@@ -243,8 +244,7 @@ export class CanvasScene {
         this.overlay.commitNameEditorIfOpen()
         const entry = this.actionHistory.undo()
         if (entry) {
-            applyHistoryEntry(entry, this.cards, this.cardLayer, true)
-            applyStackNameChanges(entry, this.stackNames, true)
+            this.applyHistory(entry, true)
         }
         this.positionPersistence.saveFromStage(this.cardLayer, this.stackNames)
         this.stacks = computeStacks(this.cards)
@@ -257,8 +257,7 @@ export class CanvasScene {
         this.overlay.commitNameEditorIfOpen()
         const entry = this.actionHistory.redo()
         if (entry) {
-            applyHistoryEntry(entry, this.cards, this.cardLayer, false)
-            applyStackNameChanges(entry, this.stackNames, false)
+            this.applyHistory(entry, false)
         }
         this.positionPersistence.saveFromStage(this.cardLayer, this.stackNames)
         this.stacks = computeStacks(this.cards)
@@ -266,6 +265,14 @@ export class CanvasScene {
 
     private get viewport(): ViewportSize {
         return { width: this.app.screen.width, height: this.app.screen.height }
+    }
+
+    /** The entry may predate a resize: cards it restores without an anchor are rescaled from its canvas size, then every stack is clamped. */
+    private applyHistory(entry: CardActionEntry, reverse: boolean): void {
+        const unanchored = applyHistoryEntry(entry, this.cards, this.cardLayer, reverse)
+        this.cardManager.rescaleFromViewport(computeStacks(unanchored), entry.viewport ?? null)
+        this.cardManager.rescaleFromViewport(computeStacks(this.cards), null)
+        applyStackNameChanges(entry, this.stackNames, reverse)
     }
 
     /** Nudges the top card out of the pile to show cards can be moved; offered once, when a first-time visitor closes the onboarding. */

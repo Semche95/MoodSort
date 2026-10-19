@@ -1,6 +1,7 @@
 import { Container } from 'pixi.js'
 import { Card } from '../../types/card.types'
 import { CardActionEntry, HistorySnapshot } from '../../types/history.types'
+import { findStack } from '../stack/stack'
 
 export function initHistoryShortcuts(doUndo: () => void, doRedo: () => void): void {
     const mod = (e: KeyboardEvent): boolean => e.ctrlKey || e.metaKey
@@ -20,23 +21,44 @@ export function initHistoryShortcuts(doUndo: () => void, doRedo: () => void): vo
     })
 }
 
+/** Anchors each card to an untouched card of its pile, if any, so the pile can be found again after a resize. */
 export function snapshotCards(cards: Card[], stage: Container): HistorySnapshot[] {
-    return cards.map((card: Card): HistorySnapshot => ({
-        id: card.imageUrl,
-        x: card.x,
-        y: card.y,
-        index: stage.children.indexOf(card),
-    }))
+    const allCards = stage.children.filter((child: Container): child is Card => (child as Card).imageUrl !== undefined)
+    const snapshotted = new Set<Card>(cards)
+    return cards.map((card: Card): HistorySnapshot => {
+        const snapshot: HistorySnapshot = {
+            id: card.imageUrl,
+            x: card.x,
+            y: card.y,
+            index: stage.children.indexOf(card),
+        }
+        const anchor = findStack(card, allCards).find((other: Card): boolean => !snapshotted.has(other))
+        if (anchor) {
+            snapshot.anchor = {
+                id: anchor.imageUrl,
+                dx: (card.x - anchor.x) / anchor.scale.x,
+                dy: (card.y - anchor.y) / anchor.scale.y,
+            }
+        }
+        return snapshot
+    })
 }
 
-/** Applies a history entry back onto the stage: `reverse` picks the "from" side, otherwise the "to" side. */
+/**
+ * Applies a history entry back onto the stage: `reverse` picks the "from"
+ * side, otherwise the "to" side. An anchored card is placed relative to its
+ * anchor's current position and scale; the others get their recorded
+ * coordinates, still in the entry's canvas size, and are returned so the
+ * caller can rescale them.
+ */
 export function applyHistoryEntry(
     entry: CardActionEntry,
     allCards: Card[],
     stage: Container,
     reverse: boolean,
-): void {
+): Card[] {
     const affected: Array<{ card: Card; index: number }> = []
+    const unanchored: Card[] = []
 
     for (const [imageUrl, data] of Object.entries(entry.cards)) {
         const card = allCards.find((c: Card): boolean => c.imageUrl === imageUrl)
@@ -44,12 +66,21 @@ export function applyHistoryEntry(
             continue
         }
         const index = reverse ? data.fromIndex : data.toIndex
-        card.x = reverse ? data.fromX : data.toX
-        card.y = reverse ? data.fromY : data.toY
+        const anchor = reverse ? data.fromAnchor : data.toAnchor
+        const anchorCard = anchor && allCards.find((c: Card): boolean => c.imageUrl === anchor.id)
+        if (anchor && anchorCard) {
+            card.x = anchorCard.x + anchor.dx * anchorCard.scale.x
+            card.y = anchorCard.y + anchor.dy * anchorCard.scale.y
+        } else {
+            card.x = reverse ? data.fromX : data.toX
+            card.y = reverse ? data.fromY : data.toY
+            unanchored.push(card)
+        }
         affected.push({ card, index })
     }
 
     restoreCardZIndices(stage, affected)
+    return unanchored
 }
 
 /** Applies the stack-name side of a history entry (if any) back onto a live stackNames map: `reverse` picks the "from" side, otherwise the "to" side. */

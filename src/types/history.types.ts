@@ -1,4 +1,13 @@
+import { ViewportSize } from './viewport-size.types'
+
 export const HISTORY_KEY = 'moodsort-history' as const
+
+/** An untouched card of the same pile, with the offset to it in card-scale units, so a restore lands back on that pile whatever the canvas size. */
+export interface HistoryAnchor {
+    id: string
+    dx: number
+    dy: number
+}
 
 /** A position/z-index snapshot of one identifiable entity, framework-agnostic. */
 export interface HistorySnapshot {
@@ -6,6 +15,7 @@ export interface HistorySnapshot {
     x: number
     y: number
     index: number
+    anchor?: HistoryAnchor
 }
 
 export interface CardActionEntry {
@@ -16,7 +26,11 @@ export interface CardActionEntry {
         toX: number
         toY: number
         toIndex: number
+        fromAnchor?: HistoryAnchor
+        toAnchor?: HistoryAnchor
     }>
+    /** Canvas size the action was recorded under; absent from entries saved before it was tracked. */
+    viewport?: ViewportSize
     /**
      * Stack name changes, keyed by the imageUrl of the card whose name slot
      * changed. Can be bundled into the same undo step as the card moves

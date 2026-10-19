@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
-import type { Spritesheet } from 'pixi.js'
+import type { Container, Spritesheet } from 'pixi.js'
 import { CanvasScene } from '../app/canvas-scene'
 import { CardStateService } from '../features/card/card-state-service'
 import { InMemoryStore } from './in-memory-store'
@@ -9,6 +9,9 @@ import { startDragHint } from '../features/onboarding/drag-hint'
 import { getPixiThemeColors } from '../features/theme/pixi-theme-colors'
 import type { StackShadow } from '../types/stack-shadow.types'
 import { CardState } from '../types/card-state.types'
+import { HistoryData, HISTORY_KEY } from '../types/history.types'
+import { ActionHistory } from '../features/history/action-history'
+import { snapshotCards } from '../features/history/history'
 
 const { mockSpritesheet } = vi.hoisted(() => {
     const mockTexture = { width: 200, height: 300 }
@@ -439,6 +442,54 @@ describe('CanvasScene', () => {
             expect(testable.stackNames).toEqual({ 'card-a': 'Joie + Calme' })
             expect(store.load('stackNames')).toEqual({ 'card-a': 'Joie + Calme' })
             expect(scene.canUndo).toBe(false)
+        })
+
+        function recordMove(testable: LayoutScene, card: Card, x: number, y: number): void {
+            const { actionHistory, cardLayer } = testable as unknown as { actionHistory: ActionHistory; cardLayer: Container }
+            actionHistory.captureBefore(snapshotCards([card], cardLayer))
+            card.x = x
+            card.y = y
+            actionHistory.recordAfter(snapshotCards([card], cardLayer))
+        }
+
+        it('rescales a lone card restored by undo/redo from the canvas size its move was recorded under, keeping it on-canvas', async () => {
+            const { scene, testable } = await setupLayout({ positions: { 'card-a': { x: 100, y: 100 }, 'card-b': { x: 500, y: 100 } } })
+            const cardB = testable.cards[1]
+            recordMove(testable, cardB, 500, 420)
+
+            resizeWindow(scene, 1024, 400)
+            scene.undo()
+            expect(cardB.y).toBeCloseTo(100 * 400 / 768)
+            scene.redo()
+
+            // 420 rescaled to 218.75, then clamped so the 300-tall card stays within a 400-tall canvas.
+            expect(cardB.y).toBe(400 - 300)
+        })
+
+        it('puts a card dropped on a pile back on that pile on redo after a resize, at the same offset in card units', async () => {
+            const { scene, testable } = await setupLayout({ positions: { 'card-a': { x: 100, y: 100 }, 'card-b': { x: 500, y: 100 } } })
+            const [cardA, cardB] = testable.cards
+            recordMove(testable, cardB, 130, 120)
+
+            resizeWindow(scene, 2048, 768)
+            scene.undo()
+            expect({ x: cardB.x, y: cardB.y }).toEqual({ x: 1000, y: 100 })
+            scene.redo()
+
+            expect({ x: cardA.x, y: cardA.y }).toEqual({ x: 200, y: 100 })
+            expect({ x: cardB.x, y: cardB.y }).toEqual({ x: 260, y: 140 })
+        })
+
+        it('clamps the cards of an entry recorded before the canvas size was tracked', async () => {
+            historyStore.save<HistoryData>(HISTORY_KEY, {
+                undoStack: [{ cards: { 'card-b': { fromX: 500, fromY: 600, fromIndex: 1, toX: 500, toY: 100, toIndex: 1 } } }],
+                redoStack: [],
+            })
+            const { scene, testable } = await setupLayout({ positions: { 'card-a': { x: 100, y: 100 }, 'card-b': { x: 500, y: 100 } } })
+
+            scene.undo()
+
+            expect(testable.cards[1].y).toBe(768 - 300)
         })
     })
 

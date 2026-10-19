@@ -77,7 +77,7 @@ describe('DragHandler', () => {
         const { Container: MockContainer } = await import('pixi.js')
         cardLayer = new MockContainer() as unknown as Container
         app = { stage: new MockContainer(), screen: { width: 800, height: 600 } } as unknown as Application
-        actionHistory = new ActionHistory(new InMemoryStore(), vi.fn())
+        actionHistory = new ActionHistory(new InMemoryStore(), vi.fn(), () => ({ width: 800, height: 600 }))
         onDragEnd = vi.fn()
         dragHandler = new DragHandler(new CardDrag(), app, cardLayer, onDragEnd, actionHistory)
     })
