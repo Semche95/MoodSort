@@ -1,4 +1,4 @@
-import { Container, Graphics, Sprite, Text } from 'pixi.js'
+import { BlurFilter, Container, Graphics, Sprite, Text, Texture } from 'pixi.js'
 import { FancyButton } from '@pixi/ui'
 import type { CanvasTooltip } from '../../shared/ui/canvas-tooltip'
 import { ICON_SIZE, applyIconTheme } from '../../shared/ui/icons'
@@ -6,9 +6,10 @@ import type { ResolvedTheme } from '../../types/theme.types'
 import { getPixiThemeColors } from '../theme/pixi-theme-colors'
 import type { PixiThemePalette } from '../../types/pixi-theme-palette.types'
 import type { RoundButtonViews } from '../../types/round-button-views.types'
+import type { BrandingTextures } from '../../types/branding-textures.types'
 
 export const BUTTON_SIZE = 48
-export const LOGO_EMOJI_SIZE = 28
+export const LOGO_SIZE = 32
 export const FONT_FAMILY = 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif'
 const ICON_SOURCE_SIZE = 64
 const DISABLED_ICON_ALPHA = 0.35
@@ -20,9 +21,18 @@ const SHARE_INDICATOR_GAP = 7
 const SHARE_INDICATOR_STROKE_WIDTH = 1.5
 const SHARE_INDICATOR_SHADOW_ALPHA = 0.4
 const SHARE_INDICATOR_SHADOW_OFFSET = 1
+const BUTTON_SHADOW_OFFSET_Y = 1.5
+const TITLE_HEIGHT = 18
+const LOGO_TITLE_GAP = 10
+const LOGO_SHADOW_BLUR = 2
+const LOGO_SHADOW_OFFSET_Y = 1
 
-export function createCircleView(fill: number, alpha: number): Graphics {
+export function createCircleView(fill: number, alpha: number, shadow?: { color: number; alpha: number }): Graphics {
     const view = new Graphics()
+    if (shadow) {
+        view.circle(BUTTON_SIZE / 2, BUTTON_SIZE / 2 + BUTTON_SHADOW_OFFSET_Y, BUTTON_SIZE / 2)
+        view.fill({ color: shadow.color, alpha: shadow.alpha })
+    }
     view.circle(BUTTON_SIZE / 2, BUTTON_SIZE / 2, BUTTON_SIZE / 2)
     view.fill({ color: fill, alpha })
     return view
@@ -30,44 +40,57 @@ export function createCircleView(fill: number, alpha: number): Graphics {
 
 /** Builds the four state views shared by every round icon button, from the toolbar palette. Used both to construct a button and to re-theme one in place. */
 function roundButtonViews(palette: PixiThemePalette['toolbar']): RoundButtonViews {
+    const shadow = { color: palette.buttonShadow, alpha: palette.buttonShadowAlpha }
     return {
-        defaultView: createCircleView(palette.buttonDefault, 0.85),
-        hoverView: createCircleView(palette.buttonHover, 1),
+        defaultView: createCircleView(palette.buttonDefault, 0.85, shadow),
+        hoverView: createCircleView(palette.buttonHover, 1, shadow),
         pressedView: createCircleView(palette.buttonPressed, 1),
         disabledView: createCircleView(palette.buttonDisabled, 0.45),
     }
 }
 
-export function createLogo(resolvedTheme: ResolvedTheme = 'light'): Container {
-    const palette = getPixiThemeColors(resolvedTheme)
-    const emoji = new Text({
-        text: '🎭',
-        style: {
-            fontFamily: FONT_FAMILY,
-            fontSize: LOGO_EMOJI_SIZE,
-            fill: palette.icon,
-        },
-    })
-    emoji.label = 'toolbar-logo-emoji'
-    emoji.anchor.set(0, 0.5)
+function createTitlePart(texture: Texture, label: string, tint: number): Sprite {
+    const part = new Sprite(texture)
+    part.label = label
+    part.anchor.set(0, 0.5)
+    part.scale.set(TITLE_HEIGHT / texture.height)
+    part.tint = tint
+    return part
+}
 
-    const title = new Text({
-        text: 'MoodSort',
-        style: {
-            fontFamily: FONT_FAMILY,
-            fontSize: 20,
-            fontWeight: '700',
-            fill: palette.toolbar.title,
-        },
-    })
-    title.label = 'toolbar-title'
-    title.anchor.set(0, 0.5)
+function createLogoSprite(logoTexture: Texture, label: string): Sprite {
+    const sprite = new Sprite(logoTexture)
+    sprite.label = label
+    sprite.anchor.set(0, 0.5)
+    sprite.width = LOGO_SIZE
+    sprite.height = LOGO_SIZE
+    return sprite
+}
+
+function applyLogoShadowTheme(shadow: Sprite, palette: PixiThemePalette['toolbar']): void {
+    shadow.tint = palette.logoShadow
+    shadow.alpha = palette.logoShadowAlpha
+}
+
+export function createLogo(textures: BrandingTextures, resolvedTheme: ResolvedTheme = 'light'): Container {
+    const palette = getPixiThemeColors(resolvedTheme)
+    const shadow = createLogoSprite(textures.logo, 'toolbar-logo-shadow')
+    shadow.filters = [new BlurFilter({ strength: LOGO_SHADOW_BLUR })]
+    shadow.y = LOGO_SHADOW_OFFSET_Y
+    applyLogoShadowTheme(shadow, palette.toolbar)
+    const image = createLogoSprite(textures.logo, 'toolbar-logo-image')
+
+    const titleAccent = createTitlePart(textures.titleAccent, 'toolbar-title-accent', palette.toolbar.titleAccent)
+    const titleRest = createTitlePart(textures.titleRest, 'toolbar-title-rest', palette.toolbar.title)
 
     const logo = new Container()
     logo.label = 'toolbar-logo'
-    logo.addChild(emoji)
-    logo.addChild(title)
-    title.position.set(LOGO_EMOJI_SIZE + 10, 0)
+    logo.addChild(shadow)
+    logo.addChild(image)
+    logo.addChild(titleAccent)
+    logo.addChild(titleRest)
+    titleAccent.x = LOGO_SIZE + LOGO_TITLE_GAP
+    titleRest.x = titleAccent.x
     return logo
 }
 
@@ -87,14 +110,16 @@ export function applyButtonTheme(button: FancyButton, resolvedTheme: ResolvedThe
     }
 }
 
-/** Re-theme the logo's emoji and title text in place. */
+/** Re-theme the logo's shadow and both title parts in place; the image keeps its own colors. */
 export function applyLogoTheme(logo: Container, resolvedTheme: ResolvedTheme): void {
     const palette = getPixiThemeColors(resolvedTheme)
     for (const child of logo.children) {
-        if (child instanceof Text && child.label === 'toolbar-logo-emoji') {
-            child.style.fill = palette.icon
-        } else if (child instanceof Text && child.label === 'toolbar-title') {
-            child.style.fill = palette.toolbar.title
+        if (child instanceof Sprite && child.label === 'toolbar-logo-shadow') {
+            applyLogoShadowTheme(child, palette.toolbar)
+        } else if (child instanceof Sprite && child.label === 'toolbar-title-accent') {
+            child.tint = palette.toolbar.titleAccent
+        } else if (child instanceof Sprite && child.label === 'toolbar-title-rest') {
+            child.tint = palette.toolbar.title
         }
     }
 }
@@ -156,7 +181,7 @@ function shareButtonViews(palette: PixiThemePalette['toolbar'], buttonWidth: num
     }
 }
 
-// Pill-shaped blue CTA button (icon + share label), reading as the primary action.
+// Pill-shaped accent CTA button (icon + share label), reading as the primary action.
 // Two dots over its top-right corner: amber when sharing is active, green once a viewer is connected.
 export function setShareIndicators(activeIndicator: Graphics, viewerIndicator: Graphics, status: 'inactive' | 'waiting' | 'connected' | 'stopped'): void {
     activeIndicator.visible = status === 'waiting' || status === 'connected'

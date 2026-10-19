@@ -3,6 +3,7 @@ import { Store } from '../shared/utils/store'
 import { initOnboarding, dismissOnboarding } from '../features/onboarding/onboarding'
 import { initTopToolbar } from '../features/toolbar/top-toolbar'
 import { loadIconTextures } from '../shared/ui/icons'
+import { loadBrandingTextures } from '../features/toolbar/branding'
 import { createFooter } from '../features/footer/footer'
 import { createLoadingOverlay } from '../shared/ui/loading-overlay'
 import { CardStateService } from '../features/card/card-state-service'
@@ -55,5 +56,6 @@ export async function bootApp(locale: Locale): Promise<void> {
     initOnboarding(cardStateService)
 
     const iconTextures = await loadIconTextures()
-    initTopToolbar(scene, (): void => { dismissOnboarding(cardStateService) }, iconTextures, themeService)
+    const brandingTextures = await loadBrandingTextures(scene.resolution)
+    initTopToolbar(scene, (): void => { dismissOnboarding(cardStateService) }, iconTextures, brandingTextures, themeService)
 }

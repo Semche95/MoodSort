@@ -16,18 +16,19 @@ import { createHelpIcon, createIcon } from '../../shared/ui/icons'
 import { I18n, switchLocale } from '../../i18n/I18n'
 import type { Locale } from '../../i18n/i18n.types'
 import { createLocaleMenu } from './locale-menu'
-import { BUTTON_SIZE, LOGO_EMOJI_SIZE, applyButtonTheme, applyLogoTheme, applyShareButtonTheme, createButton, createLogo, createShareButton, setButtonEnabled, setShareIndicators } from './toolbar-view'
+import { BUTTON_SIZE, LOGO_SIZE, applyButtonTheme, applyLogoTheme, applyShareButtonTheme, createButton, createLogo, createShareButton, setButtonEnabled, setShareIndicators } from './toolbar-view'
 import type { ThemeService } from '../theme/theme-service'
 import type { ResolvedTheme } from '../../types/theme.types'
+import type { BrandingTextures } from '../../types/branding-textures.types'
 
 const GAP = 8
 const TOP_MARGIN = 16
 const SIDE_MARGIN = 16
 
-function createToolbarState(host: ToolbarHost, onDismissOnboarding: () => void, iconTextures: Record<string, Texture>, themeService: ThemeService): ToolbarState {
+function createToolbarState(host: ToolbarHost, onDismissOnboarding: () => void, iconTextures: Record<string, Texture>, brandingTextures: BrandingTextures, themeService: ThemeService): ToolbarState {
     const resolvedTheme = themeService.getResolvedTheme()
     const tooltip = new CanvasTooltip()
-    const logo = createLogo(resolvedTheme)
+    const logo = createLogo(brandingTextures, resolvedTheme)
     const undoIcon = createIcon(iconTextures['undo-2'], resolvedTheme)
     const redoIcon = createIcon(iconTextures['redo-2'], resolvedTheme)
     const shareSupported = isScreenShareHostSupported()
@@ -157,20 +158,20 @@ function resizeToolbar(state: ToolbarState): void {
     state.localeMenu.updatePosition(state.host.canvasElement)
 
     state.shareButton.position.set(state.host.screenWidth / 2, TOP_MARGIN + BUTTON_SIZE / 2)
-    state.logo.position.set(SIDE_MARGIN, TOP_MARGIN + LOGO_EMOJI_SIZE / 2)
+    state.logo.position.set(SIDE_MARGIN, TOP_MARGIN + LOGO_SIZE / 2)
 }
 
 /**
- * Pixi-rendered toolbar: emoji/wordmark logo on the left, icon buttons on the right.
+ * Pixi-rendered toolbar: image/wordmark logo on the left, icon buttons on the right.
  * Replaces the previous HTML toolbar (undo/redo/help/settings). Its instance
  * is never needed after setup (everything is wired via `host` callbacks), so
  * it's exposed as an init function rather than a class kept around unused.
  */
-export function initTopToolbar(host: ToolbarHost, onDismissOnboarding: () => void, iconTextures: Record<string, Texture>, themeService: ThemeService): void {
+export function initTopToolbar(host: ToolbarHost, onDismissOnboarding: () => void, iconTextures: Record<string, Texture>, brandingTextures: BrandingTextures, themeService: ThemeService): void {
     const container = new Container()
     container.label = 'top-toolbar'
 
-    const state = createToolbarState(host, onDismissOnboarding, iconTextures, themeService)
+    const state = createToolbarState(host, onDismissOnboarding, iconTextures, brandingTextures, themeService)
 
     container.addChild(state.logo)
     container.addChild(state.undoButton)

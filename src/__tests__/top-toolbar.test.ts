@@ -8,6 +8,7 @@ import { ThemeService } from '../features/theme/theme-service'
 import { InMemoryStore } from './in-memory-store'
 import { mockFullscreenApi } from './fullscreen-api-mock'
 import type { FullscreenApiMock } from './fullscreen-api-mock'
+import type { BrandingTextures } from '../types/branding-textures.types'
 
 const { pixi, ui, buttons } = vi.hoisted(() => {
     class Texture {
@@ -66,10 +67,20 @@ const { pixi, ui, buttons } = vi.hoisted(() => {
     }
 
     class Sprite extends Container {
-        anchor: { set(x: number, y: number): void } = {
-            set: (): void => {},
+        anchor: { x: number; y: number; set(x: number, y: number): void } = {
+            x: 0,
+            y: 0,
+            set: (x: number, y: number): void => {
+                this.anchor.x = x
+                this.anchor.y = y
+            },
         }
         tint: number = 0
+        texture: unknown
+        constructor(texture?: unknown) {
+            super()
+            this.texture = texture
+        }
     }
 
     class Text extends Container {
@@ -179,6 +190,7 @@ const { pixi, ui, buttons } = vi.hoisted(() => {
         pixi: {
             Application,
             Assets,
+            BlurFilter: class MockBlurFilter {},
             Container,
             FederatedPointerEvent,
             Graphics,
@@ -274,6 +286,14 @@ function createTextures(): Record<string, Texture> {
     }
 }
 
+function createBrandingTextures(): BrandingTextures {
+    return {
+        logo: new pixi.Texture() as unknown as Texture,
+        titleAccent: new pixi.Texture() as unknown as Texture,
+        titleRest: new pixi.Texture() as unknown as Texture,
+    }
+}
+
 describe('TopToolbar', () => {
     beforeEach(() => {
         vi.clearAllMocks()
@@ -289,7 +309,7 @@ describe('TopToolbar', () => {
 
     it('should add the toolbar container to the host stage with logo, six buttons, and a hidden native locale select', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
+        initTopToolbar(host, vi.fn(), createTextures(), createBrandingTextures(), createThemeService())
 
         expect(host.stage.children).toHaveLength(1)
         expect(buttons).toHaveLength(6)
@@ -309,7 +329,7 @@ describe('TopToolbar', () => {
 
     it('should pin undo/redo/help/settings/locale to the right edge on construction, with settings closest to the edge', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
+        initTopToolbar(host, vi.fn(), createTextures(), createBrandingTextures(), createThemeService())
 
         const [undo, redo, help, settings, , locale] = buttons
         expect(settings.x).toBe(800 - 16 - 24)
@@ -322,7 +342,7 @@ describe('TopToolbar', () => {
 
     it('should center the share button horizontally at the top of the screen', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
+        initTopToolbar(host, vi.fn(), createTextures(), createBrandingTextures(), createThemeService())
 
         const [, , , , share] = buttons
         expect(share.x).toBe(400)
@@ -331,7 +351,7 @@ describe('TopToolbar', () => {
 
     it('should open the native locale picker when the locale button is pressed', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
+        initTopToolbar(host, vi.fn(), createTextures(), createBrandingTextures(), createThemeService())
 
         const localeButton = buttons.find((button: { label: string }): boolean => button.label === 'toolbar-localebutton')!
         const select = document.querySelector('.toolbar-locale-select') as HTMLSelectElement & { showPicker: () => void }
@@ -345,7 +365,7 @@ describe('TopToolbar', () => {
 
     it('should switch locale and reload the page when a locale is picked from the native select', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
+        initTopToolbar(host, vi.fn(), createTextures(), createBrandingTextures(), createThemeService())
 
         const select = document.querySelector('.toolbar-locale-select') as HTMLSelectElement
         const reload = vi.spyOn(I18n, 'reload').mockImplementation((): void => {})
@@ -357,29 +377,33 @@ describe('TopToolbar', () => {
         expect(reload).toHaveBeenCalledOnce()
     })
 
-    it('should render the mask emoji logo aligned with the MoodSort title', () => {
+    it('should render the logo image aligned with the two MoodSort title images', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
+        const branding = createBrandingTextures()
+        initTopToolbar(host, vi.fn(), createTextures(), branding, createThemeService())
 
         const toolbar = host.stage.children[0] as { children: unknown[] }
         const logo = toolbar.children[0] as { children: unknown[] }
-        const [emoji, title] = logo.children as Array<{
-            text: unknown
+        const [, image, titleAccent, titleRest] = logo.children as Array<{
+            texture: unknown
             anchor: { x: number; y: number }
             y: number
         }>
 
-        expect(emoji.text).toBe('🎭')
-        expect(title.text).toBe('MoodSort')
-        expect(emoji.anchor.x).toBe(0)
-        expect(emoji.anchor.y).toBe(0.5)
-        expect(title.anchor.y).toBe(0.5)
-        expect(emoji.y).toBe(title.y)
+        expect(image.texture).toBe(branding.logo)
+        expect(titleAccent.texture).toBe(branding.titleAccent)
+        expect(titleRest.texture).toBe(branding.titleRest)
+        expect(image.anchor.x).toBe(0)
+        expect(image.anchor.y).toBe(0.5)
+        expect(titleAccent.anchor.y).toBe(0.5)
+        expect(titleRest.anchor.y).toBe(0.5)
+        expect(image.y).toBe(titleAccent.y)
+        expect(image.y).toBe(titleRest.y)
     })
 
     it('should scale button icons to about half the button size', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
+        initTopToolbar(host, vi.fn(), createTextures(), createBrandingTextures(), createThemeService())
 
         const [undo, redo, help, settings, share] = buttons
         for (const button of [undo, redo, settings]) {
@@ -394,14 +418,14 @@ describe('TopToolbar', () => {
 
     it('should render the help button icon as a plain question mark text', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
+        initTopToolbar(host, vi.fn(), createTextures(), createBrandingTextures(), createThemeService())
 
         expect((buttons[2].iconView as { text: unknown }).text).toBe('?')
     })
 
     it('should render the help button with a background circle like the other buttons', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
+        initTopToolbar(host, vi.fn(), createTextures(), createBrandingTextures(), createThemeService())
 
         const [, , help, settings] = buttons
         const helpOptions = help as unknown as { options: Record<string, unknown> }
@@ -415,7 +439,7 @@ describe('TopToolbar', () => {
 
     it('should disable undo/redo buttons when the history is empty', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
+        initTopToolbar(host, vi.fn(), createTextures(), createBrandingTextures(), createThemeService())
 
         const [undo, redo, help, settings] = buttons
         expect(undo.enabled).toBe(false)
@@ -429,7 +453,7 @@ describe('TopToolbar', () => {
     it('should trigger the host undo action when the undo button is pressed', () => {
         const host = createHost()
         host.setUndoAvailable(true)
-        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
+        initTopToolbar(host, vi.fn(), createTextures(), createBrandingTextures(), createThemeService())
 
         buttons[0].press()
 
@@ -439,7 +463,7 @@ describe('TopToolbar', () => {
 
     it('should update enabled states when history availability changes', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
+        initTopToolbar(host, vi.fn(), createTextures(), createBrandingTextures(), createThemeService())
 
         host.setUndoAvailable(true)
         host.setRedoAvailable(true)
@@ -457,7 +481,7 @@ describe('TopToolbar', () => {
 
     it('should re-anchor the buttons to the right edge on resize, keeping the share button centered', () => {
         const host = createHost({ width: 800 })
-        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
+        initTopToolbar(host, vi.fn(), createTextures(), createBrandingTextures(), createThemeService())
 
         host.setWidth(1200)
         host.resize()
@@ -470,12 +494,12 @@ describe('TopToolbar', () => {
         const toolbar = host.stage.children[0] as { children: unknown[] }
         const logo = toolbar.children[0] as { x: number; y: number }
         expect(logo.x).toBe(16)
-        expect(logo.y).toBe(16 + 28 / 2)
+        expect(logo.y).toBe(16 + 32 / 2)
     })
 
     it('should show a tooltip with the button label on hover, anchored below the button', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
+        initTopToolbar(host, vi.fn(), createTextures(), createBrandingTextures(), createThemeService())
 
         const [undo] = buttons
         undo.hover()
@@ -494,7 +518,7 @@ describe('TopToolbar', () => {
 
     it('should hide the tooltip on pointer out, on press, and on resize', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
+        initTopToolbar(host, vi.fn(), createTextures(), createBrandingTextures(), createThemeService())
 
         const [undo] = buttons
         const toolbar = host.stage.children[0] as { children: unknown[] }
@@ -518,7 +542,7 @@ describe('TopToolbar', () => {
 
     it('should disable the share button and explain why when the browser lacks screen-share support', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
+        initTopToolbar(host, vi.fn(), createTextures(), createBrandingTextures(), createThemeService())
 
         const share = buttons[4]
         expect(share.enabled).toBe(false)
@@ -532,7 +556,7 @@ describe('TopToolbar', () => {
 
     it('should render hidden active and viewer indicator dots overlaid on the share button by default', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
+        initTopToolbar(host, vi.fn(), createTextures(), createBrandingTextures(), createThemeService())
 
         const share = buttons[4] as unknown as { innerView: { children: Array<{ label: string; visible: boolean }> } }
         const activeIndicator = share.innerView.children.find((child: { label: string }): boolean => child.label === 'toolbar-share-active-indicator')
@@ -545,7 +569,7 @@ describe('TopToolbar', () => {
 
     it('should open the screen share modal when the share button is pressed', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
+        initTopToolbar(host, vi.fn(), createTextures(), createBrandingTextures(), createThemeService())
 
         buttons[4].press()
 
@@ -556,7 +580,7 @@ describe('TopToolbar', () => {
 
     it('should not open a second screen share modal while one is already open', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
+        initTopToolbar(host, vi.fn(), createTextures(), createBrandingTextures(), createThemeService())
 
         buttons[4].press()
         buttons[4].press()
@@ -567,7 +591,7 @@ describe('TopToolbar', () => {
 
     it('should not render the fullscreen button when the Fullscreen API is unsupported', () => {
         const host = createHost()
-        initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
+        initTopToolbar(host, vi.fn(), createTextures(), createBrandingTextures(), createThemeService())
 
         expect(buttons.some((button: { label: string }): boolean => button.label === 'toolbar-fullscreenbutton')).toBe(false)
     })
@@ -595,7 +619,7 @@ describe('TopToolbar', () => {
 
         it('should sit between the settings and locale buttons, shifting the rest of the right-hand group', () => {
             const host = createHost()
-            initTopToolbar(host, vi.fn(), createTextures(), createThemeService())
+            initTopToolbar(host, vi.fn(), createTextures(), createBrandingTextures(), createThemeService())
 
             const [undo, , , settings] = buttons
             const locale = buttons.find((button: { label: string }): boolean => button.label === 'toolbar-localebutton')!
@@ -608,7 +632,7 @@ describe('TopToolbar', () => {
 
         it('should start in the enter state with the maximize icon', () => {
             const textures = createTextures()
-            initTopToolbar(createHost(), vi.fn(), textures, createThemeService())
+            initTopToolbar(createHost(), vi.fn(), textures, createBrandingTextures(), createThemeService())
 
             expect(findFullscreenButton().accessibleTitle).toBe('toolbar.fullscreenEnter')
             expect(fullscreenIconTexture()).toBe(textures.maximize)
@@ -616,7 +640,7 @@ describe('TopToolbar', () => {
 
         it('should request fullscreen on press without changing its state before fullscreenchange fires', () => {
             const textures = createTextures()
-            initTopToolbar(createHost(), vi.fn(), textures, createThemeService())
+            initTopToolbar(createHost(), vi.fn(), textures, createBrandingTextures(), createThemeService())
 
             findFullscreenButton().press()
 
@@ -629,7 +653,7 @@ describe('TopToolbar', () => {
         it('should switch to the exit state when fullscreenchange reports fullscreen is active', () => {
             const host = createHost()
             const textures = createTextures()
-            initTopToolbar(host, vi.fn(), textures, createThemeService())
+            initTopToolbar(host, vi.fn(), textures, createBrandingTextures(), createThemeService())
 
             api.setElement(document.documentElement)
             document.dispatchEvent(new Event('fullscreenchange'))
@@ -645,7 +669,7 @@ describe('TopToolbar', () => {
         })
 
         it('should exit fullscreen on press while fullscreen is active', () => {
-            initTopToolbar(createHost(), vi.fn(), createTextures(), createThemeService())
+            initTopToolbar(createHost(), vi.fn(), createTextures(), createBrandingTextures(), createThemeService())
             api.setElement(document.documentElement)
 
             findFullscreenButton().press()
@@ -656,7 +680,7 @@ describe('TopToolbar', () => {
 
         it('should return to the enter state when fullscreen is left outside the button, e.g. with Escape', () => {
             const textures = createTextures()
-            initTopToolbar(createHost(), vi.fn(), textures, createThemeService())
+            initTopToolbar(createHost(), vi.fn(), textures, createBrandingTextures(), createThemeService())
             api.setElement(document.documentElement)
             document.dispatchEvent(new Event('fullscreenchange'))
 
