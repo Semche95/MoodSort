@@ -19,7 +19,7 @@ export const STACK_PILL_PADDING: number = 4
 export const STACK_PILL_ICON_WIDTH: number = 30
 
 /** Width (in px) of the grip slot, wider than a button so a nameless pill still offers a comfortable handle */
-export const STACK_PILL_GRIP_WIDTH: number = 40
+export const STACK_PILL_GRIP_WIDTH: number = 48
 
 /** Horizontal padding (in px) around the stack name inside its pill */
 export const STACK_PILL_NAME_PADDING: number = 8

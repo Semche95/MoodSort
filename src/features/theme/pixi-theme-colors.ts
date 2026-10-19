@@ -82,7 +82,7 @@ const LIGHT_PIXI_THEME_COLORS: PixiThemePalette = {
     icon: LIGHT_ICON,
     toolbar: LIGHT_TOOLBAR,
     stackOverlay: {
-        frame: LIGHT_ICON,
+        frame: 0x5b3f34,
         accent: LIGHT_TOOLBAR.titleAccent,
         pill: LIGHT_TOOLBAR.buttonDefault,
         pillShadow: LIGHT_TOOLBAR.buttonShadow,
