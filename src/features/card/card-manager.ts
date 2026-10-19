@@ -3,9 +3,11 @@ import { Card } from '../../types/card.types'
 import { AnimationTarget } from '../../types/animation.types'
 import { CardState } from '../../types/card-state.types'
 import { Position } from '../../types/position.types'
+import { ViewportSize } from '../../types/viewport-size.types'
 import { GetResolvedTheme, ResolvedTheme } from '../../types/theme.types'
 import { PixiThemePalette } from '../../types/pixi-theme-palette.types'
-import { clampCardPosition } from '../stack/stack-geometry'
+import { clampCardPosition, computeBoundingBox, computeGroupClampOffset } from '../stack/stack-geometry'
+import { computeStacks } from '../stack/stack'
 import { DEFAULT_GET_RESOLVED_THEME, getPixiThemeColors } from '../theme/pixi-theme-colors'
 import { prefersReducedMotion } from '../../shared/utils/reduced-motion'
 import { applyCardLift, createCardLift, updateCardLifts } from './card-lift'
@@ -116,9 +118,11 @@ export class CardManager {
         return this.shuffleImages(images)
     }
 
+    /** Restored cards are rescaled from `savedViewport`, the canvas size they were saved under, as a resize from that size would. */
     loadCards(
         frameNames: string[],
         positions: Record<string, Position>,
+        savedViewport: ViewportSize | null,
         onDragStart: (event: FederatedPointerEvent) => void,
         spritesheet: Spritesheet,
     ): Card[] {
@@ -131,6 +135,8 @@ export class CardManager {
             this.placeCard(card, positions[frameNames[i]])
             this.cardLayer.addChild(card)
         }
+        const restored = cards.filter((card: Card): boolean => positions[card.imageUrl] !== undefined)
+        this.rescaleFromViewport(computeStacks(restored), savedViewport)
         return cards
     }
 
@@ -163,28 +169,52 @@ export class CardManager {
     }
 
     placeCard(card: Card, savedPos?: Position): void {
-        let targetX: number
-        let targetY: number
         if (savedPos) {
-            targetX = savedPos.x
-            targetY = savedPos.y
-        } else {
-            const centerX = (this.app.screen.width - card.width) / 2
-            const centerY = (this.app.screen.height - card.height) / 2
-            const jittered = jitteredPosition(centerX, centerY)
-            targetX = jittered.x
-            targetY = jittered.y
+            // Left unclamped: clamping card by card would pull a restored stack apart, so loadCards clamps whole stacks.
+            card.x = savedPos.x
+            card.y = savedPos.y
+            return
         }
-        const constrained = clampCardPosition(targetX, targetY, card, this.app.screen.width, this.app.screen.height)
+        const centerX = (this.app.screen.width - card.width) / 2
+        const centerY = (this.app.screen.height - card.height) / 2
+        const jittered = jitteredPosition(centerX, centerY)
+        const constrained = clampCardPosition(jittered.x, jittered.y, card, this.app.screen.width, this.app.screen.height)
         card.x = constrained.x
         card.y = constrained.y
     }
 
-    repositionForResize(card: Card, ratioX: number, ratioY: number, newWidth: number, newHeight: number): void {
-        this.applyScale(card)
-        const constrained = clampCardPosition(card.x * ratioX, card.y * ratioY, card, newWidth, newHeight)
-        card.x = constrained.x
-        card.y = constrained.y
+    /**
+     * Moves each stack as one rigid block after the canvas was resized by
+     * `ratioX`/`ratioY`: its top-left corner follows the canvas on both axes,
+     * while the gaps between its cards follow the card scale, which tracks the
+     * width only. Scaling those gaps by `ratioY` instead would squeeze or pull
+     * apart the cards of a pile whenever the window changes aspect ratio.
+     */
+    rescaleStacks(stacks: Card[][], ratioX: number, ratioY: number): void {
+        const appWidth = this.app.screen.width
+        const appHeight = this.app.screen.height
+        for (const stack of stacks) {
+            const origin = computeBoundingBox(stack)
+            for (const card of stack) {
+                this.applyScale(card)
+                card.x = card.x * ratioX
+                card.y = origin.y * ratioY + (card.y - origin.y) * ratioX
+            }
+            const offset = computeGroupClampOffset(stack, appWidth, appHeight)
+            for (const card of stack) {
+                // Only moves a card when its stack is larger than the canvas and couldn't fit as a whole.
+                const constrained = clampCardPosition(card.x + offset.x, card.y + offset.y, card, appWidth, appHeight)
+                card.x = constrained.x
+                card.y = constrained.y
+            }
+        }
+    }
+
+    /** Rescales stacks laid out under `savedViewport` to the current canvas; an unknown size only clamps them as whole stacks. */
+    rescaleFromViewport(stacks: Card[][], savedViewport: ViewportSize | null): void {
+        const ratioX = savedViewport ? this.app.screen.width / savedViewport.width : 1
+        const ratioY = savedViewport ? this.app.screen.height / savedViewport.height : 1
+        this.rescaleStacks(stacks, ratioX, ratioY)
     }
 
     shuffleAndBuildTargets(cards: Card[]): AnimationTarget[] {

@@ -1,5 +1,5 @@
 import { CardStateService } from '../card/card-state-service'
-import { POSITIONS_KEY, ORDER_KEY, ONBOARDING_KEY, STACK_NAMES_KEY } from '../../types/card-state.types'
+import { POSITIONS_KEY, ORDER_KEY, ONBOARDING_KEY, STACK_NAMES_KEY, VIEWPORT_KEY } from '../../types/card-state.types'
 import { I18n } from '../../i18n/I18n'
 
 export function isOnboardingDismissed(store: CardStateService): boolean {
@@ -12,6 +12,7 @@ export function dismissOnboarding(store: CardStateService): void {
         order: store.load(ORDER_KEY),
         onboardingDismissed: true,
         stackNames: store.load(STACK_NAMES_KEY),
+        viewport: store.load(VIEWPORT_KEY),
     })
 }
 

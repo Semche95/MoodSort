@@ -5,7 +5,7 @@ import { InMemoryStore } from './in-memory-store'
 
 function makeStore(onboardingDismissed: boolean): CardStateService {
     const store = new CardStateService(new InMemoryStore())
-    store.save({ positions: {}, order: [], onboardingDismissed, stackNames: {} })
+    store.save({ positions: {}, order: [], onboardingDismissed, stackNames: {}, viewport: null })
     return store
 }
 
@@ -35,6 +35,25 @@ describe('initOnboarding', () => {
         expect(onFirstDismiss).toHaveBeenCalledOnce()
         expect(isOnboardingDismissed(store)).toBe(true)
         expect(document.querySelector('.onboarding-overlay')).toBeNull()
+    })
+
+    it('keeps the saved layout when a first-time visitor dismisses the onboarding', () => {
+        const store = new CardStateService(new InMemoryStore())
+        const layout = {
+            positions: { a: { x: 1, y: 2 } },
+            order: ['a'],
+            stackNames: { a: 'Joy' },
+            viewport: { width: 1600, height: 900 },
+        }
+        store.save({ ...layout, onboardingDismissed: false })
+
+        initOnboarding(store, vi.fn())
+        document.querySelector<HTMLButtonElement>('.onboarding-dismiss')!.click()
+
+        expect(store.load('positions')).toEqual(layout.positions)
+        expect(store.load('order')).toEqual(layout.order)
+        expect(store.load('stackNames')).toEqual(layout.stackNames)
+        expect(store.load('viewport')).toEqual(layout.viewport)
     })
 
     it('does not stack a second overlay over one already open', () => {

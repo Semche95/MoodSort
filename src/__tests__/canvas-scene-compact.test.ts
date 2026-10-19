@@ -62,7 +62,11 @@ vi.mock('pixi.js', () => {
         eventMode: string = 'auto'
         cursor: string = 'default'
         hitArea: unknown = null
-        scale: { set(v: number): void } = { set: vi.fn() }
+        scale: { x: number; y: number; set(v: number): void } = {
+            x: 1,
+            y: 1,
+            set: vi.fn(function set(this: { x: number; y: number }, v: number): void { this.x = v; this.y = v }),
+        }
         position: { set(x: number, y: number): void } = {
             set: (x: number, y: number): void => {
                 this.x = x
@@ -177,6 +181,7 @@ function seedStore(historyStore: InMemoryStore, priorEntry?: CardActionEntry): C
         order: ['card-a', 'card-b', 'card-top', 'card-other'],
         onboardingDismissed: false,
         stackNames: {},
+        viewport: null,
     })
     if (priorEntry) {
         historyStore.save<HistoryData>(HISTORY_KEY, { undoStack: [priorEntry], redoStack: [] })

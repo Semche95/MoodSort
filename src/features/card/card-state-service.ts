@@ -9,9 +9,9 @@ const STORAGE_KEY: string = 'moodsort-card-state'
  * so load() can tell a genuinely-missing field apart from an intentional
  * empty value and re-save the migrated shape once.
  */
-const CARD_STATE_SCHEMA_VERSION: number = 2
+const CARD_STATE_SCHEMA_VERSION: number = 3
 
-const DEFAULTS: CardState = { positions: {}, order: [], onboardingDismissed: false, stackNames: {} }
+const DEFAULTS: CardState = { positions: {}, order: [], onboardingDismissed: false, stackNames: {}, viewport: null }
 
 export class CardStateService {
     private store: IStore
@@ -21,7 +21,7 @@ export class CardStateService {
         this.store = store
     }
 
-    /** True once a load() has migrated a pre-stackNames saved blob to the current schema. */
+    /** True once a load() has migrated a saved blob from an older schema to the current one. */
     get wasMigrated(): boolean {
         return this.migrated
     }
@@ -49,6 +49,7 @@ export class CardStateService {
             order: raw.order ?? DEFAULTS.order,
             onboardingDismissed: raw.onboardingDismissed ?? DEFAULTS.onboardingDismissed,
             stackNames: raw.stackNames ?? DEFAULTS.stackNames,
+            viewport: raw.viewport ?? DEFAULTS.viewport,
         }
         if (needsMigration) {
             this.migrated = true

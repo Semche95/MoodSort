@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import type { Container } from 'pixi.js'
 import { PositionPersistence } from '../features/card/position-persistence'
+import { ViewportSize } from '../types/viewport-size.types'
 import { CardStateService } from '../features/card/card-state-service'
 import { InMemoryStore } from './in-memory-store'
 import { Card } from '../types/card.types'
@@ -21,18 +22,18 @@ describe('PositionPersistence', () => {
     beforeEach(() => {
         rawStore = new InMemoryStore()
         cardStateService = new CardStateService(rawStore)
-        persistence = new PositionPersistence(cardStateService)
+        persistence = new PositionPersistence(cardStateService, (): ViewportSize => ({ width: 1600, height: 900 }))
     })
 
     it('load returns defaults when nothing was saved', () => {
         const state = persistence.load()
 
-        expect(state).toEqual({ positions: {}, order: [], onboardingDismissed: false, stackNames: {} })
+        expect(state).toEqual({ positions: {}, order: [], onboardingDismissed: false, stackNames: {}, viewport: null })
         expect(persistence.wasMigrated).toBe(false)
     })
 
     it('save delegates directly to the underlying store', () => {
-        persistence.save({ positions: { a: { x: 1, y: 2 } }, order: ['a'], onboardingDismissed: true, stackNames: { a: 'Joy' } })
+        persistence.save({ positions: { a: { x: 1, y: 2 } }, order: ['a'], onboardingDismissed: true, stackNames: { a: 'Joy' }, viewport: null })
 
         expect(cardStateService.load('positions')).toEqual({ a: { x: 1, y: 2 } })
         expect(cardStateService.load('order')).toEqual(['a'])
@@ -52,6 +53,12 @@ describe('PositionPersistence', () => {
         expect(cardStateService.load('order')).toEqual(['card-a', 'card-b'])
     })
 
+    it('saveFromStage records the current canvas size the positions were taken at', () => {
+        persistence.saveFromStage(fakeStage([fakeCard('card-a', 10, 20)]))
+
+        expect(cardStateService.load('viewport')).toEqual({ width: 1600, height: 900 })
+    })
+
     it('saveFromStage ignores stage children without an imageUrl', () => {
         const decoration = { x: 0, y: 0 } as unknown as Card
         const stage = fakeStage([decoration, fakeCard('card-a', 10, 20)])
@@ -62,7 +69,7 @@ describe('PositionPersistence', () => {
     })
 
     it('saveFromStage preserves the existing onboardingDismissed flag', () => {
-        cardStateService.save({ positions: {}, order: [], onboardingDismissed: true, stackNames: {} })
+        cardStateService.save({ positions: {}, order: [], onboardingDismissed: true, stackNames: {}, viewport: null })
 
         persistence.saveFromStage(fakeStage([]))
 
@@ -83,6 +90,7 @@ describe('PositionPersistence', () => {
             order: ['/assets/sad-cat-Ab12xY.webp'],
             onboardingDismissed: false,
             stackNames: {},
+            viewport: { width: 1280, height: 720 },
         })
 
         const state = persistence.load()
@@ -91,6 +99,8 @@ describe('PositionPersistence', () => {
         expect(state.order).toEqual(['sad-cat'])
         expect(persistence.wasMigrated).toBe(true)
         expect(cardStateService.load('positions')).toEqual({ 'sad-cat': { x: 5, y: 6 } })
+        expect(state.viewport).toEqual({ width: 1280, height: 720 })
+        expect(cardStateService.load('viewport')).toEqual({ width: 1280, height: 720 })
     })
 
     it('does not flag a migration when keys are already plain frame names', () => {
@@ -99,6 +109,7 @@ describe('PositionPersistence', () => {
             order: ['sad-cat'],
             onboardingDismissed: false,
             stackNames: {},
+            viewport: null,
         })
 
         persistence.load()
@@ -121,14 +132,21 @@ describe('PositionPersistence', () => {
         expect(state.positions).toEqual({ a: { x: 1, y: 1 } })
     })
 
-    it('clear empties positions, order and stackNames but keeps onboardingDismissed', () => {
-        cardStateService.save({ positions: { a: { x: 1, y: 1 } }, order: ['a'], onboardingDismissed: true, stackNames: { a: 'Joy' } })
+    it('clear empties positions, order, stackNames and viewport but keeps onboardingDismissed', () => {
+        cardStateService.save({
+            positions: { a: { x: 1, y: 1 } },
+            order: ['a'],
+            onboardingDismissed: true,
+            stackNames: { a: 'Joy' },
+            viewport: { width: 1600, height: 900 },
+        })
 
         persistence.clear()
 
         expect(cardStateService.load('positions')).toEqual({})
         expect(cardStateService.load('order')).toEqual([])
         expect(cardStateService.load('stackNames')).toEqual({})
+        expect(cardStateService.load('viewport')).toBeNull()
         expect(cardStateService.load('onboardingDismissed')).toBe(true)
     })
 })

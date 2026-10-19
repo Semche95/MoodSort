@@ -14,7 +14,7 @@ The interface is available in Dutch, English, Esperanto, French, German, and Spa
 - Overlapping cards form stacks, each always shown with a border and a drag handle (a lone card included), plus a hover-only button to re-gather a stack of two or more cards around its top card
 - Undo/redo (toolbar buttons, Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, Ctrl/Cmd+Y), persisted across sessions
 - Positions and history are saved to `localStorage` and restored on the next visit
-- Cards reposition proportionally when the window is resized
+- Cards reposition proportionally when the window is resized or the app reopens in a differently sized window, each stack moving as one block so piles never split or merge on their own
 - Reset animates cards back to the center
 - Named stack labels: click a stack's name button to open an inline editor (native paste/IME support, a clear button, width-capped with horizontal scrolling); names merge when stacks merge and follow the right group when a stack splits
 - Canvas sharing over peer-to-peer WebRTC: toggle it from the toolbar to get a shareable room link, no signup or account needed. This streams the app's canvas only, not the viewer's whole screen
@@ -131,7 +131,7 @@ Each stack can also carry a name. A dedicated button next to the drag handle, sh
 
 ### Persistence and history
 
-`Store` is a plain `localStorage` wrapper with no app knowledge. `CardStateService` uses it to persist positions, z-order, and onboarding status under one key. `PositionPersistence` reads positions off the stage and writes them back, and on first load transparently migrates the old Vite-hashed URL keys (e.g. `/assets/abandon-kDvhRWIr.webp`) to atlas frame names (e.g. `abandon`). Undo history is cleared if a migration happened, since old snapshots would reference stale keys.
+`Store` is a plain `localStorage` wrapper with no app knowledge. `CardStateService` uses it to persist positions, z-order, stack names, onboarding status and the canvas size the positions were taken at under one key. `PositionPersistence` reads positions off the stage and writes them back, and on first load transparently migrates the old Vite-hashed URL keys (e.g. `/assets/abandon-kDvhRWIr.webp`) to atlas frame names (e.g. `abandon`). Undo history is cleared if a migration happened, since old snapshots would reference stale keys. On resize, and on load when the saved canvas size differs, `CardManager.rescaleStacks` moves each stack rigidly: its corner follows the canvas on both axes, the gaps between its cards follow the card scale (width only), and it is clamped as a whole. The scene then recomputes stacks, so names of piles clamped together are fused like a merge.
 
 `ActionHistory` snapshots positions and z-index before/after each drag (one mousedown→mouseup = one action), keeping up to 15 undo entries plus a redo stack, both persisted. Any new action clears redo. Both `DragHandler` and `StackDragManager` feed it; `CanvasScene` exposes `undo()`, `redo()`, `canUndo`/`canRedo`, and a history-change callback for the toolbar.
 

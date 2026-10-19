@@ -16,6 +16,7 @@ describe('CardStateService', () => {
         expect(service.load('order')).toEqual([])
         expect(service.load('onboardingDismissed')).toBe(false)
         expect(service.load('stackNames')).toEqual({})
+        expect(service.load('viewport')).toBeNull()
     })
 
     it('saves and reloads the full state', () => {
@@ -24,17 +25,19 @@ describe('CardStateService', () => {
             order: ['card-a'],
             onboardingDismissed: true,
             stackNames: { 'card-a': 'Joy' },
+            viewport: { width: 1600, height: 900 },
         })
 
         expect(service.load('positions')).toEqual({ 'card-a': { x: 10, y: 20 } })
         expect(service.load('order')).toEqual(['card-a'])
         expect(service.load('onboardingDismissed')).toBe(true)
         expect(service.load('stackNames')).toEqual({ 'card-a': 'Joy' })
+        expect(service.load('viewport')).toEqual({ width: 1600, height: 900 })
     })
 
     it('overwrites the previous state entirely on save', () => {
-        service.save({ positions: { a: { x: 1, y: 1 } }, order: ['a'], onboardingDismissed: true, stackNames: { a: 'Joy' } })
-        service.save({ positions: {}, order: [], onboardingDismissed: false, stackNames: {} })
+        service.save({ positions: { a: { x: 1, y: 1 } }, order: ['a'], onboardingDismissed: true, stackNames: { a: 'Joy' }, viewport: null })
+        service.save({ positions: {}, order: [], onboardingDismissed: false, stackNames: {}, viewport: null })
 
         expect(service.load('positions')).toEqual({})
         expect(service.load('order')).toEqual([])
@@ -43,7 +46,7 @@ describe('CardStateService', () => {
     })
 
     it('returns default values again after clear', () => {
-        service.save({ positions: { a: { x: 1, y: 1 } }, order: ['a'], onboardingDismissed: true, stackNames: { a: 'Joy' } })
+        service.save({ positions: { a: { x: 1, y: 1 } }, order: ['a'], onboardingDismissed: true, stackNames: { a: 'Joy' }, viewport: null })
 
         service.clear()
 
@@ -60,6 +63,21 @@ describe('CardStateService', () => {
         expect(service.load('stackNames')).toEqual({})
         expect(service.wasMigrated).toBe(true)
         expect(service.load('positions')).toEqual({ a: { x: 1, y: 1 } })
-        expect(store.load<{ schemaVersion: number }>('moodsort-card-state')?.schemaVersion).toBe(2)
+        expect(store.load<{ schemaVersion: number }>('moodsort-card-state')?.schemaVersion).toBe(3)
+    })
+
+    it('migrates a saved blob that predates the viewport field, leaving the viewport unknown', () => {
+        store.save('moodsort-card-state', {
+            positions: { a: { x: 1, y: 1 } },
+            order: ['a'],
+            onboardingDismissed: true,
+            stackNames: { a: 'Joy' },
+            schemaVersion: 2,
+        })
+
+        expect(service.load('viewport')).toBeNull()
+        expect(service.wasMigrated).toBe(true)
+        expect(service.load('stackNames')).toEqual({ a: 'Joy' })
+        expect(store.load<{ schemaVersion: number }>('moodsort-card-state')?.schemaVersion).toBe(3)
     })
 })

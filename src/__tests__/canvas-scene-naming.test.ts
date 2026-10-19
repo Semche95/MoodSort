@@ -68,7 +68,11 @@ vi.mock('pixi.js', () => {
         visible: boolean = true
         label: string = ''
         parent: unknown = null
-        scale: { set(v: number): void } = { set: vi.fn() }
+        scale: { x: number; y: number; set(v: number): void } = {
+            x: 1,
+            y: 1,
+            set: vi.fn(function set(this: { x: number; y: number }, v: number): void { this.x = v; this.y = v }),
+        }
         position: { set(x: number, y: number): void } = {
             set: (x: number, y: number): void => {
                 this.x = x
@@ -182,6 +186,7 @@ function seedStore(positions: Record<string, { x: number; y: number }>, order: s
         order,
         onboardingDismissed: false,
         stackNames: {},
+        viewport: null,
     })
     return store
 }

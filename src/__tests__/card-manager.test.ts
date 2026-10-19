@@ -14,6 +14,7 @@ import { STACK_HANDLE_TOP_CLEARANCE } from '../features/stack/stack'
 import { getPixiThemeColors } from '../features/theme/pixi-theme-colors'
 import { Card } from '../types/card.types'
 import { CardState } from '../types/card-state.types'
+import { Position } from '../types/position.types'
 import { CARD_CORNER_RADIUS } from '../features/card/card-corner-radius'
 
 vi.mock('pixi.js', () => {
@@ -103,7 +104,7 @@ function makeCard(imageUrl: string, x: number, y: number, width: number = 200, h
 }
 
 function makeState(order: string[]): CardState {
-    return { positions: {}, order, onboardingDismissed: false, stackNames: {} }
+    return { positions: {}, order, onboardingDismissed: false, stackNames: {}, viewport: null }
 }
 
 type Listener = { event: string; handler: (...args: unknown[]) => void }
@@ -268,7 +269,7 @@ describe('CardManager', () => {
         it('changes the hover outline drawn on cards created afterwards through loadCards', () => {
             const spritesheet = { textures: { a: { width: 200, height: 300 } } }
             manager.setResolvedTheme('dark')
-            const cards = manager.loadCards(['a'], {}, vi.fn(), spritesheet as unknown as Spritesheet) as unknown as CardShape[]
+            const cards = manager.loadCards(['a'], {}, null, vi.fn(), spritesheet as unknown as Spritesheet) as unknown as CardShape[]
 
             fire(cards[0], 'pointerover')
             expect(cards[0].highlight.strokes).toEqual([{ ...getPixiThemeColors('dark').card.hoverOutline, alignment: 0 }])
@@ -303,7 +304,7 @@ describe('CardManager', () => {
     describe('loadCards', () => {
         it('creates one card per frame name, in order, and adds each to the card layer', () => {
             const spritesheet = { textures: { a: { width: 200, height: 300 }, b: { width: 200, height: 300 } } }
-            const cards = manager.loadCards(['a', 'b'], {}, vi.fn(), spritesheet as unknown as Spritesheet)
+            const cards = manager.loadCards(['a', 'b'], {}, null, vi.fn(), spritesheet as unknown as Spritesheet)
 
             expect(cards.map((c: Card): string => c.imageUrl)).toEqual(['a', 'b'])
             expect(cardLayer.children).toEqual(cards)
@@ -311,15 +312,40 @@ describe('CardManager', () => {
 
         it('places a card at its saved position when one exists', () => {
             const spritesheet = { textures: { a: { width: 200, height: 300 } } }
-            const cards = manager.loadCards(['a'], { a: { x: 42, y: 84 } }, vi.fn(), spritesheet as unknown as Spritesheet)
+            const cards = manager.loadCards(['a'], { a: { x: 42, y: 84 } }, null, vi.fn(), spritesheet as unknown as Spritesheet)
 
             expect(cards[0].x).toBe(42)
             expect(cards[0].y).toBe(84)
         })
 
+        it('rescales restored stacks from the canvas size they were saved under', () => {
+            const spritesheet = { textures: { a: { width: 200, height: 300 }, b: { width: 200, height: 300 } } }
+            const positions = { a: { x: 200, y: 100 }, b: { x: 240, y: 160 } }
+            const cards = manager.loadCards(['a', 'b'], positions, { width: 2560, height: 1440 }, vi.fn(), spritesheet as unknown as Spritesheet)
+
+            expect(cards.map((c: Card): Position => ({ x: c.x, y: c.y }))).toEqual([{ x: 100, y: 50 }, { x: 120, y: 80 }])
+        })
+
+        it('clamps a restored stack as a whole when no saved canvas size is known', () => {
+            const spritesheet = { textures: { a: { width: 200, height: 300 }, b: { width: 200, height: 300 } } }
+            const positions = { a: { x: 1050, y: 100 }, b: { x: 1100, y: 100 } }
+            const cards = manager.loadCards(['a', 'b'], positions, null, vi.fn(), spritesheet as unknown as Spritesheet)
+
+            expect(cards.map((c: Card): number => c.x)).toEqual([1030, 1080])
+        })
+
+        it('centers a card added since the last save without rescaling it like the restored ones', () => {
+            vi.spyOn(Math, 'random').mockReturnValue(0.5)
+            const spritesheet = { textures: { a: { width: 200, height: 300 }, b: { width: 200, height: 300 } } }
+            const cards = manager.loadCards(['a', 'b'], { a: { x: 200, y: 100 } }, { width: 2560, height: 1440 }, vi.fn(), spritesheet as unknown as Spritesheet)
+
+            expect({ x: cards[1].x, y: cards[1].y }).toEqual({ x: (app.screen.width - 200) / 2, y: (app.screen.height - 300) / 2 })
+            vi.restoreAllMocks()
+        })
+
         it('centers a card with jitter when it has no saved position', () => {
             const spritesheet = { textures: { a: { width: 200, height: 300 } } }
-            const cards = manager.loadCards(['a'], {}, vi.fn(), spritesheet as unknown as Spritesheet)
+            const cards = manager.loadCards(['a'], {}, null, vi.fn(), spritesheet as unknown as Spritesheet)
 
             const centerX = (app.screen.width - cards[0].width) / 2
             const centerY = (app.screen.height - cards[0].height) / 2
@@ -333,7 +359,7 @@ describe('CardManager', () => {
     describe('updateTextures', () => {
         it('swaps each card\'s sprite texture for the frame matching its imageUrl in the new spritesheet', () => {
             const spritesheet = { textures: { a: { width: 200, height: 300 }, b: { width: 200, height: 300 } } }
-            const cards = manager.loadCards(['a', 'b'], {}, vi.fn(), spritesheet as unknown as Spritesheet) as unknown as Array<
+            const cards = manager.loadCards(['a', 'b'], {}, null, vi.fn(), spritesheet as unknown as Spritesheet) as unknown as Array<
                 Container & { imageUrl: string; innerSprite: { texture: unknown } }
             >
             const newTexture = { width: 200, height: 300 }
@@ -347,7 +373,7 @@ describe('CardManager', () => {
 
         it('leaves a card\'s texture untouched when the new spritesheet has no frame for its imageUrl', () => {
             const spritesheet = { textures: { a: { width: 200, height: 300 } } }
-            const cards = manager.loadCards(['a'], {}, vi.fn(), spritesheet as unknown as Spritesheet) as unknown as Array<
+            const cards = manager.loadCards(['a'], {}, null, vi.fn(), spritesheet as unknown as Spritesheet) as unknown as Array<
                 Container & { imageUrl: string; innerSprite: { texture: unknown } }
             >
             const originalTexture = cards[0].innerSprite.texture
@@ -361,7 +387,7 @@ describe('CardManager', () => {
     describe('updateShadows', () => {
         it('restyles each card\'s shadow with the newly resolved theme', () => {
             const spritesheet = { textures: { a: { width: 200, height: 300 } } }
-            const cards = manager.loadCards(['a'], {}, vi.fn(), spritesheet as unknown as Spritesheet) as unknown as CardShape[]
+            const cards = manager.loadCards(['a'], {}, null, vi.fn(), spritesheet as unknown as Spritesheet) as unknown as CardShape[]
 
             manager.setResolvedTheme('dark')
             manager.updateShadows(cards as unknown as Card[])
@@ -375,7 +401,7 @@ describe('CardManager', () => {
     describe('updateLifts', () => {
         it('eases a dragged card upward over frames instead of jumping', () => {
             const spritesheet = { textures: { a: { width: 200, height: 300 } } }
-            const cards = manager.loadCards(['a'], {}, vi.fn(), spritesheet as unknown as Spritesheet) as unknown as CardShape[]
+            const cards = manager.loadCards(['a'], {}, null, vi.fn(), spritesheet as unknown as Spritesheet) as unknown as CardShape[]
             cards[0].lift.reasons.add('drag')
 
             manager.updateLifts(cards as unknown as Card[], 1)
@@ -387,7 +413,7 @@ describe('CardManager', () => {
         it('raises the card in a single frame when the user prefers reduced motion', () => {
             vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({ matches: true }))
             const spritesheet = { textures: { a: { width: 200, height: 300 } } }
-            const cards = manager.loadCards(['a'], {}, vi.fn(), spritesheet as unknown as Spritesheet) as unknown as CardShape[]
+            const cards = manager.loadCards(['a'], {}, null, vi.fn(), spritesheet as unknown as Spritesheet) as unknown as CardShape[]
             cards[0].lift.reasons.add('drag')
 
             manager.updateLifts(cards as unknown as Card[], 1)
@@ -419,13 +445,13 @@ describe('CardManager', () => {
             expect(card.y).toBe(300)
         })
 
-        it('clamps a saved position that violates the handle top clearance', () => {
+        it('leaves a saved position unclamped, since loadCards clamps restored stacks as a whole', () => {
             const card = makeCard('a', 0, 0)
 
             manager.placeCard(card, { x: 15, y: 0 })
 
             expect(card.x).toBe(15)
-            expect(card.y).toBe(STACK_HANDLE_TOP_CLEARANCE)
+            expect(card.y).toBe(0)
         })
 
         it('centers with jitter when no saved position is provided', () => {
@@ -442,34 +468,89 @@ describe('CardManager', () => {
         })
     })
 
-    describe('repositionForResize', () => {
-        it('rescales, applies the resize ratio, and constrains the card within the new viewport', () => {
-            const card = makeCard('a', 100, 100, 200, 300)
-            const setSpy = vi.fn()
-            ;(card as unknown as { scale: { set: typeof setSpy } }).scale = { set: setSpy }
+    describe('rescaleStacks', () => {
+        it('rescales every card to the current canvas width', () => {
+            const card = makeCard('a', 100, 100)
 
-            manager.repositionForResize(card, 2, 2, 1000, 1000)
+            manager.rescaleStacks([[card]], 2, 2)
 
-            expect(setSpy).toHaveBeenCalledWith(app.screen.width / CARD_REFERENCE_WIDTH)
-            expect(card.x).toBe(200)
-            expect(card.y).toBe(200)
+            expect(card.scale.set).toHaveBeenCalledWith(app.screen.width / CARD_REFERENCE_WIDTH)
         })
 
-        it('clamps the card back inside the viewport when the resize would push it out of bounds', () => {
-            const card = makeCard('a', 900, 900, 200, 300)
+        it('moves the stack origin with the height ratio but keeps the gaps between its cards, which follow the card scale', () => {
+            const a = makeCard('a', 100, 100)
+            const b = makeCard('b', 140, 160)
 
-            manager.repositionForResize(card, 1, 1, 1000, 1000)
+            manager.rescaleStacks([[a, b]], 1, 0.5)
 
-            expect(card.x).toBeLessThanOrEqual(1000 - card.width)
-            expect(card.y).toBeLessThanOrEqual(1000 - card.height)
+            expect({ x: a.x, y: a.y }).toEqual({ x: 100, y: 50 })
+            expect({ x: b.x, y: b.y }).toEqual({ x: 140, y: 110 })
         })
 
-        it('keeps the handle top clearance when shrinking the window pushes the card toward the top', () => {
-            const card = makeCard('a', 100, 100, 200, 300)
+        it('scales the vertical gaps between cards with the width ratio, like the cards themselves', () => {
+            const a = makeCard('a', 400, 200)
+            const b = makeCard('b', 440, 260)
 
-            manager.repositionForResize(card, 1, 0.1, 1000, 1000)
+            manager.rescaleStacks([[a, b]], 0.5, 1)
 
-            expect(card.y).toBe(STACK_HANDLE_TOP_CLEARANCE)
+            expect({ x: a.x, y: a.y }).toEqual({ x: 200, y: 200 })
+            expect({ x: b.x, y: b.y }).toEqual({ x: 220, y: 230 })
+        })
+
+        it('clamps a stack pushed past an edge as a whole, keeping its shape', () => {
+            const a = makeCard('a', 1050, 100)
+            const b = makeCard('b', 1100, 100)
+
+            manager.rescaleStacks([[a, b]], 1, 1)
+
+            expect(a.x).toBe(1030)
+            expect(b.x).toBe(1080)
+        })
+
+        it('clamps each card of a stack taller than the canvas, so none ends up off-canvas', () => {
+            const a = makeCard('a', 100, 40)
+            const b = makeCard('b', 100, 400)
+
+            manager.rescaleStacks([[a, b]], 1, 1)
+
+            for (const card of [a, b]) {
+                expect(card.y).toBeGreaterThanOrEqual(STACK_HANDLE_TOP_CLEARANCE)
+                expect(card.y + card.height).toBeLessThanOrEqual(app.screen.height)
+            }
+        })
+
+        it('clamps each stack on its own, leaving a stack already inside the canvas where the ratios put it', () => {
+            const inside = makeCard('a', 100, 100)
+            const pastEdge = makeCard('b', 1200, 100)
+
+            manager.rescaleStacks([[inside], [pastEdge]], 1, 1)
+
+            expect(inside.x).toBe(100)
+            expect(pastEdge.x).toBe(app.screen.width - pastEdge.width)
+        })
+    })
+
+    describe('rescaleFromViewport', () => {
+        it('rescales stacks by the ratio between the current canvas and the saved size', () => {
+            const a = makeCard('a', 200, 100)
+            const b = makeCard('b', 240, 160)
+
+            manager.rescaleFromViewport([[a, b]], { width: 2560, height: 1440 })
+
+            expect({ x: a.x, y: a.y }).toEqual({ x: 100, y: 50 })
+            expect({ x: b.x, y: b.y }).toEqual({ x: 120, y: 80 })
+        })
+
+        it('only clamps stacks as a whole when the saved size is unknown', () => {
+            const inside = makeCard('a', 100, 100)
+            const a = makeCard('b', 1050, 100)
+            const b = makeCard('c', 1100, 100)
+
+            manager.rescaleFromViewport([[inside], [a, b]], null)
+
+            expect({ x: inside.x, y: inside.y }).toEqual({ x: 100, y: 100 })
+            expect(a.x).toBe(1030)
+            expect(b.x).toBe(1080)
         })
     })
 

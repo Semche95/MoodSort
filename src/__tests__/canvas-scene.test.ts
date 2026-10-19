@@ -8,6 +8,7 @@ import { applyCanvasBackgroundTheme, createCanvasBackground, resizeCanvasBackgro
 import { startDragHint } from '../features/onboarding/drag-hint'
 import { getPixiThemeColors } from '../features/theme/pixi-theme-colors'
 import type { StackShadow } from '../types/stack-shadow.types'
+import { CardState } from '../types/card-state.types'
 
 const { mockSpritesheet } = vi.hoisted(() => {
     const mockTexture = { width: 200, height: 300 }
@@ -78,7 +79,11 @@ vi.mock('pixi.js', () => {
         cursor: string = 'default'
         hitArea: unknown = null
         label: string = ''
-        scale: { set(v: number): void } = { set: vi.fn() }
+        scale: { x: number; y: number; set(v: number): void } = {
+            x: 1,
+            y: 1,
+            set: vi.fn(function set(this: { x: number; y: number }, v: number): void { this.x = v; this.y = v }),
+        }
         position: { set(x: number, y: number): void } = {
             set: (x: number, y: number): void => {
                 this.x = x
@@ -177,6 +182,7 @@ function seedStore(): CardStateService {
         order: ['card-a', 'card-b'],
         onboardingDismissed: false,
         stackNames: {},
+        viewport: null,
     })
     return store
 }
@@ -349,6 +355,91 @@ describe('CanvasScene', () => {
 
         expect(onResize).toHaveBeenCalledTimes(1)
         expect(a.x).toBe(originalX * (1600 / oldWidth))
+    })
+
+    describe('layout across window sizes', () => {
+        type LayoutScene = { cards: Card[]; stacks: Card[][]; stackNames: Record<string, string>; isCompacting: boolean }
+
+        async function setupLayout(state: Partial<CardState>): Promise<{ scene: CanvasScene; testable: LayoutScene; store: CardStateService }> {
+            const store = new CardStateService(new InMemoryStore())
+            store.save({ positions: {}, order: ['card-a', 'card-b'], onboardingDismissed: false, stackNames: {}, viewport: null, ...state })
+            const scene = new CanvasScene(store, historyStore)
+            await scene.init(['card-a', 'card-b'], mockSpritesheet as unknown as Spritesheet)
+            return { scene, testable: scene as unknown as LayoutScene, store }
+        }
+
+        function resizeWindow(scene: CanvasScene, width: number, height: number): void {
+            Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: width })
+            Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: height })
+            ;(scene as unknown as { handleResize: () => void }).handleResize()
+        }
+
+        // On the 768-tall jsdom window these two 300-tall cards stand apart; at 400 tall, the bottom clamp pushes card-b onto card-a.
+        const APART = { 'card-a': { x: 100, y: 100 }, 'card-b': { x: 100, y: 420 } }
+
+        it('recomputes stacks once a resize clamps two cards into one pile', async () => {
+            const { scene, testable } = await setupLayout({ positions: APART })
+            expect(testable.stacks).toHaveLength(2)
+
+            resizeWindow(scene, 1024, 400)
+
+            expect(testable.stacks).toHaveLength(1)
+        })
+
+        it('fuses the names of two named stacks a resize clamps together into one undoable entry, however many resize events follow', async () => {
+            const { scene, testable } = await setupLayout({ positions: APART, stackNames: { 'card-a': 'Joie', 'card-b': 'Calme' } })
+
+            resizeWindow(scene, 1024, 400)
+            resizeWindow(scene, 1024, 390)
+
+            expect(testable.stackNames).toEqual({ 'card-a': 'Joie + Calme' })
+            scene.undo()
+            expect(testable.stackNames).toEqual({ 'card-a': 'Joie', 'card-b': 'Calme' })
+            expect(scene.canUndo).toBe(false)
+        })
+
+        it('leaves stacks to the gesture in progress when a resize happens mid-gesture', async () => {
+            const { scene, testable } = await setupLayout({ positions: APART, stackNames: { 'card-a': 'Joie', 'card-b': 'Calme' } })
+            testable.isCompacting = true
+
+            resizeWindow(scene, 1024, 400)
+
+            expect(testable.stacks).toHaveLength(2)
+            expect(testable.stackNames).toEqual({ 'card-a': 'Joie', 'card-b': 'Calme' })
+        })
+
+        it('saves the positions along with the new canvas size on resize', async () => {
+            const { scene, store } = await setupLayout({ positions: APART })
+
+            resizeWindow(scene, 1024, 400)
+
+            expect(store.load('viewport')).toEqual({ width: 1024, height: 400 })
+        })
+
+        it('rescales restored positions from the canvas size they were saved under, then saves them with the current one', async () => {
+            const { testable, store } = await setupLayout({
+                positions: { 'card-a': { x: 200, y: 200 }, 'card-b': { x: 800, y: 200 } },
+                viewport: { width: 2048, height: 1536 },
+            })
+
+            expect(testable.cards.map((c: Card): { x: number; y: number } => ({ x: c.x, y: c.y }))).toEqual([
+                { x: 100, y: 100 },
+                { x: 400, y: 100 },
+            ])
+            expect(store.load('positions')).toEqual({ 'card-a': { x: 100, y: 100 }, 'card-b': { x: 400, y: 100 } })
+            expect(store.load('viewport')).toEqual({ width: 1024, height: 768 })
+        })
+
+        it('fuses the names of named stacks restored onto each other, without an undo entry', async () => {
+            const { scene, testable, store } = await setupLayout({
+                positions: { 'card-a': { x: 100, y: 100 }, 'card-b': { x: 110, y: 110 } },
+                stackNames: { 'card-a': 'Joie', 'card-b': 'Calme' },
+            })
+
+            expect(testable.stackNames).toEqual({ 'card-a': 'Joie + Calme' })
+            expect(store.load('stackNames')).toEqual({ 'card-a': 'Joie + Calme' })
+            expect(scene.canUndo).toBe(false)
+        })
     })
 
     it('mounts the background sprite on the stage below the card layer, baked by the app renderer at the screen size', async () => {

@@ -2,6 +2,7 @@ import { Application, Container, FederatedPointerEvent, Spritesheet } from 'pixi
 import { Card } from '../types/card.types'
 import { AnimationTarget } from '../types/animation.types'
 import { ResolvedTheme } from '../types/theme.types'
+import { ViewportSize } from '../types/viewport-size.types'
 import type { Locale } from '../i18n/i18n.types'
 import { loadCardAtlasSpritesheet } from '../i18n/card-atlas'
 import type { ThemeService } from '../features/theme/theme-service'
@@ -60,7 +61,7 @@ export class CanvasScene {
         this.resolvedTheme = themeService?.getResolvedTheme() ?? 'light'
         this.locale = locale
         this.stackShadow = createStackShadow(getPixiThemeColors(this.resolvedTheme).card.stackShadow)
-        this.positionPersistence = new PositionPersistence(store)
+        this.positionPersistence = new PositionPersistence(store, (): ViewportSize => this.viewport)
         this.cardManager = new CardManager(this.app, this.cardLayer)
         this.cardManager.setResolvedTheme(this.resolvedTheme)
         this.actionHistory = new ActionHistory(historyStore, (): void => {
@@ -178,18 +179,15 @@ export class CanvasScene {
         const saved = this.positionPersistence.load()
         const ordered = this.cardManager.resolveOrder(frameNames, saved)
         this.stackNames = saved.stackNames
-        this.positionPersistence.save({
-            positions: saved.positions,
-            order: ordered,
-            onboardingDismissed: saved.onboardingDismissed,
-            stackNames: saved.stackNames,
-        })
 
-        this.cards = this.cardManager.loadCards(ordered, saved.positions, this.handleCardPointerDown, spritesheet)
+        this.cards = this.cardManager.loadCards(ordered, saved.positions, saved.viewport, this.handleCardPointerDown, spritesheet)
         if (this.positionPersistence.wasMigrated) {
             this.actionHistory.clear()
         }
         this.stacks = computeStacks(this.cards)
+        // Restoring into a differently sized window can clamp named stacks together; no history entry, since the user didn't act.
+        resolveNameMerges(this.stacks, this.cardLayer, this.stackNames)
+        this.positionPersistence.saveFromStage(this.cardLayer, this.stackNames)
 
         this.overlay.addToStage()
         this.dragHandler.wireStageHandlers()
@@ -264,6 +262,10 @@ export class CanvasScene {
         }
         this.positionPersistence.saveFromStage(this.cardLayer, this.stackNames)
         this.stacks = computeStacks(this.cards)
+    }
+
+    private get viewport(): ViewportSize {
+        return { width: this.app.screen.width, height: this.app.screen.height }
     }
 
     /** Nudges the top card out of the pile to show cards can be moved; offered once, when a first-time visitor closes the onboarding. */
@@ -388,8 +390,10 @@ export class CanvasScene {
             resizeCanvasBackground(this.background, newWidth, newHeight)
         }
 
-        for (const card of this.cards) {
-            this.cardManager.repositionForResize(card, ratioX, ratioY, newWidth, newHeight)
+        this.cardManager.rescaleStacks(computeStacks(this.cards), ratioX, ratioY)
+        // A drag or compact in progress resolves stacks itself when it ends, against the stacks it started from.
+        if (!this.isBusy) {
+            this.recomputeStacks()
         }
 
         this.positionPersistence.saveFromStage(this.cardLayer, this.stackNames)

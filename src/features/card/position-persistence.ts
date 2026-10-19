@@ -1,7 +1,8 @@
 import { Container } from 'pixi.js'
 import { Card } from '../../types/card.types'
-import { CardState, POSITIONS_KEY, ORDER_KEY, ONBOARDING_KEY, STACK_NAMES_KEY } from '../../types/card-state.types'
+import { CardState, POSITIONS_KEY, ORDER_KEY, ONBOARDING_KEY, STACK_NAMES_KEY, VIEWPORT_KEY } from '../../types/card-state.types'
 import { Position } from '../../types/position.types'
+import { ViewportSize } from '../../types/viewport-size.types'
 import { CardStateService } from './card-state-service'
 
 const URL_PREFIX_RE = /^\/assets\/(.+)-[A-Za-z0-9_-]+\.webp$/
@@ -39,10 +40,12 @@ function migrateKeys(
 
 export class PositionPersistence {
     private store: CardStateService
+    private getViewport: () => ViewportSize
     private migrated: boolean = false
 
-    constructor(store: CardStateService) {
+    constructor(store: CardStateService, getViewport: () => ViewportSize) {
         this.store = store
+        this.getViewport = getViewport
     }
 
     save(state: CardState): void {
@@ -59,13 +62,20 @@ export class PositionPersistence {
                 order.push(card.imageUrl)
             }
         }
-        this.store.save({ positions, order, onboardingDismissed: this.store.load(ONBOARDING_KEY), stackNames })
+        this.store.save({
+            positions,
+            order,
+            onboardingDismissed: this.store.load(ONBOARDING_KEY),
+            stackNames,
+            viewport: this.getViewport(),
+        })
     }
 
     load(): CardState {
         const rawPositions = this.store.load(POSITIONS_KEY)
         const rawOrder = this.store.load(ORDER_KEY)
         const stackNames = this.store.load(STACK_NAMES_KEY)
+        const viewport = this.store.load(VIEWPORT_KEY)
         const { positions, order, migrated } = migrateKeys(rawPositions, rawOrder)
         if (migrated) {
             this.migrated = true
@@ -74,6 +84,7 @@ export class PositionPersistence {
                 order,
                 onboardingDismissed: this.store.load(ONBOARDING_KEY),
                 stackNames,
+                viewport,
             })
         }
         return {
@@ -81,6 +92,7 @@ export class PositionPersistence {
             order,
             onboardingDismissed: this.store.load(ONBOARDING_KEY),
             stackNames,
+            viewport,
         }
     }
 
@@ -94,6 +106,7 @@ export class PositionPersistence {
             order: [],
             onboardingDismissed: this.store.load(ONBOARDING_KEY),
             stackNames: {},
+            viewport: null,
         })
     }
 }
