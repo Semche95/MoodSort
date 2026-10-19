@@ -132,6 +132,7 @@ export class StackSpread {
     addToStage(): void {
         this.app.stage.addChild(this.view)
         this.app.stage.on('pointermove', this.handleStagePointerMove)
+        this.app.stage.on('pointerleave', this.handleStagePointerLeave)
         this.app.stage.on('pointerup', this.handleStagePointerUp)
         this.app.stage.on('pointerupoutside', this.handleStagePointerUp)
         this.app.stage.on('wheel', this.handleWheel)
@@ -313,6 +314,10 @@ export class StackSpread {
             return
         }
         this.deps.onCardGrab(grab.card, e, grab.grabOffset)
+    }
+
+    private handleStagePointerLeave: () => void = (): void => {
+        this.pointer = null
     }
 
     private handleStagePointerUp: () => void = (): void => {

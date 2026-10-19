@@ -315,6 +315,19 @@ describe('StackSpread', () => {
             expect(outlined()).toBeUndefined()
         })
 
+        it('drops the hover outline once the pointer leaves the canvas', () => {
+            const { spread, stage, tick } = openDeck()
+            const cell = computeSpreadCellBox(computeStackSpreadLayout(85, SCREEN, CARD_WIDTH, CARD_RATIO), 0)
+            const outlined = (): boolean => spread['items'].some((item: StackSpreadItem): boolean => item.highlight.visible)
+
+            stage.emit('pointermove', makeEvent(cell.x + 10, cell.y + 10))
+            tick()
+            expect(outlined()).toBe(true)
+            stage.emit('pointerleave', {})
+            tick()
+            expect(outlined()).toBe(false)
+        })
+
         it('ignores the wheel while closed', () => {
             const { spread, stage } = openDeck()
             spread.close()
