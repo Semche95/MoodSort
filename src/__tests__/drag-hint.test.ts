@@ -3,8 +3,6 @@ import type { Container, Ticker } from 'pixi.js'
 import {
     HINT_DELAY_MS,
     HINT_NUDGE_MS,
-    HINT_PAUSE_MS,
-    HINT_REPEATS,
     HINT_SHIFT_X,
     HINT_SHIFT_Y,
     hintSlideAt,
@@ -73,21 +71,13 @@ describe('nudgeSlideAt', () => {
 })
 
 describe('hintSlideAt', () => {
-    const cycle = HINT_NUDGE_MS + HINT_PAUSE_MS
-    const middle = HINT_NUDGE_MS * 0.45
-
     it('waits out the initial delay with the card in place', () => {
         expect(hintSlideAt(HINT_DELAY_MS - 1)).toBe(0)
     })
 
-    it('rests in place during the pause between nudges', () => {
-        expect(hintSlideAt(HINT_DELAY_MS + HINT_NUDGE_MS + HINT_PAUSE_MS / 2)).toBe(0)
-    })
-
-    it('plays every repeat, then reports the hint as finished', () => {
-        expect(hintSlideAt(HINT_DELAY_MS + middle)).toBe(1)
-        expect(hintSlideAt(HINT_DELAY_MS + cycle * (HINT_REPEATS - 1) + middle)).toBe(1)
-        expect(hintSlideAt(HINT_DELAY_MS + cycle * HINT_REPEATS)).toBeNull()
+    it('plays a single nudge, then reports the hint as finished', () => {
+        expect(hintSlideAt(HINT_DELAY_MS + HINT_NUDGE_MS * 0.45)).toBe(1)
+        expect(hintSlideAt(HINT_DELAY_MS + HINT_NUDGE_MS)).toBeNull()
     })
 })
 
@@ -127,8 +117,8 @@ describe('tickDragHint', () => {
         expect(card.lift.reasons.has('hint')).toBe(false)
     })
 
-    it('stops itself once every nudge has played', () => {
-        const ticker = makeTicker(HINT_DELAY_MS + (HINT_NUDGE_MS + HINT_PAUSE_MS) * HINT_REPEATS)
+    it('stops itself once the nudge has played', () => {
+        const ticker = makeTicker(HINT_DELAY_MS + HINT_NUDGE_MS)
         const hint = startDragHint(ticker, makeStage(), makeCard())
 
         tickDragHint(hint)

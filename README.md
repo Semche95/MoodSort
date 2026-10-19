@@ -23,7 +23,7 @@ The app's detailed behavior and business rules live in [BEHAVIOR.md](BEHAVIOR.md
 - Canvas sharing over peer-to-peer WebRTC: toggle it from the toolbar to get a shareable room link, no signup or account needed. This streams the app's canvas only, not the viewer's whole screen
 - Fullscreen toggle (toolbar button, hidden when the browser lacks the Fullscreen API); the whole page goes fullscreen so modals stay usable, and leaving with Escape is reflected on the button
 - Settings modal (toolbar button) with a confirmation-gated "reset positions" action
-- First-time onboarding overlay; right after it is first closed, the top card slides out of the pile and back twice to show cards can be moved (skipped with `prefers-reduced-motion`)
+- First-time onboarding overlay; right after it is first closed, the top card slides out of the pile and back once to show cards can be moved (skipped with `prefers-reduced-motion`)
 - Footer link to a legal notices modal (LCEN)
 - Everything except an active screen share stays in the browser: nothing else is sent or stored externally
 - Multi-language UI with browser auto-detection and a toolbar language picker; the choice is persisted across sessions

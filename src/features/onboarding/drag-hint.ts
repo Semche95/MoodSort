@@ -7,8 +7,6 @@ import { prefersReducedMotion } from '../../shared/utils/reduced-motion'
 /** Just enough for the eye to land on the pile once the canvas is uncovered */
 export const HINT_DELAY_MS: number = 500
 export const HINT_NUDGE_MS: number = 1400
-export const HINT_PAUSE_MS: number = 2000
-export const HINT_REPEATS: number = 2
 /** How far the card slides out of the pile, as a share of its own size */
 export const HINT_SHIFT_X: number = 0.35
 export const HINT_SHIFT_Y: number = -0.08
@@ -43,17 +41,16 @@ export function nudgeSlideAt(elapsedMs: number): number {
     return 1 - easeInOutCubic((t - SLIDE_BACK_START) / (1 - SLIDE_BACK_START))
 }
 
-/** Slide share over the whole hint (delay, then each nudge followed by a pause), or null once every nudge has played. */
+/** Slide share over the whole hint (delay, then a single nudge), or null once the nudge has played. */
 export function hintSlideAt(elapsedMs: number): number | null {
     const sinceStart = elapsedMs - HINT_DELAY_MS
     if (sinceStart < 0) {
         return 0
     }
-    const cycle = HINT_NUDGE_MS + HINT_PAUSE_MS
-    if (Math.floor(sinceStart / cycle) >= HINT_REPEATS) {
+    if (sinceStart >= HINT_NUDGE_MS) {
         return null
     }
-    return nudgeSlideAt(sinceStart % cycle)
+    return nudgeSlideAt(sinceStart)
 }
 
 export function tickDragHint(hint: DragHint): void {
@@ -81,7 +78,7 @@ export function stopDragHint(hint: DragHint): void {
     lowerCard(hint.card, 'hint')
 }
 
-/** Nudges `card` out of the pile and back a few times, until the first pointer down anywhere on the canvas. */
+/** Nudges `card` out of the pile and back once, unless stopped by the first pointer down anywhere on the canvas. */
 export function startDragHint(ticker: Ticker, stage: Container, card: Card): DragHint {
     const hint: DragHint = {
         ticker,
