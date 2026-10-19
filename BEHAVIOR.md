@@ -26,7 +26,7 @@ How the app behaves and the business rules it must keep. The README covers setup
 
 ## Moving cards and stacks
 
-- Pressing a card carries that card; pressing a stack's grip or frame, or anywhere within its frame with Ctrl/Cmd held (cards and gaps between them alike, but not its rename or re-gather buttons, which keep their own action), carries the whole stack. Where frames overlap, the card on top decides which stack. This is decided once, at press time.
+- Pressing a card carries that card; pressing a stack's grip, or anywhere within its frame with Ctrl/Cmd held (cards and gaps between them alike, but not its rename or re-gather buttons, which keep their own action), carries the whole stack. Where frames overlap, the card on top decides which stack. This is decided once, at press time.
 - While Ctrl/Cmd is held anywhere a press would carry a stack, with no drag or re-gathering under way, its grip lights up (hover chip, accent dots) and the cursor is a grab hand. Both follow the key as it goes down or up under a still pointer, and turn off when the window loses focus. Hovering the grip alone does not light it.
 - Cards and stack frames under a toolbar button are out of the pointer's reach: no card outline, no stack hover, and Ctrl/Cmd arms nothing there. The logo and wordmark leave the cards under them within reach.
 - The cursor stays a closed hand for as long as a stack is carried, whatever passes under it.
