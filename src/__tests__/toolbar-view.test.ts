@@ -225,8 +225,8 @@ describe('toolbar-view', () => {
         const logo = createLogo('dark') as unknown as { children: Array<{ style: { fill?: number } }> }
         const [emoji, title] = logo.children
 
-        expect(emoji.style.fill).toBe(0xf2f2f2)
-        expect(title.style.fill).toBe(0xf0f0f0)
+        expect(emoji.style.fill).toBe(0xf3dccb)
+        expect(title.style.fill).toBe(0xf3dccb)
     })
 
     it('draws button state views with the dark theme palette when built for the dark theme', () => {
@@ -236,10 +236,10 @@ describe('toolbar-view', () => {
             options: { defaultView: { fillColor: number }; hoverView: { fillColor: number }; pressedView: { fillColor: number }; disabledView: { fillColor: number } }
         }
 
-        expect(button.options.defaultView.fillColor).toBe(0x76767f)
-        expect(button.options.hoverView.fillColor).toBe(0x82828c)
-        expect(button.options.pressedView.fillColor).toBe(0x44444c)
-        expect(button.options.disabledView.fillColor).toBe(0x76767f)
+        expect(button.options.defaultView.fillColor).toBe(0x4a4350)
+        expect(button.options.hoverView.fillColor).toBe(0x564e5d)
+        expect(button.options.pressedView.fillColor).toBe(0x352f3a)
+        expect(button.options.disabledView.fillColor).toBe(0x4a4350)
     })
 
     it('tints the share button icon and its status dots with the dark theme palette', () => {

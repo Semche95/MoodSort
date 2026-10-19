@@ -100,7 +100,7 @@ src/
   app/          # Composition root: entry point, canvas scene
   features/     # One folder per feature: card, drag, stack, history,
                 # toolbar, onboarding, settings, footer, screen-share, theme,
-                # screen-size, fullscreen
+                # screen-size, fullscreen, background
   shared/       # Cross-feature UI widgets and utilities: icons (used app-wide),
                 # tooltip, loading overlay, geometry, localStorage wrapper
   types/        # One file per domain type (card, drag, stack, history, etc.)
@@ -134,6 +134,8 @@ Each stack can also carry a name. A dedicated button next to the drag handle, sh
 `ActionHistory` snapshots positions and z-index before/after each drag (one mousedown→mouseup = one action), keeping up to 15 undo entries plus a redo stack, both persisted. Any new action clears redo. Both `DragHandler` and `StackDragManager` feed it; `CanvasScene` exposes `undo()`, `redo()`, `canUndo`/`canRedo`, and a history-change callback for the toolbar.
 
 ### Toolbar
+
+The canvas backdrop (`src/features/background/`) is a full-screen Pixi sprite below the card layer. Its texture is baked by a fragment shader from the theme palette: a warm base color, a central halo, two soft colored glows in opposite corners and a grain. The shader computes every physical pixel in float and dithers it right before the 8-bit output, since faint dark-theme glows only span a dozen color levels and visibly band if rounded earlier (canvas gradients, resampled textures). It only runs at startup, on resize (window resize or browser zoom, each one baking into a fresh texture at the new size), on theme change and after a WebGL context restore; every other frame just draws the baked texture, so low-end GPUs pay no more than for a plain image. Being part of the canvas, it's included in a screen share.
 
 `TopToolbar` renders directly on the Pixi canvas rather than as HTML: a logo on the left, and undo/redo/help/language/fullscreen/settings buttons on the right that stay pinned on resize. The fullscreen button (`src/features/fullscreen/`) only appears when the Fullscreen API (standard or `webkit`-prefixed) is available; it targets `document.documentElement` rather than the canvas so DOM modals remain visible, its icon and label follow `fullscreenchange` only (so an exit via Escape is picked up), and fullscreen is never restored on load since browsers require a user gesture. Entering or leaving fullscreen goes through the same `window` resize handling as any other viewport change, and an active canvas share keeps streaming at the new canvas size. Hovering a button shows a `CanvasTooltip`, a small reusable rounded label. Keyboard shortcuts (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, Ctrl/Cmd+Y) are wired independently in `initHistoryShortcuts`. The settings button opens a modal (`createSettingsModal`) with an appearance section (a Light/Dark/Auto theme toggle backed by `ThemeService`) and a cards section whose only action is resetting all card positions, gated behind a confirmation step.
 

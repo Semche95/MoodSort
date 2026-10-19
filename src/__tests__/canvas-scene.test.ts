@@ -4,6 +4,7 @@ import { CanvasScene } from '../app/canvas-scene'
 import { CardStateService } from '../features/card/card-state-service'
 import { InMemoryStore } from './in-memory-store'
 import { Card } from '../types/card.types'
+import { applyCanvasBackgroundTheme, createCanvasBackground, resizeCanvasBackground } from '../features/background/canvas-background'
 
 const { mockSpritesheet } = vi.hoisted(() => {
     const mockTexture = { width: 200, height: 300 }
@@ -21,6 +22,12 @@ vi.mock('../i18n/card-atlas', () => ({
     loadCardAtlasSpritesheet: vi.fn().mockResolvedValue(mockSpritesheet),
 }))
 
+vi.mock('../features/background/canvas-background', () => ({
+    createCanvasBackground: vi.fn(() => ({ sprite: { label: 'canvas-background' } })),
+    resizeCanvasBackground: vi.fn(),
+    applyCanvasBackgroundTheme: vi.fn(),
+}))
+
 vi.mock('pixi.js', () => {
     const tickers: Array<() => void> = []
     const mockApp: Record<string, unknown> = {
@@ -32,6 +39,7 @@ vi.mock('pixi.js', () => {
                 ;(mockApp.screen as { width: number; height: number }).height = h
             }),
             background: { color: 0 },
+            resolution: 2,
         },
         ticker: {
             add: (fn: () => void): void => {
@@ -146,7 +154,7 @@ async function importMockedPixi(): Promise<{ __getMockApp: () => Record<string, 
 interface TestableScene {
     cards: Card[]
     cardLayer: { children: unknown[] }
-    app: { stage: { children: unknown[] } }
+    app: { stage: { children: unknown[] }; renderer: unknown }
 }
 
 function seedStore(): CardStateService {
@@ -210,7 +218,7 @@ describe('CanvasScene', () => {
 
         scene.applyTheme('dark')
 
-        expect(mockApp.renderer.background.color).toBe(0x1e1e1e)
+        expect(mockApp.renderer.background.color).toBe(0x24202a)
     })
 
     it('resolves the initial theme from the provided ThemeService and applies it once init resolves', async () => {
@@ -228,11 +236,11 @@ describe('CanvasScene', () => {
         const pixi = await importMockedPixi()
         const mockApp = pixi.__getMockApp() as unknown as { renderer: { background: { color: number } } }
 
-        expect(mockApp.renderer.background.color).toBe(0x1e1e1e)
+        expect(mockApp.renderer.background.color).toBe(0x24202a)
 
         listener?.('light')
 
-        expect(mockApp.renderer.background.color).toBe(0xa9a9a9)
+        expect(mockApp.renderer.background.color).toBe(0xcdbfad)
     })
 
     it('reloads the atlas for the scene\'s locale and swaps every card texture when the theme changes', async () => {
@@ -268,6 +276,12 @@ describe('CanvasScene', () => {
 
         expect(scene.screenWidth).toBe(window.innerWidth)
         expect(scene.screenHeight).toBe(window.innerHeight)
+    })
+
+    it('exposes the renderer resolution so textures can be rasterized at the physical pixel density', async () => {
+        const { scene } = await setup()
+
+        expect(scene.resolution).toBe(2)
     })
 
     it('resetPositions clears undo/redo history and animates every card away from its saved position', async () => {
@@ -323,4 +337,35 @@ describe('CanvasScene', () => {
         expect(onResize).toHaveBeenCalledTimes(1)
         expect(a.x).toBe(originalX * (1600 / oldWidth))
     })
+
+    it('mounts the background sprite on the stage below the card layer, baked by the app renderer at the screen size', async () => {
+        const { scene, testable } = await setup()
+        const background = vi.mocked(createCanvasBackground).mock.results[0].value as { sprite: unknown }
+        const children = testable.app.stage.children
+
+        expect(createCanvasBackground).toHaveBeenLastCalledWith(testable.app.renderer, scene.screenWidth, scene.screenHeight, 'light')
+        expect(children.indexOf(background.sprite)).toBeGreaterThanOrEqual(0)
+        expect(children.indexOf(background.sprite)).toBeLessThan(children.indexOf(testable.cardLayer))
+    })
+
+    it('switches the background to the new theme on applyTheme', async () => {
+        const { scene } = await setup()
+        const background = vi.mocked(createCanvasBackground).mock.results[0].value
+
+        scene.applyTheme('dark')
+
+        expect(applyCanvasBackgroundTheme).toHaveBeenLastCalledWith(background, 'dark')
+    })
+
+    it('resizes the background to the new window size on resize', async () => {
+        const { scene } = await setup()
+        const background = vi.mocked(createCanvasBackground).mock.results[0].value
+
+        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1400 })
+        Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 900 })
+        ;(scene as unknown as { handleResize: () => void }).handleResize()
+
+        expect(resizeCanvasBackground).toHaveBeenLastCalledWith(background, 1400, 900)
+    })
+
 })

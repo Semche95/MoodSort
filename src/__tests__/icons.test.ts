@@ -63,34 +63,34 @@ describe('icons', () => {
         const anchor = (icon as unknown as { anchor: { x: number; y: number } }).anchor
         expect(anchor.x).toBe(0.5)
         expect(anchor.y).toBe(0.5)
-        expect(icon.tint).toBe(0x111111)
+        expect(icon.tint).toBe(0x6b4a3d)
     })
 
     it('creates the help icon as a plain question mark text', () => {
         const help = createHelpIcon()
 
         expect((help as unknown as { text: unknown }).text).toBe('?')
-        expect((help as unknown as { style: { fill: number } }).style.fill).toBe(0x111111)
+        expect((help as unknown as { style: { fill: number } }).style.fill).toBe(0x6b4a3d)
     })
 
     it('tints an icon sprite to the dark theme color when created with the dark theme', () => {
         const icon = createIcon(new pixi.Texture() as unknown as Texture, 'dark')
 
-        expect(icon.tint).toBe(0xf2f2f2)
+        expect(icon.tint).toBe(0xf3dccb)
     })
 
     it('fills the help icon with the dark theme color when created with the dark theme', () => {
         const help = createHelpIcon('dark')
 
-        expect((help as unknown as { style: { fill: number } }).style.fill).toBe(0xf2f2f2)
+        expect((help as unknown as { style: { fill: number } }).style.fill).toBe(0xf3dccb)
     })
 
     it('re-tints an existing icon sprite to match a new resolved theme', () => {
         const icon = createIcon(new pixi.Texture() as unknown as Texture)
-        expect(icon.tint).toBe(0x111111)
+        expect(icon.tint).toBe(0x6b4a3d)
 
         applyIconTheme(icon, 'dark')
 
-        expect(icon.tint).toBe(0xf2f2f2)
+        expect(icon.tint).toBe(0xf3dccb)
     })
 })

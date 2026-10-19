@@ -33,9 +33,9 @@
   --button-danger-hover-bg: #a93226;
 
   /* Screen share host modal */
-  --button-info-bg: #2563eb;
-  --button-info-hover-bg: #1d4ed8;
-  --button-info-disabled-bg: #93c5fd;
+  --button-info-bg: #b4462c;
+  --button-info-hover-bg: #bf5236;
+  --button-info-disabled-bg: #f3bba9;
   --button-stop-bg: #dc2626;
   --button-stop-hover-bg: #b91c1c;
 
@@ -82,9 +82,9 @@ html[data-theme='dark'] {
   --button-danger-hover-bg: #c8432f;
 
   /* Screen share host modal */
-  --button-info-bg: #3b82f6;
-  --button-info-hover-bg: #2f6fe0;
-  --button-info-disabled-bg: #3a557a;
+  --button-info-bg: #b4462c;
+  --button-info-hover-bg: #bf5236;
+  --button-info-disabled-bg: #7a4436;
   --button-stop-bg: #ef4444;
   --button-stop-hover-bg: #c53030;
 

@@ -6,6 +6,7 @@ import type { Locale } from '../i18n/i18n.types'
 import { loadCardAtlasSpritesheet } from '../i18n/card-atlas'
 import type { ThemeService } from '../features/theme/theme-service'
 import { getPixiThemeColors } from '../features/theme/pixi-theme-colors'
+import { applyCanvasBackgroundTheme, createCanvasBackground, resizeCanvasBackground } from '../features/background/canvas-background'
 import { CardManager } from '../features/card/card-manager'
 import { DragHandler } from '../features/drag/drag-handler'
 import { CardDrag } from '../features/drag/card-drag'
@@ -20,10 +21,12 @@ import { resolveNameSplits, resolveNameMerges } from '../features/stack/stack-na
 import { snapshotCards, applyHistoryEntry, applyStackNameChanges } from '../features/history/history'
 import { createPointerInteractions } from '../features/interactions/pointer-interactions'
 import type { PointerInteractions } from '../types/pointer-interactions.types'
+import type { CanvasBackground } from '../types/canvas-background.types'
 
 export class CanvasScene {
     private app: Application
     private cardLayer: Container
+    private background: CanvasBackground | null = null
     private cards: Card[]
     private cardManager: CardManager
     private dragHandler: DragHandler
@@ -107,6 +110,9 @@ export class CanvasScene {
         if (renderer?.background) {
             renderer.background.color = getPixiThemeColors(resolved).canvasBackground
         }
+        if (this.background) {
+            applyCanvasBackgroundTheme(this.background, resolved)
+        }
     }
 
     /** Reloads the atlas for the current locale under `resolved` and swaps every card's texture, so a theme change updates card backgrounds/text without a page reload. */
@@ -125,6 +131,10 @@ export class CanvasScene {
 
     get stage(): Container {
         return this.app.stage
+    }
+
+    get resolution(): number {
+        return this.app.renderer.resolution
     }
 
     get screenWidth(): number {
@@ -152,6 +162,8 @@ export class CanvasScene {
         })
         this.applyTheme(this.resolvedTheme)
         this.app.renderer.resize(window.innerWidth, window.innerHeight)
+        this.background = createCanvasBackground(this.app.renderer, this.app.screen.width, this.app.screen.height, this.resolvedTheme)
+        this.app.stage.addChild(this.background.sprite)
         this.app.stage.addChild(this.cardLayer)
 
         const saved = this.positionPersistence.load()
@@ -351,6 +363,10 @@ export class CanvasScene {
         const newHeight = this.app.screen.height
         const ratioX = newWidth / oldWidth
         const ratioY = newHeight / oldHeight
+
+        if (this.background) {
+            resizeCanvasBackground(this.background, newWidth, newHeight)
+        }
 
         for (const card of this.cards) {
             this.cardManager.repositionForResize(card, ratioX, ratioY, newWidth, newHeight)

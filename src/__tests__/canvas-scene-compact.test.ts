@@ -20,6 +20,12 @@ const { mockSpritesheet } = vi.hoisted(() => {
     }
 })
 
+vi.mock('../features/background/canvas-background', () => ({
+    createCanvasBackground: vi.fn(() => ({ sprite: { label: 'canvas-background' } })),
+    resizeCanvasBackground: vi.fn(),
+    applyCanvasBackgroundTheme: vi.fn(),
+}))
+
 vi.mock('pixi.js', () => {
     const tickers: Array<() => void> = []
     const mockApp: Record<string, unknown> = {
