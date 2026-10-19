@@ -12,6 +12,7 @@ import { CardState } from '../types/card-state.types'
 import { HistoryData, HISTORY_KEY } from '../types/history.types'
 import { ActionHistory } from '../features/history/action-history'
 import { snapshotCards } from '../features/history/history'
+import { STACK_FRAME_CLEARANCE } from '../features/stack/stack'
 
 const { mockSpritesheet } = vi.hoisted(() => {
     const mockTexture = { width: 200, height: 300 }
@@ -123,6 +124,10 @@ vi.mock('pixi.js', () => {
 
     class MockGraphics extends MockContainer {
         roundRect(): this { return this }
+        moveTo(): this { return this }
+        lineTo(): this { return this }
+        closePath(): this { return this }
+        circle(): this { return this }
         rect(): this { return this }
         fill(): this { return this }
         stroke(): this { return this }
@@ -462,8 +467,8 @@ describe('CanvasScene', () => {
             expect(cardB.y).toBeCloseTo(100 * 400 / 768)
             scene.redo()
 
-            // 420 rescaled to 218.75, then clamped so the 300-tall card stays within a 400-tall canvas.
-            expect(cardB.y).toBe(400 - 300)
+            // 420 rescaled to 218.75, then clamped so the 300-tall card keeps its pill clearance in a 400-tall canvas.
+            expect(cardB.y).toBe(400 - STACK_FRAME_CLEARANCE - 300)
         })
 
         it('puts a card dropped on a pile back on that pile on redo after a resize, at the same offset in card units', async () => {
@@ -489,7 +494,7 @@ describe('CanvasScene', () => {
 
             scene.undo()
 
-            expect(testable.cards[1].y).toBe(768 - 300)
+            expect(testable.cards[1].y).toBe(768 - STACK_FRAME_CLEARANCE - 300)
         })
     })
 

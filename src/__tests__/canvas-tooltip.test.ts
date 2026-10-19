@@ -85,6 +85,27 @@ describe('CanvasTooltip', () => {
         expect(bg.calls.map((call: { method: string }): string => call.method)).toEqual(['clear', 'roundRect', 'fill'])
     })
 
+    it('wraps the label to fit maxWidth, minus its own horizontal padding, when one is given', () => {
+        const tooltip = new CanvasTooltip()
+
+        tooltip.show(0, 0, 'Un nom très long', 120)
+
+        const text = (tooltip.view as unknown as { children: Array<{ style: { wordWrap?: boolean; wordWrapWidth?: number } }> }).children[1]
+        expect(text.style.wordWrap).toBe(true)
+        // 120 - 2 * paddingX (10)
+        expect(text.style.wordWrapWidth).toBe(100)
+    })
+
+    it('turns wrapping back off for a later show without maxWidth', () => {
+        const tooltip = new CanvasTooltip()
+
+        tooltip.show(0, 0, 'Un nom très long', 120)
+        tooltip.show(0, 0, 'Annuler')
+
+        const text = (tooltip.view as unknown as { children: Array<{ style: { wordWrap?: boolean } }> }).children[1]
+        expect(text.style.wordWrap).toBe(false)
+    })
+
     it('hides the tooltip', () => {
         const tooltip = new CanvasTooltip()
         tooltip.show(0, 0, 'Annuler')

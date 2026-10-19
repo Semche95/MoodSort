@@ -5,15 +5,10 @@ import {
     getStackTop,
     computeStackLabel,
     findNameAnchor,
-    computeLabelAnchorPoint,
+    pickWinningGroup,
     resolveNameSplits,
     resolveNameMerges,
 } from '../features/stack/stack-naming'
-import {
-    STACK_HANDLE_HEIGHT,
-    STACK_HIGHLIGHT_PADDING,
-    STACK_LABEL_HANDLE_GAP,
-} from '../features/stack/stack'
 import { Card } from '../types/card.types'
 
 function makeCard(x: number, y: number, width: number, height: number, imageUrl: string): Card {
@@ -106,16 +101,24 @@ describe('findNameAnchor', () => {
     })
 })
 
-describe('computeLabelAnchorPoint', () => {
-    it('sits just below the handle\'s bottom edge, clear of its clickable area', () => {
-        const stack = [makeCard(0, 0, 100, 100, 'a'), makeCard(10, 10, 100, 100, 'b')]
+describe('pickWinningGroup', () => {
+    it('picks the largest group', () => {
+        const a = makeCard(0, 0, 100, 100, 'a')
+        const b = makeCard(0, 0, 100, 100, 'b')
+        const c = makeCard(0, 0, 100, 100, 'c')
+        const larger = [b, c]
 
-        const pad = STACK_HIGHLIGHT_PADDING
+        expect(pickWinningGroup([[a], larger], makeCardLayer([a, b, c]))).toBe(larger)
+    })
 
-        expect(computeLabelAnchorPoint(stack)).toEqual({
-            x: 55,
-            y: -pad + STACK_HANDLE_HEIGHT / 2 + STACK_LABEL_HANDLE_GAP,
-        })
+    it('breaks a tie between equal groups with the lowest z-order card', () => {
+        const a = makeCard(0, 0, 100, 100, 'a')
+        const b = makeCard(0, 0, 100, 100, 'b')
+        const c = makeCard(0, 0, 100, 100, 'c')
+        const d = makeCard(0, 0, 100, 100, 'd')
+        const lower = [c, d]
+
+        expect(pickWinningGroup([[a, b], lower], makeCardLayer([d, a, b, c]))).toBe(lower)
     })
 })
 

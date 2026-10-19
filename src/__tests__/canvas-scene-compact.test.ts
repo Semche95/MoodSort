@@ -111,6 +111,10 @@ vi.mock('pixi.js', () => {
 
     class MockGraphics extends MockContainer {
         roundRect(): this { return this }
+        moveTo(): this { return this }
+        lineTo(): this { return this }
+        closePath(): this { return this }
+        circle(): this { return this }
         rect(): this { return this }
         fill(): this { return this }
         stroke(): this { return this }

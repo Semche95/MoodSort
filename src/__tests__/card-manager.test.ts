@@ -10,7 +10,7 @@ import {
     REST_SHADOW_SPREAD,
 } from '../features/card/card-manager'
 import { REST_SHADOW_OFFSET_Y } from '../features/card/card-lift'
-import { STACK_HANDLE_TOP_CLEARANCE } from '../features/stack/stack'
+import { STACK_FRAME_CLEARANCE } from '../features/stack/stack'
 import { getPixiThemeColors } from '../features/theme/pixi-theme-colors'
 import { Card } from '../types/card.types'
 import { CardState } from '../types/card-state.types'
@@ -514,8 +514,8 @@ describe('CardManager', () => {
             manager.rescaleStacks([[a, b]], 1, 1)
 
             for (const card of [a, b]) {
-                expect(card.y).toBeGreaterThanOrEqual(STACK_HANDLE_TOP_CLEARANCE)
-                expect(card.y + card.height).toBeLessThanOrEqual(app.screen.height)
+                expect(card.y).toBeGreaterThanOrEqual(STACK_FRAME_CLEARANCE)
+                expect(card.y + card.height).toBeLessThanOrEqual(app.screen.height - STACK_FRAME_CLEARANCE)
             }
         })
 
@@ -583,7 +583,7 @@ describe('CardManager', () => {
 
             const [target] = manager.shuffleAndBuildTargets([tallCard])
 
-            expect(target.toY).toBe(STACK_HANDLE_TOP_CLEARANCE)
+            expect(target.toY).toBe(STACK_FRAME_CLEARANCE)
         })
     })
 

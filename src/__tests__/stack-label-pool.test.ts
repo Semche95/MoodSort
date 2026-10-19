@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
 import { StackLabelPool, truncateLabel } from '../features/stack/stack-overlay/stack-label-pool'
-import { Card } from '../types/card.types'
 import { getPixiThemeColors } from '../features/theme/pixi-theme-colors'
 
 const { pixi } = vi.hoisted(() => {
@@ -43,10 +42,6 @@ const { pixi } = vi.hoisted(() => {
 
 vi.mock('pixi.js', () => ({ ...pixi }))
 
-function makeCard(x: number, y: number, width: number, height: number, imageUrl: string): Card {
-    return { imageUrl, x, y, width, height, alpha: 1 } as unknown as Card
-}
-
 describe('truncateLabel', () => {
     const measure = (text: string): number => text.length
 
@@ -62,52 +57,67 @@ describe('truncateLabel', () => {
 describe('StackLabelPool', () => {
     const palette = getPixiThemeColors('light').stackOverlay
 
-    it('reuses pooled Text instances across repeated update calls instead of creating new ones each time', () => {
-        const cardLayer = new pixi.Container()
+    it('reuses pooled Text instances across frames instead of creating new ones each time', () => {
         const stageContainer = new pixi.Container()
-        const cardA = makeCard(100, 100, 200, 300, 'a')
-        const pool = new StackLabelPool(stageContainer as never, cardLayer as never, () => ({ a: 'Joie' }))
+        const pool = new StackLabelPool(stageContainer as never)
 
-        pool.update([{ stack: [cardA], point: { x: 1, y: 2 } }], palette)
-        const firstText = stageContainer.children[0]
-        pool.update([{ stack: [cardA], point: { x: 3, y: 4 } }], palette)
+        pool.begin()
+        const first = pool.take('Joie', 100, palette).text
+        pool.end()
+        pool.begin()
+        const second = pool.take('Colère', 100, palette).text
+        pool.end()
 
         expect(stageContainer.children.length).toBe(1)
-        expect(stageContainer.children[0]).toBe(firstText)
+        expect(second).toBe(first)
     })
 
-    it('hides surplus pool entries that are no longer used when the entry count shrinks between calls', () => {
-        const cardLayer = new pixi.Container()
+    it('hides surplus texts a frame no longer uses', () => {
         const stageContainer = new pixi.Container()
-        const cardA = makeCard(100, 100, 200, 300, 'a')
-        const cardB = makeCard(400, 100, 200, 300, 'b')
-        const pool = new StackLabelPool(stageContainer as never, cardLayer as never, () => ({ a: 'Joie', b: 'Colère' }))
+        const pool = new StackLabelPool(stageContainer as never)
 
-        pool.update(
-            [
-                { stack: [cardA], point: { x: 1, y: 2 } },
-                { stack: [cardB], point: { x: 5, y: 6 } },
-            ],
-            palette,
-        )
-        const texts = stageContainer.children as unknown as Array<{ visible: boolean; text: string }>
-        expect(texts.every((t: { visible: boolean }): boolean => t.visible)).toBe(true)
+        pool.begin()
+        const first = pool.take('Joie', 100, palette).text
+        const second = pool.take('Colère', 100, palette).text
+        pool.end()
+        pool.begin()
+        pool.take('Joie', 100, palette)
+        pool.end()
 
-        pool.update([{ stack: [cardA], point: { x: 1, y: 2 } }], palette)
-        expect(texts[0].visible).toBe(true)
-        expect(texts[1].visible).toBe(false)
+        expect(first.visible).toBe(true)
+        expect(second.visible).toBe(false)
     })
 
-    it('applies palette colors to the text style', () => {
-        const cardLayer = new pixi.Container()
+    it('truncates a label wider than maxWidth and reports it as truncated', () => {
         const stageContainer = new pixi.Container()
-        const cardA = makeCard(100, 100, 200, 300, 'a')
-        const pool = new StackLabelPool(stageContainer as never, cardLayer as never, () => ({ a: 'Joie' }))
+        const pool = new StackLabelPool(stageContainer as never)
 
-        pool.update([{ stack: [cardA], point: { x: 1, y: 2 } }], palette)
+        pool.begin()
+        // The mocked Text is always 40px wide, wider than this 30px slot.
+        const label = pool.take('Joie', 30, palette)
 
-        const text = stageContainer.children[0] as unknown as { style: { fill: number; stroke: { color: number } } }
-        expect(text.style.fill).toBe(palette.labelText)
-        expect(text.style.stroke.color).toBe(palette.labelStroke)
+        expect(label.truncated).toBe(true)
+        expect(label.text.text.endsWith('…')).toBe(true)
+    })
+
+    it('keeps a label that fits as is and reports it as not truncated', () => {
+        const stageContainer = new pixi.Container()
+        const pool = new StackLabelPool(stageContainer as never)
+
+        pool.begin()
+        const label = pool.take('Joie', 100, palette)
+
+        expect(label.truncated).toBe(false)
+        expect(label.text.text).toBe('Joie')
+    })
+
+    it('applies the palette label color to the text', () => {
+        const stageContainer = new pixi.Container()
+        const pool = new StackLabelPool(stageContainer as never)
+
+        pool.begin()
+        const { text } = pool.take('Joie', 100, palette)
+
+        expect((text.style as unknown as { fill: number }).fill).toBe(palette.labelText)
     })
 })

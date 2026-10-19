@@ -52,9 +52,14 @@ export class CanvasTooltip {
      * at `topY`. The tooltip's own height is only known once the label text
      * is set, so callers pass a top edge rather than a center point.
      * The theme is re-read on every call so a theme flip is picked up on the next show().
+     * With `maxWidth`, the label wraps onto centered lines so the tooltip never grows wider than it.
      */
-    show(centerX: number, topY: number, label: string): void {
+    show(centerX: number, topY: number, label: string, maxWidth?: number): void {
         const palette = getPixiThemeColors(this.getResolvedTheme()).tooltip
+        this.text.style.wordWrap = maxWidth !== undefined
+        this.text.style.wordWrapWidth = maxWidth === undefined ? 0 : Math.max(0, maxWidth - PADDING_X * 2)
+        this.text.style.breakWords = maxWidth !== undefined
+        this.text.style.align = 'center'
         this.text.text = label
         this.text.style.fill = palette.text
         const width = this.text.width + PADDING_X * 2

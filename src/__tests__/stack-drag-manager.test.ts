@@ -3,7 +3,7 @@ import type { Application, Container } from 'pixi.js'
 import { StackDragManager } from '../features/stack/stack-drag-manager'
 import { StackOverlay } from '../features/stack/stack-overlay/stack-overlay'
 import { ActionHistory } from '../features/history/action-history'
-import { STACK_HANDLE_TOP_CLEARANCE } from '../features/stack/stack'
+import { STACK_FRAME_CLEARANCE } from '../features/stack/stack'
 import { InMemoryStore } from './in-memory-store'
 import { Card } from '../types/card.types'
 
@@ -104,8 +104,8 @@ describe('StackDragManager', () => {
 
         moveHandler({ global: { x: 100, y: -1000 } })
 
-        expect(a.y).toBe(STACK_HANDLE_TOP_CLEARANCE)
-        expect(b.y).toBe(STACK_HANDLE_TOP_CLEARANCE + 10)
+        expect(a.y).toBe(STACK_FRAME_CLEARANCE)
+        expect(b.y).toBe(STACK_FRAME_CLEARANCE + 10)
     })
 
     it('end records the after-snapshot, stops dragging and restores the overlay z-order', () => {

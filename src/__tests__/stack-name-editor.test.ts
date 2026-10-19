@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
+import { getPixiThemeColors } from '../features/theme/pixi-theme-colors'
 import { StackNameEditor } from '../features/stack/stack-overlay/stack-name-editor'
-import { STACK_NAME_MAX_WIDTH } from '../features/stack/stack'
 
 const { pixi } = vi.hoisted(() => {
     class Container {
@@ -149,6 +149,10 @@ function pressEscape(editor: StackNameEditor): void {
     getInput(editor)?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
 }
 
+const EDITOR_MAX_WIDTH = 300
+// Clear button slot (8px gap + 16px chip) reserved on both sides of the centered box.
+const EDITOR_MAX_BOX_WIDTH = EDITOR_MAX_WIDTH - (8 + 16) * 2
+
 describe('StackNameEditor', () => {
     it('is closed until open() is called', () => {
         const editor = new StackNameEditor()
@@ -158,22 +162,26 @@ describe('StackNameEditor', () => {
         expect(getInput(editor)).toBeNull()
     })
 
-    it('opens prefilled with the initial value, positioned at (x, y)', () => {
+    it('opens prefilled with the initial value, centered on (x, y)', () => {
         const editor = new StackNameEditor()
 
-        editor.open(10, 20, 'Joie', vi.fn(), vi.fn())
+        editor.open(10, 20, EDITOR_MAX_WIDTH, 'Joie', vi.fn(), vi.fn())
 
         expect(editor.isOpen).toBe(true)
         expect(editor.view.visible).toBe(true)
         expect(editor.value).toBe('Joie')
         expect(editor.view.x).toBe(10)
         expect(editor.view.y).toBe(20)
+        const bg = editor['bg'] as unknown as { calls: Array<{ method: string; args: number[] }> }
+        const [x, y, width, height] = bg.calls.find((call: { method: string }): boolean => call.method === 'roundRect')!.args
+        expect(x).toBe(-width / 2)
+        expect(y).toBe(-height / 2)
         expect(getInput(editor)?.value).toBe('Joie')
     })
 
     it('creates a hidden, off-screen input so no visible DOM element is added, and removes it on close', () => {
         const editor = new StackNameEditor()
-        editor.open(0, 0, '', vi.fn(), vi.fn())
+        editor.open(0, 0, EDITOR_MAX_WIDTH, '', vi.fn(), vi.fn())
 
         const input = getInput(editor)
         expect(input).not.toBeNull()
@@ -188,7 +196,7 @@ describe('StackNameEditor', () => {
 
     it('appends typed characters to the buffer', () => {
         const editor = new StackNameEditor()
-        editor.open(0, 0, '', vi.fn(), vi.fn())
+        editor.open(0, 0, EDITOR_MAX_WIDTH, '', vi.fn(), vi.fn())
 
         type(editor, 'Joie')
 
@@ -198,7 +206,7 @@ describe('StackNameEditor', () => {
     it('allows editing a name that is already longer than a single-name cap (e.g. a fused "A + B")', () => {
         const fused = `${'a'.repeat(30)} + ${'b'.repeat(30)}`
         const editor = new StackNameEditor()
-        editor.open(0, 0, fused, vi.fn(), vi.fn())
+        editor.open(0, 0, EDITOR_MAX_WIDTH, fused, vi.fn(), vi.fn())
 
         pressBackspace(editor)
         type(editor, 'c')
@@ -209,7 +217,7 @@ describe('StackNameEditor', () => {
     it('empties the field when the clear button is clicked, without committing or closing the editor, and keeps it focused so typing still works right after', async () => {
         const onCommit = vi.fn()
         const editor = new StackNameEditor()
-        editor.open(0, 0, 'Joie', onCommit, vi.fn())
+        editor.open(0, 0, EDITOR_MAX_WIDTH, 'Joie', onCommit, vi.fn())
         await new Promise<void>((resolve: () => void): void => { setTimeout(resolve, 0) })
         const input = getInput(editor)
 
@@ -235,26 +243,36 @@ describe('StackNameEditor', () => {
 
     it('has nothing to clear (and nothing to click) once the field is already empty', () => {
         const editor = new StackNameEditor()
-        editor.open(0, 0, '', vi.fn(), vi.fn())
+        editor.open(0, 0, EDITOR_MAX_WIDTH, '', vi.fn(), vi.fn())
 
         const clearButton = editor['clearButton'] as { eventMode: string }
         expect(clearButton.eventMode).toBe('none')
     })
 
-    it('caps the box width at STACK_NAME_MAX_WIDTH instead of growing past the stack\'s frame', () => {
+    it('keeps an empty box wide enough to read as a text field', () => {
         const editor = new StackNameEditor()
-        editor.open(0, 0, '', vi.fn(), vi.fn())
+        editor.open(0, 0, EDITOR_MAX_WIDTH, '', vi.fn(), vi.fn())
+
+        const bg = editor['bg'] as unknown as { calls: Array<{ method: string; args: number[] }> }
+        const width = bg.calls.find((call: { method: string }): boolean => call.method === 'roundRect')!.args[2]
+        // 60px minimum text slot + 2 * 8px padding + 2px caret
+        expect(width).toBe(78)
+    })
+
+    it('caps the box so it and its clear button never grow wider than maxWidth', () => {
+        const editor = new StackNameEditor()
+        editor.open(0, 0, EDITOR_MAX_WIDTH, '', vi.fn(), vi.fn())
 
         type(editor, 'a'.repeat(50))
 
         const bg = editor['bg'] as unknown as { calls: Array<{ method: string; args: unknown[] }> }
         const lastRoundRect = bg.calls.filter((call: { method: string }): boolean => call.method === 'roundRect').pop()
-        expect(lastRoundRect?.args[2]).toBe(STACK_NAME_MAX_WIDTH)
+        expect(lastRoundRect?.args[2]).toBe(EDITOR_MAX_BOX_WIDTH)
     })
 
     it('keeps the caret in sync while an arrow key is held (key-repeat), not just once it is released', async () => {
         const editor = new StackNameEditor()
-        editor.open(0, 0, 'Joie', vi.fn(), vi.fn())
+        editor.open(0, 0, EDITOR_MAX_WIDTH, 'Joie', vi.fn(), vi.fn())
         // Lets open()'s own deferred focus/selection settle first, exactly as it would have
         // long before a real user starts holding a key, so it doesn't race the assertion below.
         await new Promise<void>((resolve: () => void): void => { setTimeout(resolve, 0) })
@@ -274,7 +292,7 @@ describe('StackNameEditor', () => {
 
     it('removes the last character on Backspace', () => {
         const editor = new StackNameEditor()
-        editor.open(0, 0, 'Joie', vi.fn(), vi.fn())
+        editor.open(0, 0, EDITOR_MAX_WIDTH, 'Joie', vi.fn(), vi.fn())
 
         pressBackspace(editor)
 
@@ -283,7 +301,7 @@ describe('StackNameEditor', () => {
 
     it('inserts a typed character at the cursor position after moving it left with ArrowLeft, not just at the end', () => {
         const editor = new StackNameEditor()
-        editor.open(0, 0, '', vi.fn(), vi.fn())
+        editor.open(0, 0, EDITOR_MAX_WIDTH, '', vi.fn(), vi.fn())
         type(editor, 'Joie')
 
         pressArrowLeft(editor)
@@ -295,7 +313,7 @@ describe('StackNameEditor', () => {
 
     it('moves the cursor back to the end with ArrowRight after moving left, so typing appends again', () => {
         const editor = new StackNameEditor()
-        editor.open(0, 0, '', vi.fn(), vi.fn())
+        editor.open(0, 0, EDITOR_MAX_WIDTH, '', vi.fn(), vi.fn())
         type(editor, 'Joie')
 
         pressArrowLeft(editor)
@@ -309,7 +327,7 @@ describe('StackNameEditor', () => {
 
     it('jumps the cursor to the start with Home and to the end with End', () => {
         const editor = new StackNameEditor()
-        editor.open(0, 0, '', vi.fn(), vi.fn())
+        editor.open(0, 0, EDITOR_MAX_WIDTH, '', vi.fn(), vi.fn())
         type(editor, 'Joie')
 
         pressHome(editor)
@@ -323,7 +341,7 @@ describe('StackNameEditor', () => {
 
     it('clears the selection when Home or End is pressed while text is selected', () => {
         const editor = new StackNameEditor()
-        editor.open(0, 0, '', vi.fn(), vi.fn())
+        editor.open(0, 0, EDITOR_MAX_WIDTH, '', vi.fn(), vi.fn())
         type(editor, 'Joie')
 
         selectAll(editor)
@@ -335,7 +353,7 @@ describe('StackNameEditor', () => {
 
     it('does not move the cursor past the start or end of the buffer', () => {
         const editor = new StackNameEditor()
-        editor.open(0, 0, '', vi.fn(), vi.fn())
+        editor.open(0, 0, EDITOR_MAX_WIDTH, '', vi.fn(), vi.fn())
         type(editor, 'Jo')
 
         // Cursor is clamped at index 0: Backspace there is a no-op, nothing before it to delete.
@@ -355,7 +373,7 @@ describe('StackNameEditor', () => {
 
     it('selects the whole buffer on Ctrl+A so the next typed character replaces it entirely', () => {
         const editor = new StackNameEditor()
-        editor.open(0, 0, '', vi.fn(), vi.fn())
+        editor.open(0, 0, EDITOR_MAX_WIDTH, '', vi.fn(), vi.fn())
         type(editor, 'Joie')
 
         selectAll(editor)
@@ -366,7 +384,7 @@ describe('StackNameEditor', () => {
 
     it('selects the whole buffer on Cmd+A (metaKey) too, for macOS', () => {
         const editor = new StackNameEditor()
-        editor.open(0, 0, '', vi.fn(), vi.fn())
+        editor.open(0, 0, EDITOR_MAX_WIDTH, '', vi.fn(), vi.fn())
         type(editor, 'Joie')
 
         const input = getInput(editor)
@@ -379,7 +397,7 @@ describe('StackNameEditor', () => {
 
     it('clears the whole buffer on Backspace when everything is selected via Ctrl+A', () => {
         const editor = new StackNameEditor()
-        editor.open(0, 0, '', vi.fn(), vi.fn())
+        editor.open(0, 0, EDITOR_MAX_WIDTH, '', vi.fn(), vi.fn())
         type(editor, 'Joie')
 
         selectAll(editor)
@@ -390,7 +408,7 @@ describe('StackNameEditor', () => {
 
     it('accepts a native paste through the hidden input, exactly like a typed character', () => {
         const editor = new StackNameEditor()
-        editor.open(0, 0, '', vi.fn(), vi.fn())
+        editor.open(0, 0, EDITOR_MAX_WIDTH, '', vi.fn(), vi.fn())
 
         const input = getInput(editor)
         // A real paste event mutates `.value` directly, then fires `input`, same
@@ -405,7 +423,7 @@ describe('StackNameEditor', () => {
     it('commits the trimmed value and closes on Enter', () => {
         const onCommit = vi.fn()
         const editor = new StackNameEditor()
-        editor.open(0, 0, '', onCommit, vi.fn())
+        editor.open(0, 0, EDITOR_MAX_WIDTH, '', onCommit, vi.fn())
 
         type(editor, '  Joie  ')
         pressEnter(editor)
@@ -419,7 +437,7 @@ describe('StackNameEditor', () => {
         const onCommit = vi.fn()
         const onCancel = vi.fn()
         const editor = new StackNameEditor()
-        editor.open(0, 0, 'Joie', onCommit, onCancel)
+        editor.open(0, 0, EDITOR_MAX_WIDTH, 'Joie', onCommit, onCancel)
 
         pressEscape(editor)
 
@@ -431,7 +449,7 @@ describe('StackNameEditor', () => {
     it('commit() can be called programmatically to simulate blur (click elsewhere)', () => {
         const onCommit = vi.fn()
         const editor = new StackNameEditor()
-        editor.open(0, 0, '', onCommit, vi.fn())
+        editor.open(0, 0, EDITOR_MAX_WIDTH, '', onCommit, vi.fn())
 
         type(editor, 'Joie')
         editor.commit()
@@ -451,7 +469,7 @@ describe('StackNameEditor', () => {
 
     it('stops listening for keystrokes once closed', () => {
         const editor = new StackNameEditor()
-        editor.open(0, 0, '', vi.fn(), vi.fn())
+        editor.open(0, 0, EDITOR_MAX_WIDTH, '', vi.fn(), vi.fn())
         editor.commit()
 
         type(editor, 'Joie')
@@ -462,10 +480,10 @@ describe('StackNameEditor', () => {
     it('opening while already open commits the previous edit first', () => {
         const firstCommit = vi.fn()
         const editor = new StackNameEditor()
-        editor.open(0, 0, '', firstCommit, vi.fn())
+        editor.open(0, 0, EDITOR_MAX_WIDTH, '', firstCommit, vi.fn())
         type(editor, 'Joie')
 
-        editor.open(5, 5, '', vi.fn(), vi.fn())
+        editor.open(5, 5, EDITOR_MAX_WIDTH, '', vi.fn(), vi.fn())
 
         expect(firstCommit).toHaveBeenCalledWith('Joie')
         expect(editor.value).toBe('')
@@ -473,13 +491,14 @@ describe('StackNameEditor', () => {
 
     it('reads background, border, and text colors from the getResolvedTheme callback on redraw', () => {
         const editor = new StackNameEditor(() => 'dark')
-        editor.open(0, 0, 'Joie', vi.fn(), vi.fn())
+        editor.open(0, 0, EDITOR_MAX_WIDTH, 'Joie', vi.fn(), vi.fn())
 
         const bg = editor.view.children[0] as unknown as { calls: Array<{ method: string; args: unknown[] }> }
         const fillCall = bg.calls.find((call: { method: string; args: unknown[] }): boolean => call.method === 'fill')!
         const strokeCall = bg.calls.find((call: { method: string; args: unknown[] }): boolean => call.method === 'stroke')!
-        expect((fillCall.args[0] as { color: number }).color).toBe(0x3a3a3a)
-        expect((strokeCall.args[0] as { color: number }).color).toBe(0x88aaff)
-        expect((editor as unknown as { text: { style: { fill?: number } } }).text.style.fill).toBe(0xffffff)
+        const dark = getPixiThemeColors('dark').stackNameEditor
+        expect((fillCall.args[0] as { color: number }).color).toBe(dark.background)
+        expect((strokeCall.args[0] as { color: number }).color).toBe(dark.border)
+        expect((editor as unknown as { text: { style: { fill?: number } } }).text.style.fill).toBe(dark.text)
     })
 })

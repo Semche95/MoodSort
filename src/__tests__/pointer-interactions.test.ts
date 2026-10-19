@@ -2,8 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { FederatedPointerEvent } from 'pixi.js'
 import { createPointerInteractions } from '../features/interactions/pointer-interactions'
 import { Card } from '../types/card.types'
-import { computeCompactButtonBox, computeNameButtonBox } from '../features/stack/stack-hit-testing'
-import { computeLabelAnchorPoint } from '../features/stack/stack-naming'
+import { computeCompactButtonBox } from '../features/stack/stack-hit-testing'
 import { PointerInteractionsDeps } from '../types/pointer-interactions.types'
 
 function makeCard(x: number, y: number, width: number = 200, height: number = 300, imageUrl: string = 'card'): Card {
@@ -22,6 +21,7 @@ function makeDeps(overrides: Partial<PointerInteractionsDeps> = {}): {
         setHoveredStack: ReturnType<typeof vi.fn>
         showHighlight: ReturnType<typeof vi.fn>
         openNameEditor: ReturnType<typeof vi.fn>
+        findStackByNameButtonAtPoint: ReturnType<typeof vi.fn>
     }
     dragHandler: { isDragging: boolean; handleDragStart: ReturnType<typeof vi.fn> }
     stackDragManager: { isDragging: boolean; startDrag: ReturnType<typeof vi.fn> }
@@ -34,6 +34,7 @@ function makeDeps(overrides: Partial<PointerInteractionsDeps> = {}): {
         setHoveredStack: vi.fn(),
         showHighlight: vi.fn(),
         openNameEditor: vi.fn(),
+        findStackByNameButtonAtPoint: vi.fn((): Card[] | null => null),
     }
     const dragHandler = { isDragging: false, handleDragStart: vi.fn() }
     const stackDragManager = { isDragging: false, startDrag: vi.fn() }
@@ -238,26 +239,26 @@ describe('createPointerInteractions', () => {
     it('handleNameButtonPointerDown no-ops while busy', () => {
         const stack = [makeCard(100, 100)]
         const { deps, overlay } = makeDeps({ getStacks: (): Card[][] => [stack], isBusy: (): boolean => true })
+        overlay.findStackByNameButtonAtPoint.mockReturnValue(stack)
         const interactions = createPointerInteractions(deps)
-        const box = computeNameButtonBox(stack)
-        const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
 
-        interactions.handleNameButtonPointerDown(makeEvent(point.x, point.y))
+        interactions.handleNameButtonPointerDown(makeEvent(0, 0))
 
         expect(overlay.openNameEditor).not.toHaveBeenCalled()
     })
 
-    it('handleNameButtonPointerDown no-ops when the point misses the name button', () => {
+    it('handleNameButtonPointerDown no-ops when the overlay finds no rename button at the point', () => {
         const stack = [makeCard(100, 100)]
         const { deps, overlay } = makeDeps({ getStacks: (): Card[][] => [stack] })
         const interactions = createPointerInteractions(deps)
 
         interactions.handleNameButtonPointerDown(makeEvent(-9999, -9999))
 
+        expect(overlay.findStackByNameButtonAtPoint).toHaveBeenCalledWith({ x: -9999, y: -9999 })
         expect(overlay.openNameEditor).not.toHaveBeenCalled()
     })
 
-    it('handleNameButtonPointerDown opens the name editor prefilled with the current name at the label anchor', () => {
+    it('handleNameButtonPointerDown opens the name editor over the stack whose rename button was hit, prefilled with its name', () => {
         const anchor = makeCard(100, 100, 200, 300, 'card-a')
         const stack = [anchor]
         const cardLayer = { children: [anchor] }
@@ -266,20 +267,17 @@ describe('createPointerInteractions', () => {
             getStackNames: (): Record<string, string> => ({ 'card-a': 'Joie' }),
             cardLayer: cardLayer as unknown as PointerInteractionsDeps['cardLayer'],
         })
+        overlay.findStackByNameButtonAtPoint.mockReturnValue(stack)
         const interactions = createPointerInteractions(deps)
-        const box = computeNameButtonBox(stack)
-        const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
 
-        interactions.handleNameButtonPointerDown(makeEvent(point.x, point.y))
+        interactions.handleNameButtonPointerDown(makeEvent(0, 0))
 
         expect(overlay.commitNameEditorIfOpen).toHaveBeenCalledTimes(1)
         expect(actionHistory.captureBefore).toHaveBeenCalledWith([], { 'card-a': 'Joie' })
         expect(overlay.openNameEditor).toHaveBeenCalledTimes(1)
-        const labelPoint = computeLabelAnchorPoint(stack)
         const call = overlay.openNameEditor.mock.calls[0]
-        expect(call[0]).toBe(labelPoint.x)
-        expect(call[1]).toBe(labelPoint.y)
-        expect(call[2]).toBe('Joie')
+        expect(call[0]).toBe(stack)
+        expect(call[1]).toBe('Joie')
     })
 
     it('handleNameButtonPointerDown wires its commit callback to onCommitStackName with the anchor card', () => {
@@ -290,17 +288,16 @@ describe('createPointerInteractions', () => {
             getStacks: (): Card[][] => [stack],
             cardLayer: cardLayer as unknown as PointerInteractionsDeps['cardLayer'],
         })
+        overlay.findStackByNameButtonAtPoint.mockReturnValue(stack)
         const interactions = createPointerInteractions(deps)
-        const box = computeNameButtonBox(stack)
-        const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
 
-        interactions.handleNameButtonPointerDown(makeEvent(point.x, point.y))
+        interactions.handleNameButtonPointerDown(makeEvent(0, 0))
 
-        const onCommit = overlay.openNameEditor.mock.calls[0][3] as (value: string) => void
+        const onCommit = overlay.openNameEditor.mock.calls[0][2] as (value: string) => void
         onCommit('Colère')
         expect(deps.onCommitStackName).toHaveBeenCalledWith(anchor, 'Colère')
 
-        const onCancel = overlay.openNameEditor.mock.calls[0][4] as () => void
+        const onCancel = overlay.openNameEditor.mock.calls[0][3] as () => void
         onCancel()
         expect(deps.onCancelStackNameEdit).toHaveBeenCalledTimes(1)
     })

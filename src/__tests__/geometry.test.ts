@@ -61,4 +61,10 @@ describe('constrainPosition', () => {
 
         expect(position.y).toBe(300)
     })
+
+    it('should clamp y so the bottom keeps bottomMargin from the bottom edge when dragged below it', () => {
+        const position: Position = constrainPosition(200, 500, objectWidth, objectHeight, appWidth, appHeight, 0, 35)
+
+        expect(position.y).toBe(415) // appHeight - objectHeight - bottomMargin
+    })
 })

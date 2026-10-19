@@ -1,9 +1,6 @@
 import { Container } from 'pixi.js'
 import { Card } from '../../types/card.types'
-import { Position } from '../../types/position.types'
 import { NameReassignment } from '../../types/name-reassignment.types'
-import { computeBoundingBox } from './stack-geometry'
-import { STACK_HIGHLIGHT_PADDING, STACK_HANDLE_HEIGHT, STACK_LABEL_HANDLE_GAP } from './stack'
 
 /**
  * A stack's identity (and thus its name) is carried by its "anchor": the
@@ -105,7 +102,7 @@ export function resolveNameMerges(
  * broken the same way a name is normally anchored: the group holding the
  * lowest z-order card.
  */
-function pickWinningGroup(groups: Card[][], cardLayer: Container): Card[] {
+export function pickWinningGroup(groups: Card[][], cardLayer: Container): Card[] {
     const eligible = groups.some((group: Card[]): boolean => group.length >= 2)
         ? groups.filter((group: Card[]): boolean => group.length >= 2)
         : groups
@@ -181,20 +178,4 @@ export function resolveNameSplits(
     }
 
     return { before, after }
-}
-
-/**
- * Anchor point for the stack's name label: top-center, positioned just below
- * the drag handle's bottom edge (with a small clearance gap) so the label
- * never sits on top of the handle's clickable area and steals its clicks.
- * The text itself is top-anchored (not center-anchored) at this point, so it
- * only ever grows downward from here, possibly overlapping the top card's
- * artwork below it; that's an acceptable trade-off for legibility.
- */
-export function computeLabelAnchorPoint(stack: Card[]): Position {
-    const box = computeBoundingBox(stack)
-    const pad = STACK_HIGHLIGHT_PADDING
-    const cx = box.x + box.width / 2
-    const cy = box.y - pad + STACK_HANDLE_HEIGHT / 2 + STACK_LABEL_HANDLE_GAP
-    return { x: cx, y: cy }
 }

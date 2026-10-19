@@ -6,26 +6,41 @@ import { computeBoundingBox } from '../stack-geometry'
 import { findMergeTargets } from '../stack-merge'
 import {
     computeCompactButtonBox,
+    computeStackNameMaxWidth,
+    computeStackPillLayout,
+    computeStackPillMaxWidth,
     findStackByCompactButtonAtPoint,
-    computeNameButtonBox,
-    findStackByNameButtonAtPoint,
+    isPointInBox,
 } from '../stack-hit-testing'
-import { computeLabelAnchorPoint, computeStackLabel } from '../stack-naming'
+import { computeStackLabel, pickWinningGroup } from '../stack-naming'
 import { isCardDragged } from '../../card/card-lift'
 import { CanvasTooltip } from '../../../shared/ui/canvas-tooltip'
 import { StackNameEditor } from './stack-name-editor'
 import { StackLabelPool } from './stack-label-pool'
 import { StackDragSourceTracker } from './stack-drag-source-tracker'
-import { drawCompactButton, drawNameButton, drawMergeDim, drawMergePlus, drawMergeTargetBorder, drawSingleBox, drawSingleStack } from './stack-overlay-view'
+import { drawCompactButton, drawMergePlus, drawMergeWash, drawNameButton, drawStackFrame, drawStackPill } from './stack-overlay-view'
 import { I18n } from '../../../i18n/I18n'
 import type { GetResolvedTheme } from '../../../types/theme.types'
 import { DEFAULT_GET_RESOLVED_THEME, getPixiThemeColors } from '../../theme/pixi-theme-colors'
 import type { PixiThemePalette } from '../../../types/pixi-theme-palette.types'
+import type { StackOverlayEntry } from '../../../types/stack-overlay-entry.types'
+import type { StackDrawTarget } from '../../../types/stack-draw-target.types'
 
 const COMPACT_TOOLTIP_GAP = 6
 const NAME_TOOLTIP_GAP = 6
 
-/** The stack border and handle are redrawn every frame from the cards on the stage, so they stay visible on every stack regardless of hover. */
+function isSameStack(stack: Card[], cards: Set<Card> | null): boolean {
+    if (!cards || stack.length !== cards.size) {
+        return false
+    }
+    return stack.every((card: Card): boolean => cards.has(card))
+}
+
+/**
+ * Every stack's frame and top pill (grip, name, rename button) are redrawn every frame from the
+ * cards on the stage, so they stay visible on every stack regardless of hover; the compact pill
+ * on the frame's bottom edge only shows on the hovered stack.
+ */
 export class StackOverlay {
     private app: Application
     private cardLayer: Container
@@ -33,6 +48,7 @@ export class StackOverlay {
     stackDragHandle: Graphics
     stackCompactButton: Graphics
     stackNameButton: Graphics
+    private pillTopLayer: Container
     private compactTooltip: CanvasTooltip
     private nameTooltip: CanvasTooltip
     private nameEditor: StackNameEditor
@@ -48,6 +64,11 @@ export class StackOverlay {
     private cards: Card[]
     private draggedCards: Card[]
     private hoveredCards: Set<Card> | null
+    private namePointer: Position | null
+    private compactPointer: Position | null
+    private editingCards: Set<Card> | null
+    private entries: StackOverlayEntry[]
+    private mergeTargets: Card[][]
 
     constructor(
         app: Application,
@@ -71,14 +92,18 @@ export class StackOverlay {
         // Purely decorative text: must never intercept pointer events meant for
         // the card underneath it (same pattern as CanvasTooltip and StackNameEditor).
         labelContainer.eventMode = 'none'
-        this.labelPool = new StackLabelPool(labelContainer, cardLayer, getStackNames)
+        this.labelPool = new StackLabelPool(labelContainer)
+        // Names share the pill's layer, under every card, so a neighbouring pile covers name and pill alike;
+        // a single child keeps the overlay at 4 bottom slots, the offset of card z-indices saved in undo history.
+        this.pillTopLayer = new Container()
+        this.pillTopLayer.addChild(labelContainer)
+        this.pillTopLayer.addChild(this.stackNameButton)
         const draggedLabelContainer = new Container()
         draggedLabelContainer.label = 'dragged-stack-label'
         // Holds only the label of the stack actively being handle-dragged, kept
-        // above its own cards (unlike labelContainer, which stays below them so
-        // it can be covered while passing over other, stationary stacks).
+        // above its own cards like the rest of its pill.
         draggedLabelContainer.eventMode = 'none'
-        this.draggedLabelPool = new StackLabelPool(draggedLabelContainer, cardLayer, getStackNames)
+        this.draggedLabelPool = new StackLabelPool(draggedLabelContainer)
         this.dragSourceTracker = new StackDragSourceTracker()
         this.draggedBorder = new Graphics()
         this.draggedHandle = new Graphics()
@@ -87,10 +112,11 @@ export class StackOverlay {
         this.cards = []
         this.draggedCards = []
         this.hoveredCards = null
-    }
-
-    private get labelContainer(): Container {
-        return this.labelPool.container
+        this.namePointer = null
+        this.compactPointer = null
+        this.editingCards = null
+        this.entries = []
+        this.mergeTargets = []
     }
 
     private get draggedLabelContainer(): Container {
@@ -102,6 +128,9 @@ export class StackOverlay {
         this.stackDragHandle.eventMode = 'static'
         this.stackDragHandle.cursor = 'grab'
         this.stackDragHandle.on('pointerdown', onPointerDown)
+        this.stackDragHandle.on('pointerover', this.handlePillHover)
+        this.stackDragHandle.on('pointermove', this.handlePillHover)
+        this.stackDragHandle.on('pointerout', this.handleNameOut)
     }
 
     initCompactButton(onPointerDown: (e: FederatedPointerEvent) => void): void {
@@ -124,13 +153,34 @@ export class StackOverlay {
         })
         this.stackNameButton.on('pointerover', this.handleNameHover)
         this.stackNameButton.on('pointermove', this.handleNameHover)
-        this.stackNameButton.on('pointerout', this.handleNameOut)
+        this.stackNameButton.on('pointerout', this.handleNameButtonOut)
     }
 
-    /** Opens the inline Pixi name editor anchored at (x, y), prefilled with `initial`. */
-    openNameEditor(x: number, y: number, initial: string, onCommit: (value: string) => void, onCancel: () => void): void {
+    /** The stationary stack whose rename button is under `point`, as drawn on the last frame. */
+    findStackByNameButtonAtPoint(point: Position): Card[] | null {
+        return this.entries.find((entry: StackOverlayEntry): boolean => isPointInBox(point, entry.layout.pencil))?.stack ?? null
+    }
+
+    /** Opens the inline Pixi name editor over `stack`'s pill, prefilled with `initial`; the pill hides its own name meanwhile. */
+    openNameEditor(stack: Card[], initial: string, onCommit: (value: string) => void, onCancel: () => void): void {
         this.nameTooltip.hide()
-        this.nameEditor.open(x, y, initial, onCommit, onCancel)
+        const box = computeBoundingBox(stack)
+        const { frame } = computeStackPillLayout(box, null)
+        this.editingCards = new Set(stack)
+        this.nameEditor.open(
+            frame.x + frame.width / 2,
+            frame.y,
+            computeStackPillMaxWidth(box),
+            initial,
+            (value: string): void => {
+                this.editingCards = null
+                onCommit(value)
+            },
+            (): void => {
+                this.editingCards = null
+                onCancel()
+            },
+        )
     }
 
     /** Commits any pending edit in the name editor, e.g. on a click elsewhere ("blur"). */
@@ -144,13 +194,12 @@ export class StackOverlay {
         this.cardLayer.addChildAt(this.stackBorder, 0)
         this.cardLayer.addChildAt(this.stackDragHandle, 1)
         this.cardLayer.addChildAt(this.stackCompactButton, 2)
-        this.cardLayer.addChildAt(this.stackNameButton, 3)
+        this.cardLayer.addChildAt(this.pillTopLayer, 3)
         this.cardLayer.addChild(this.mergeIndicator)
         this.cardLayer.addChild(this.draggedBorder)
         this.cardLayer.addChild(this.draggedHandle)
         // Matches the exact order these are re-raised in every render() frame,
         // so that first frame's re-raise is a no-op instead of a visible reorder.
-        this.cardLayer.addChild(this.labelContainer)
         this.cardLayer.addChild(this.draggedLabelContainer)
         this.cardLayer.addChild(this.compactTooltip.view)
         this.cardLayer.addChild(this.nameTooltip.view)
@@ -161,8 +210,7 @@ export class StackOverlay {
 
     showHighlight(stack: Card[]): void {
         void stack
-        this.mergeIndicator.clear()
-        this.mergePlus.clear()
+        this.clearMergeTargets()
     }
 
     /**
@@ -173,30 +221,12 @@ export class StackOverlay {
         this.hoveredCards = stack ? new Set(stack) : null
     }
 
-    private isHoveredStack(stack: Card[]): boolean {
-        const hovered = this.hoveredCards
-        if (!hovered || stack.length !== hovered.size) {
-            return false
-        }
-        return stack.every((card: Card): boolean => hovered.has(card))
-    }
-
     showDragHighlights(
         draggedStack: Card[],
         mergeTargets: Card[][],
     ): void {
         this.draggedCards = draggedStack
-        this.mergeIndicator.clear()
-        this.mergePlus.clear()
-        const palette = getPixiThemeColors(this.getResolvedTheme()).stackOverlay
-
-        if (mergeTargets.length > 0) {
-            for (const target of mergeTargets) {
-                drawMergeTargetBorder(target, this.mergeIndicator, palette)
-                drawMergeDim(target, this.mergeIndicator, palette)
-            }
-            this.cardLayer.addChild(this.mergeIndicator)
-        }
+        this.setMergeTargets(mergeTargets, getPixiThemeColors(this.getResolvedTheme()).stackOverlay)
 
         for (const card of draggedStack) {
             this.cardLayer.addChild(card)
@@ -205,16 +235,41 @@ export class StackOverlay {
         this.cardLayer.addChild(this.draggedHandle)
 
         if (mergeTargets.length > 0) {
-            for (const target of mergeTargets) {
-                drawMergePlus(target, this.mergePlus, palette)
-            }
             this.cardLayer.addChild(this.mergePlus)
         }
     }
 
     hide(): void {
+        this.clearMergeTargets()
+    }
+
+    private clearMergeTargets(): void {
+        this.mergeTargets = []
         this.mergeIndicator.clear()
         this.mergePlus.clear()
+    }
+
+    /**
+     * Single source of truth for the stacks the dragged cards would merge into: their own frames
+     * switch to the accent on the next frame (drawn under their pills), while the wash and the
+     * `+` sit above them.
+     */
+    private setMergeTargets(mergeTargets: Card[][], palette: PixiThemePalette['stackOverlay']): void {
+        this.clearMergeTargets()
+        this.mergeTargets = mergeTargets
+        if (mergeTargets.length === 0) {
+            return
+        }
+        for (const target of mergeTargets) {
+            drawMergeWash(target, this.mergeIndicator, palette)
+            drawMergePlus(target, this.mergePlus, palette)
+        }
+        this.cardLayer.addChild(this.mergeIndicator)
+        this.cardLayer.addChild(this.mergePlus)
+    }
+
+    private isMergeTarget(stack: Card[]): boolean {
+        return this.mergeTargets.some((target: Card[]): boolean => isSameStack(stack, new Set(target)))
     }
 
     restoreZOrder(): void {
@@ -222,7 +277,7 @@ export class StackOverlay {
         this.cardLayer.addChildAt(this.stackBorder, 0)
         this.cardLayer.addChildAt(this.stackDragHandle, 1)
         this.cardLayer.addChildAt(this.stackCompactButton, 2)
-        this.cardLayer.addChildAt(this.stackNameButton, 3)
+        this.cardLayer.addChildAt(this.pillTopLayer, 3)
     }
 
     private collectCards(): void {
@@ -242,14 +297,19 @@ export class StackOverlay {
         this.draggedHandle.clear()
 
         const draggingCard = this.cards.find(isCardDragged)
-        if (draggingCard) {
+        if (draggingCard || this.draggedCards.length > 0) {
             this.compactTooltip.hide()
+            this.nameTooltip.hide()
+            this.namePointer = null
+            this.compactPointer = null
         }
         if (!draggingCard && this.draggedCards.length === 0) {
-            this.mergeIndicator.clear()
-            this.mergePlus.clear()
+            this.clearMergeTargets()
         }
         this.dragSourceTracker.captureIfDragStarted(this.cards, draggingCard)
+        if (draggingCard) {
+            this.setMergeTargets(this.findSingleCardMergeTargets(draggingCard), palette)
+        }
 
         const excluded = new Set<Card>(this.dragSourceTracker.sourceCards ?? [])
         const draggedStack = new Set<Card>(this.draggedCards)
@@ -257,64 +317,45 @@ export class StackOverlay {
             (card: Card): boolean =>
                 !isCardDragged(card) && !excluded.has(card) && !draggedStack.has(card),
         )
+        const stackNames = this.getStackNames()
+        const resting: StackDrawTarget = { frame: this.stackBorder, pill: this.stackDragHandle, pencil: this.stackNameButton, labels: this.labelPool }
+        const carried: StackDrawTarget = { frame: this.draggedBorder, pill: this.draggedHandle, pencil: this.draggedHandle, labels: this.draggedLabelPool }
+        this.labelPool.begin()
+        this.draggedLabelPool.begin()
 
-        const labelEntries: Array<{ stack: Card[]; point: Position }> = []
-
-        for (const group of this.dragSourceTracker.sourceGroups) {
-            // The card being pulled out is still mid-drag (not dropped yet): its
-            // stack-mates left behind still need their border/handle drawn.
-            drawSingleBox(computeBoundingBox(group), this.stackBorder, this.stackDragHandle, palette)
+        // The card being pulled out is still mid-drag (not dropped yet): the pile it left keeps its
+        // frames, and its whole name stays on the group that would inherit it if dropped right now.
+        const sourceCards = this.dragSourceTracker.sourceCards
+        const sourceGroups = this.dragSourceTracker.sourceGroups
+        const namedSourceGroup = sourceCards && sourceGroups.length > 0 ? pickWinningGroup(sourceGroups, this.cardLayer) : null
+        for (const group of sourceGroups) {
+            const label = sourceCards && group === namedSourceGroup ? computeStackLabel(sourceCards, this.cardLayer, stackNames) : ''
+            this.drawStack(group, label, false, resting, palette)
         }
-        if (
-            this.dragSourceTracker.sourceCards &&
-            this.dragSourceTracker.sourceLabelPoint &&
-            this.dragSourceTracker.sourceGroups.length > 0
-        ) {
-            // One label for the whole original pile, computed from every card that
-            // was in it (so it's correct whether the departing card carried the name
-            // or not), shown at its frozen pre-drag spot regardless of which card
-            // ends up carrying the name around the canvas. But if sourceGroups
-            // is empty, the dragged card was alone in its own pile (a plain
-            // single-card drag, not a handle drag): there's no pile left behind to
-            // show a frame for, so there's nothing left to show a label for either.
-            labelEntries.push({ stack: this.dragSourceTracker.sourceCards, point: this.dragSourceTracker.sourceLabelPoint })
-        }
+        const entries: StackOverlayEntry[] = []
         for (const stack of computeStacks(stackedCards)) {
-            drawSingleStack(stack, this.stackBorder, this.stackDragHandle, palette)
-            labelEntries.push({ stack, point: computeLabelAnchorPoint(stack) })
-            if (this.isHoveredStack(stack)) {
-                if (stack.length >= 2) {
-                    drawCompactButton(stack, this.stackCompactButton, palette)
-                }
-                drawNameButton(stack, this.stackNameButton, palette)
+            const hovered = isSameStack(stack, this.hoveredCards)
+            const label = isSameStack(stack, this.editingCards) ? '' : computeStackLabel(stack, this.cardLayer, stackNames)
+            entries.push(this.drawStack(stack, label, hovered || this.isMergeTarget(stack), resting, palette))
+            if (hovered) {
+                const compactRect = computeCompactButtonBox(stack)
+                const compactHovered = compactRect !== null && this.compactPointer !== null && isPointInBox(this.compactPointer, compactRect)
+                drawCompactButton(stack, this.stackCompactButton, compactHovered, palette)
             }
         }
-        const draggedLabelEntries: Array<{ stack: Card[]; point: Position }> = []
         for (const stack of computeStacks(this.draggedCards)) {
-            drawSingleStack(stack, this.draggedBorder, this.draggedHandle, palette)
-            // Routed to draggedLabelEntries, not labelEntries: this is the label of the
-            // stack actually being carried, so it must stay above its own cards, not
-            // below them like the "coverable" labels of stationary stacks.
-            draggedLabelEntries.push({ stack, point: computeLabelAnchorPoint(stack) })
+            this.drawStack(stack, computeStackLabel(stack, this.cardLayer, stackNames), false, carried, palette)
         }
-        this.labelPool.update(labelEntries, palette)
-        this.draggedLabelPool.update(draggedLabelEntries, palette)
-
-        if (draggingCard) {
-            this.drawSingleCardMergeIndicator(draggingCard, palette)
-        }
+        this.entries = entries
+        this.labelPool.end()
+        this.draggedLabelPool.end()
 
         // Cards can be brought to the front (drag start, stack drag, reordering)
         // after these were first appended in addToStage, so they must be
         // re-raised every frame to stay above them. draggedLabelContainer is
-        // re-raised here too, unconditionally like labelContainer, so its resting
-        // z-order stays stable frame to frame even while nothing is being dragged
-        // (it has nothing visible to show then anyway).
-        this.cardLayer.addChild(this.labelContainer)
+        // re-raised unconditionally so its resting z-order stays stable frame
+        // to frame even while nothing is being dragged (it is empty then).
         this.cardLayer.addChild(this.draggedLabelContainer)
-        // Whatever's actively being dragged must render above the labels just
-        // re-raised above, so dragging a stack over another stack's name
-        // visually covers that name instead of it floating above the drag.
         if (draggingCard) {
             this.cardLayer.addChild(draggingCard)
         }
@@ -326,8 +367,7 @@ export class StackOverlay {
             this.cardLayer.addChild(this.draggedHandle)
             // Re-raised a second time here, now above the dragged cards/border/handle
             // just re-raised above: the dragged stack's own name must stay readable
-            // above its own cards, unlike other stacks' labels, which the drag is
-            // free to pass over/cover.
+            // above its own cards.
             this.cardLayer.addChild(this.draggedLabelContainer)
         }
         this.cardLayer.addChild(this.compactTooltip.view)
@@ -335,33 +375,31 @@ export class StackOverlay {
         this.cardLayer.addChild(this.nameEditor.view)
     }
 
-    private drawSingleCardMergeIndicator(draggingCard: Card, palette: PixiThemePalette['stackOverlay']): void {
-        this.mergeIndicator.clear()
-        this.mergePlus.clear()
+    private drawStack(stack: Card[], label: string, hovered: boolean, target: StackDrawTarget, palette: PixiThemePalette['stackOverlay']): StackOverlayEntry {
+        const box = computeBoundingBox(stack)
+        const name = label ? target.labels.take(label, computeStackNameMaxWidth(box), palette) : null
+        const layout = computeStackPillLayout(box, name ? name.text.width : null)
+        drawStackFrame(target.frame, layout.frame, hovered, palette)
+        drawStackPill(target.pill, layout, palette)
+        const pencilHovered = target.pencil === this.stackNameButton && this.namePointer !== null && isPointInBox(this.namePointer, layout.pencil)
+        drawNameButton(layout, target.pencil, hovered, pencilHovered, palette)
+        if (name && layout.name) {
+            name.text.position.set(layout.name.x, layout.name.y)
+        }
+        return { stack, layout, label, truncated: name?.truncated ?? false }
+    }
 
-        const mergeTargets = findMergeTargets(
+    private findSingleCardMergeTargets(draggingCard: Card): Card[][] {
+        return findMergeTargets(
             [draggingCard],
             computeStacks(this.cards.filter((card: Card): boolean => card !== draggingCard)),
             this.dragSourceTracker.sourceCards,
         )
-
-        if (mergeTargets.length === 0) {
-            return
-        }
-
-        for (const target of mergeTargets) {
-            drawMergeTargetBorder(target, this.mergeIndicator, palette)
-            drawMergeDim(target, this.mergeIndicator, palette)
-        }
-        this.cardLayer.addChild(this.mergeIndicator)
-        for (const target of mergeTargets) {
-            drawMergePlus(target, this.mergePlus, palette)
-        }
-        this.cardLayer.addChild(this.mergePlus)
     }
 
     private handleCompactHover: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void => {
         const point: Position = { x: e.global.x, y: e.global.y }
+        this.compactPointer = point
         const stack = findStackByCompactButtonAtPoint(computeStacks(this.cards), point)
         const rect = stack ? computeCompactButtonBox(stack) : null
         if (!rect) {
@@ -376,27 +414,44 @@ export class StackOverlay {
     }
 
     private handleCompactOut: () => void = (): void => {
+        this.compactPointer = null
         this.compactTooltip.hide()
     }
 
     private handleNameHover: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void => {
         const point: Position = { x: e.global.x, y: e.global.y }
-        const stacks = computeStacks(this.cards)
-        const stack = findStackByNameButtonAtPoint(stacks, point)
-        if (!stack) {
+        this.namePointer = point
+        const entry = this.entries.find((candidate: StackOverlayEntry): boolean => isPointInBox(point, candidate.layout.pencil))
+        if (!entry) {
             this.nameTooltip.hide()
             return
         }
-        const rect = computeNameButtonBox(stack)
-        const hasName = computeStackLabel(stack, this.cardLayer, this.getStackNames()).length > 0
+        const { pencil } = entry.layout
         this.nameTooltip.show(
-            rect.x + rect.width / 2,
-            rect.y + rect.height + NAME_TOOLTIP_GAP,
-            hasName ? I18n.t('stack.nameTooltipNamed') : I18n.t('stack.nameTooltipUnnamed'),
+            pencil.x + pencil.width / 2,
+            pencil.y + pencil.height + NAME_TOOLTIP_GAP,
+            entry.label ? I18n.t('stack.nameTooltipNamed') : I18n.t('stack.nameTooltipUnnamed'),
         )
     }
 
+    /** Spells out a name its pill had to shorten, wrapped to stay within the stack's frame. */
+    private handlePillHover: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void => {
+        const point: Position = { x: e.global.x, y: e.global.y }
+        const entry = this.entries.find((candidate: StackOverlayEntry): boolean => isPointInBox(point, candidate.layout.pill))
+        if (!entry?.truncated || this.draggedCards.length > 0) {
+            this.nameTooltip.hide()
+            return
+        }
+        const { frame, pill } = entry.layout
+        this.nameTooltip.show(frame.x + frame.width / 2, pill.y + pill.height + NAME_TOOLTIP_GAP, entry.label, frame.width)
+    }
+
     private handleNameOut: () => void = (): void => {
+        this.nameTooltip.hide()
+    }
+
+    private handleNameButtonOut: () => void = (): void => {
+        this.namePointer = null
         this.nameTooltip.hide()
     }
 }

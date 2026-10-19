@@ -52,13 +52,14 @@ export interface PixiThemePalette {
         shareIndicatorShadow: number
     }
     stackOverlay: {
-        border: number
-        handle: number
+        frame: number
+        accent: number
+        pill: number
+        pillShadow: number
+        pillShadowAlpha: number
         controlIcon: number
-        mergeDim: number
-        mergePlus: number
+        controlHover: number
         labelText: number
-        labelStroke: number
     }
     stackNameEditor: {
         background: number

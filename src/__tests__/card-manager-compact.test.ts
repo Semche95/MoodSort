@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import type { Application, Container } from 'pixi.js'
 import { CardManager } from '../features/card/card-manager'
-import { STACK_HANDLE_TOP_CLEARANCE } from '../features/stack/stack'
+import { STACK_FRAME_CLEARANCE } from '../features/stack/stack'
 import { Card } from '../types/card.types'
 import { AnimationTarget } from '../types/animation.types'
 
@@ -61,14 +61,14 @@ describe('CardManager.buildCompactTargets', () => {
     })
 
     it('keeps the dispersed target below the handle top clearance when the stack sits near the canvas top', () => {
-        const top = makeCard(500, STACK_HANDLE_TOP_CLEARANCE, 'top')
+        const top = makeCard(500, STACK_FRAME_CLEARANCE, 'top')
         const others = [makeCard(10, 10, 'a')]
         const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0)
 
         const [target] = manager.buildCompactTargets(top, others)
 
         randomSpy.mockRestore()
-        expect(target.toY).toBe(STACK_HANDLE_TOP_CLEARANCE)
+        expect(target.toY).toBe(STACK_FRAME_CLEARANCE)
     })
 
     it('keeps the dispersed target within the canvas when the stack sits near the right/bottom edge', () => {
@@ -80,6 +80,6 @@ describe('CardManager.buildCompactTargets', () => {
 
         randomSpy.mockRestore()
         expect(target.toX).toBe(700) // appWidth (800) - card width (100)
-        expect(target.toY).toBe(450) // appHeight (600) - card height (150)
+        expect(target.toY).toBe(450 - STACK_FRAME_CLEARANCE) // appHeight (600) - card height (150) - bottom clearance
     })
 })

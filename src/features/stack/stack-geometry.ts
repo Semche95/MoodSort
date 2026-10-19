@@ -2,11 +2,11 @@ import { Card } from '../../types/card.types'
 import { Position } from '../../types/position.types'
 import { Box } from '../../types/box.types'
 import { constrainPosition } from '../../shared/utils/geometry'
-import { STACK_HANDLE_TOP_CLEARANCE } from './stack'
+import { STACK_FRAME_CLEARANCE } from './stack'
 
 /**
  * Clamps a candidate (x, y) to the canvas for a card-sized object, reserving
- * STACK_HANDLE_TOP_CLEARANCE at the top. Every place that positions a card
+ * STACK_FRAME_CLEARANCE at the top and bottom. Every place that positions a card
  * (drag, load, resize, shuffle, compact) needs this same clamp, so this
  * wraps constrainPosition to avoid repeating its card-specific arguments at
  * every call site.
@@ -18,7 +18,7 @@ export function clampCardPosition(
     appWidth: number,
     appHeight: number,
 ): Position {
-    return constrainPosition(x, y, card.width, card.height, appWidth, appHeight, STACK_HANDLE_TOP_CLEARANCE)
+    return constrainPosition(x, y, card.width, card.height, appWidth, appHeight, STACK_FRAME_CLEARANCE, STACK_FRAME_CLEARANCE)
 }
 
 /**
@@ -55,8 +55,8 @@ export function computeBoundingBox(cards: Card[]): { x: number; y: number; width
  * whole rather than per-card (otherwise cards would drift apart when the
  * clamp kicks in for some of them but not others). Returns the x/y offset
  * to add to every card in the group to keep its bounding box within the
- * canvas, reserving STACK_HANDLE_TOP_CLEARANCE at the top for the drag
- * handle drawn above it.
+ * canvas, reserving STACK_FRAME_CLEARANCE at the top and bottom for the
+ * pills drawn on its frame.
  */
 export function computeGroupClampOffset(cards: Card[], appWidth: number, appHeight: number): Position {
     const box = computeBoundingBox(cards)
@@ -67,10 +67,10 @@ export function computeGroupClampOffset(cards: Card[], appWidth: number, appHeig
     } else if (box.x + box.width > appWidth) {
         x = appWidth - (box.x + box.width)
     }
-    if (box.y < STACK_HANDLE_TOP_CLEARANCE) {
-        y = STACK_HANDLE_TOP_CLEARANCE - box.y
-    } else if (box.y + box.height > appHeight) {
-        y = appHeight - (box.y + box.height)
+    if (box.y < STACK_FRAME_CLEARANCE) {
+        y = STACK_FRAME_CLEARANCE - box.y
+    } else if (box.y + box.height > appHeight - STACK_FRAME_CLEARANCE) {
+        y = appHeight - STACK_FRAME_CLEARANCE - (box.y + box.height)
     }
     return { x, y }
 }

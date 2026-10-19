@@ -2,41 +2,38 @@ import { Card } from '../../types/card.types'
 import { Position } from '../../types/position.types'
 import { boxesOverlap, computeBoundingBox } from './stack-geometry'
 
-/** Padding (in px) added around the stack bounding box highlight */
+/** Padding (in px) between a stack's cards and its dashed frame */
 export const STACK_HIGHLIGHT_PADDING: number = 20
 
-/** Height (in px) of the stack drag handle bar */
-export const STACK_HANDLE_HEIGHT: number = 22
+/** Corner radius (in px) of a stack's dashed frame */
+export const STACK_FRAME_RADIUS: number = 24
 
-/** Size (in px) of the square stack compact button, next to the drag handle. Deliberately matches STACK_HANDLE_HEIGHT so it never looks smaller than the handle it sits beside. */
-export const STACK_COMPACT_BUTTON_SIZE: number = STACK_HANDLE_HEIGHT
+/** Height (in px) of the pills centered on a stack frame's top (handle, name, rename) and bottom (actions) edges */
+export const STACK_PILL_HEIGHT: number = 32
 
-/** Gap (in px) between the stack drag handle and the compact button */
-export const STACK_COMPACT_BUTTON_GAP: number = 16
+/** Inner horizontal padding (in px) of a stack pill */
+export const STACK_PILL_PADDING: number = 4
 
-/** Size (in px) of the square stack "name" button, mirroring the compact button on the other side of the handle */
-export const STACK_NAME_BUTTON_SIZE: number = STACK_HANDLE_HEIGHT
+/** Width (in px) of a button slot in a stack pill (rename, compact) */
+export const STACK_PILL_ICON_WIDTH: number = 30
 
-/** Gap (in px) between the stack drag handle and the name button */
-export const STACK_NAME_BUTTON_GAP: number = 16
+/** Width (in px) of the grip slot, wider than a button so a nameless pill still offers a comfortable handle */
+export const STACK_PILL_GRIP_WIDTH: number = 40
 
-/** Small breathing gap (in px) between the handle's bottom edge and the name label drawn just below it, so the label never overlaps the handle's clickable area. */
-export const STACK_LABEL_HANDLE_GAP: number = 4
+/** Horizontal padding (in px) around the stack name inside its pill */
+export const STACK_PILL_NAME_PADDING: number = 8
 
-/**
- * Max width (in px) of both the persistent stack label and the inline name
- * editor, shared so the editor never grows wider than the stack's own frame
- * (the label truncates with an ellipsis past this width; the editor scrolls
- * its text like a native input instead, since it must stay fully editable).
- */
-export const STACK_NAME_MAX_WIDTH: number = 325
+export const STACK_NAME_FONT_FAMILY: string = 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif'
+
+/** Shared by the name shown in the pill and the inline editor, so a name reads the same while typed and once committed */
+export const STACK_NAME_FONT_SIZE: number = 14
 
 /**
- * Minimum distance (in px) a stack's bounding box top must keep from the
- * canvas top edge, so its drag handle (which is drawn above the box) always
- * stays fully on-canvas and clickable.
+ * Minimum distance (in px) a stack's bounding box must keep from the canvas
+ * top and bottom edges, so the pills centered on its frame's top and bottom
+ * edges always stay fully on-canvas and clickable.
  */
-export const STACK_HANDLE_TOP_CLEARANCE: number = STACK_HIGHLIGHT_PADDING + STACK_HANDLE_HEIGHT / 2
+export const STACK_FRAME_CLEARANCE: number = STACK_HIGHLIGHT_PADDING + STACK_PILL_HEIGHT / 2
 
 function cardsOverlap(a: Card, b: Card): boolean {
     return boxesOverlap(a, b)
@@ -82,8 +79,8 @@ export function findStackAtPoint(stacks: Card[][], point: Position): Card[] | nu
         if (
             point.x >= box.x - STACK_HIGHLIGHT_PADDING &&
             point.x <= box.x + box.width + STACK_HIGHLIGHT_PADDING &&
-            point.y >= box.y - STACK_HIGHLIGHT_PADDING - STACK_HANDLE_HEIGHT &&
-            point.y <= box.y + box.height + STACK_HIGHLIGHT_PADDING
+            point.y >= box.y - STACK_FRAME_CLEARANCE &&
+            point.y <= box.y + box.height + STACK_FRAME_CLEARANCE
         ) {
             return stack
         }

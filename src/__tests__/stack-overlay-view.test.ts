@@ -5,15 +5,20 @@ import {
     drawArrow,
     drawCompactButton,
     drawCompactIcon,
+    drawControlHover,
     drawGripIcon,
-    drawMergeDim,
     drawMergePlus,
-    drawMergeTargetBorder,
+    drawMergeWash,
     drawNameButton,
     drawNameIcon,
-    drawSingleBox,
-    drawSingleStack,
+    drawPillShape,
+    drawStackFrame,
+    drawStackPill,
+    roundRectOutline,
+    traceDashedPath,
 } from '../features/stack/stack-overlay/stack-overlay-view'
+import { computeStackPillLayout } from '../features/stack/stack-hit-testing'
+import { STACK_PILL_HEIGHT } from '../features/stack/stack'
 import { getPixiThemeColors } from '../features/theme/pixi-theme-colors'
 
 type Call = { method: string; args: unknown[] }
@@ -29,6 +34,7 @@ const { pixi } = vi.hoisted(() => {
         moveTo(...args: unknown[]): this { this.calls.push({ method: 'moveTo', args }); return this }
         lineTo(...args: unknown[]): this { this.calls.push({ method: 'lineTo', args }); return this }
         closePath(...args: unknown[]): this { this.calls.push({ method: 'closePath', args }); return this }
+        circle(...args: unknown[]): this { this.calls.push({ method: 'circle', args }); return this }
     }
 
     return { pixi: { Graphics } }
@@ -44,64 +50,195 @@ function makeCard(x: number, y: number, width: number, height: number, imageUrl:
     return { imageUrl, x, y, width, height, alpha: 1 } as unknown as Card
 }
 
+function calls(g: { calls: Call[] }, method: string): Call[] {
+    return g.calls.filter((c: Call): boolean => c.method === method)
+}
+
+const lightPalette = getPixiThemeColors('light').stackOverlay
+const darkPalette = getPixiThemeColors('dark').stackOverlay
+const frame = { x: 0, y: 0, width: 200, height: 100 }
+
+describe('roundRectOutline', () => {
+    it('starts and ends on the top edge, just past the top-left corner', () => {
+        const points = roundRectOutline(frame, 10)
+
+        expect(points[0]).toEqual({ x: 10, y: 0 })
+        expect(points[points.length - 1]).toEqual({ x: 10, y: 0 })
+    })
+
+    it('stays within the rectangle and reaches each straight edge', () => {
+        const points = roundRectOutline(frame, 10)
+
+        expect(points.every((p: { x: number; y: number }): boolean => p.x >= -1e-9 && p.x <= 200 + 1e-9 && p.y >= -1e-9 && p.y <= 100 + 1e-9)).toBe(true)
+        expect(points.some((p: { x: number }): boolean => Math.abs(p.x - 200) < 1e-9)).toBe(true)
+        expect(points.some((p: { y: number }): boolean => Math.abs(p.y - 100) < 1e-9)).toBe(true)
+    })
+})
+
+describe('traceDashedPath', () => {
+    it('fits a whole number of dashes on the path, so a closed outline never ends on a stub', () => {
+        const g = makeGraphics()
+
+        // 100px with a 6+5 pattern: rounded to 9 periods, each stretched to 100/9.
+        traceDashedPath(g, [{ x: 0, y: 0 }, { x: 100, y: 0 }], 6, 5)
+
+        const moves = calls(g, 'moveTo')
+        const lines = calls(g, 'lineTo')
+        expect(moves).toHaveLength(9)
+        const period = 100 / 9
+        expect(moves[1].args[0]).toBeCloseTo(period)
+        expect(lines[0].args[0]).toBeCloseTo(period * (6 / 11))
+    })
+
+    it('carries a dash across a corner of the polyline instead of restarting it', () => {
+        const g = makeGraphics()
+
+        traceDashedPath(g, [{ x: 0, y: 0 }, { x: 3, y: 0 }, { x: 3, y: 8 }], 6, 5)
+
+        // The first dash runs 3px along the first segment, then continues 3px down the second.
+        expect(calls(g, 'moveTo')[1].args).toEqual([3, 0])
+        expect(calls(g, 'lineTo')[1].args[1]).toBeCloseTo(3)
+    })
+
+    it('draws nothing for a zero-length path', () => {
+        const g = makeGraphics()
+
+        traceDashedPath(g, [{ x: 5, y: 5 }, { x: 5, y: 5 }], 6, 5)
+
+        expect(g.calls).toHaveLength(0)
+    })
+})
+
 describe('stack-overlay-view', () => {
-    it('drawSingleBox draws a padded border and a centered handle above it', () => {
-        const border = makeGraphics()
-        const handle = makeGraphics()
+    it('drawStackFrame strokes a dashed rounded frame in the frame color at rest', () => {
+        const g = makeGraphics()
 
-        drawSingleBox({ x: 100, y: 100, width: 200, height: 300 }, border, handle)
+        drawStackFrame(g, frame, false, darkPalette)
 
-        const rectCall = border.calls.find((c: Call): boolean => c.method === 'rect')!
-        expect(rectCall.args).toEqual([80, 80, 240, 340])
-        expect(handle.calls.some((c: Call): boolean => c.method === 'roundRect')).toBe(true)
-        expect(handle.calls.some((c: Call): boolean => c.method === 'rect')).toBe(true)
+        expect(calls(g, 'roundRect')[0].args).toEqual([0, 0, 200, 100, 24])
+        expect(calls(g, 'moveTo').length).toBeGreaterThan(10)
+        expect((calls(g, 'stroke')[0].args[0] as { color: number }).color).toBe(darkPalette.frame)
     })
 
-    it('drawSingleStack derives the box from the stack cards before drawing', () => {
-        const border = makeGraphics()
-        const handle = makeGraphics()
-        const stack = [makeCard(0, 0, 100, 100, 'a'), makeCard(50, 50, 100, 100, 'b')]
+    it('drawStackFrame switches to the accent, with a light accent wash, while highlighted', () => {
+        const g = makeGraphics()
 
-        drawSingleStack(stack, border, handle)
+        drawStackFrame(g, frame, true, darkPalette)
 
-        const rectCall = border.calls.find((c: Call): boolean => c.method === 'rect')!
-        expect(rectCall.args).toEqual([-20, -20, 190, 190])
+        expect((calls(g, 'fill')[0].args[0] as { color: number }).color).toBe(darkPalette.accent)
+        expect((calls(g, 'stroke')[0].args[0] as { color: number }).color).toBe(darkPalette.accent)
     })
 
-    it('drawGripIcon draws three horizontal bars centered on the handle', () => {
-        const handle = makeGraphics()
+    it('drawPillShape draws a shadow offset below the pill, then the pill itself', () => {
+        const g = makeGraphics()
 
-        drawGripIcon(0, 0, 80, handle)
+        drawPillShape(g, { x: 10, y: 20, width: 60, height: STACK_PILL_HEIGHT }, darkPalette)
 
-        const rects = handle.calls.filter((c: Call): boolean => c.method === 'rect')
-        expect(rects).toHaveLength(3)
+        const [shadow, pill] = calls(g, 'roundRect')
+        expect(shadow.args[1]).toBeGreaterThan(20)
+        expect(pill.args).toEqual([10, 20, 60, STACK_PILL_HEIGHT, STACK_PILL_HEIGHT / 2])
+        const fills = calls(g, 'fill').map((c: Call): number => (c.args[0] as { color: number }).color)
+        expect(fills).toEqual([darkPalette.pillShadow, darkPalette.pill])
+    })
+
+    it('drawStackPill draws the pill and its grip', () => {
+        const g = makeGraphics()
+
+        drawStackPill(g, computeStackPillLayout(frame, null), lightPalette)
+
+        expect(calls(g, 'roundRect')).toHaveLength(2)
+        expect(calls(g, 'circle')).toHaveLength(6)
+    })
+
+    it('drawGripIcon draws six dots centered on the grip slot', () => {
+        const g = makeGraphics()
+
+        drawGripIcon({ x: 0, y: 0, width: 26, height: 30 }, g)
+
+        const dots = calls(g, 'circle')
+        expect(dots).toHaveLength(6)
+        const xs = dots.map((c: Call): number => c.args[0] as number)
+        const ys = dots.map((c: Call): number => c.args[1] as number)
+        expect((Math.min(...xs) + Math.max(...xs)) / 2).toBe(13)
+        expect((Math.min(...ys) + Math.max(...ys)) / 2).toBe(15)
+    })
+
+    it('drawNameButton fades the pencil at rest and shows it fully while hovered', () => {
+        const layout = computeStackPillLayout(frame, 40)
+        const rest = makeGraphics()
+        const hovered = makeGraphics()
+
+        drawNameButton(layout, rest, false, false, darkPalette)
+        drawNameButton(layout, hovered, true, false, darkPalette)
+
+        const iconAlpha = (g: { calls: Call[] }): number => (calls(g, 'fill').pop()!.args[0] as { alpha: number }).alpha
+        expect(iconAlpha(rest)).toBeLessThan(iconAlpha(hovered))
+        expect(calls(hovered, 'circle')).toHaveLength(0)
+        expect(calls(rest, 'rect')[0].args).toEqual([layout.pencil.x, layout.pencil.y, layout.pencil.width, layout.pencil.height])
+    })
+
+    it('drawNameButton puts an accent pencil on a hover chip centered on its slot while the button itself is hovered', () => {
+        const layout = computeStackPillLayout(frame, 40)
+        const g = makeGraphics()
+
+        drawNameButton(layout, g, true, true, darkPalette)
+
+        const { pencil } = layout
+        const chip = calls(g, 'circle')
+        expect(chip).toHaveLength(1)
+        expect(chip[0].args.slice(0, 2)).toEqual([pencil.x + pencil.width / 2, pencil.y + pencil.height / 2])
+        const fills = calls(g, 'fill').map((c: Call): number => (c.args[0] as { color: number }).color)
+        expect(fills[1]).toBe(darkPalette.controlHover)
+        expect(fills.pop()).toBe(darkPalette.accent)
+    })
+
+    it('drawControlHover draws a round chip centered on the slot in the hover color', () => {
+        const g = makeGraphics()
+
+        drawControlHover({ x: 10, y: 20, width: 30, height: 32 }, g, darkPalette)
+
+        expect(calls(g, 'circle')[0].args.slice(0, 2)).toEqual([25, 36])
+        expect((calls(g, 'fill')[0].args[0] as { color: number }).color).toBe(darkPalette.controlHover)
     })
 
     it('drawCompactButton draws nothing for a lone single-card stack', () => {
         const compactButton = makeGraphics()
 
-        drawCompactButton([makeCard(0, 0, 100, 100, 'a')], compactButton)
+        drawCompactButton([makeCard(0, 0, 100, 100, 'a')], compactButton, false)
 
         expect(compactButton.calls).toHaveLength(0)
     })
 
-    it('drawCompactButton draws a rounded button with the converging-arrows icon for a multi-card stack', () => {
+    it('drawCompactButton draws a pill with the converging-arrows icon for a multi-card stack', () => {
         const compactButton = makeGraphics()
         const stack = [makeCard(0, 0, 100, 100, 'a'), makeCard(50, 50, 100, 100, 'b')]
 
-        drawCompactButton(stack, compactButton)
+        drawCompactButton(stack, compactButton, false, darkPalette)
 
-        expect(compactButton.calls.some((c: Call): boolean => c.method === 'roundRect')).toBe(true)
-        expect(compactButton.calls.filter((c: Call): boolean => c.method === 'moveTo')).toHaveLength(4)
+        expect(calls(compactButton, 'roundRect')).toHaveLength(2)
+        expect(calls(compactButton, 'moveTo')).toHaveLength(4)
+        expect(calls(compactButton, 'circle')).toHaveLength(0)
+        expect((calls(compactButton, 'fill').pop()!.args[0] as { color: number }).color).toBe(darkPalette.controlIcon)
     })
 
-    it('drawCompactIcon draws two arrows scaled to the button rect', () => {
+    it('drawCompactButton adds a hover chip and tints the arrows with the accent while hovered', () => {
+        const compactButton = makeGraphics()
+        const stack = [makeCard(0, 0, 100, 100, 'a'), makeCard(50, 50, 100, 100, 'b')]
+
+        drawCompactButton(stack, compactButton, true, darkPalette)
+
+        expect(calls(compactButton, 'circle')).toHaveLength(1)
+        expect((calls(compactButton, 'fill').pop()!.args[0] as { color: number }).color).toBe(darkPalette.accent)
+    })
+
+    it('drawCompactIcon draws two arrows scaled to the icon rect', () => {
         const compactButton = makeGraphics()
 
-        drawCompactIcon({ x: 0, y: 0, width: 24, height: 24 }, compactButton)
+        drawCompactIcon({ x: 0, y: 0, width: 24, height: 24 }, compactButton, 0x123456)
 
-        expect(compactButton.calls.filter((c: Call): boolean => c.method === 'moveTo')).toHaveLength(4)
-        expect(compactButton.calls.filter((c: Call): boolean => c.method === 'closePath')).toHaveLength(4)
+        expect(calls(compactButton, 'moveTo')).toHaveLength(4)
+        expect(calls(compactButton, 'closePath')).toHaveLength(4)
+        expect((calls(compactButton, 'fill')[0].args[0] as { color: number }).color).toBe(0x123456)
     })
 
     it('drawArrow draws a filled shaft and arrowhead pointing from "from" to "to"', () => {
@@ -109,80 +246,37 @@ describe('stack-overlay-view', () => {
 
         drawArrow(icon, { x: 0, y: 0 }, { x: 10, y: 0 }, 2)
 
-        expect(icon.calls.filter((c: Call): boolean => c.method === 'moveTo')).toHaveLength(2)
-        expect(icon.calls.filter((c: Call): boolean => c.method === 'closePath')).toHaveLength(2)
-        expect(icon.calls.filter((c: Call): boolean => c.method === 'fill')).toHaveLength(2)
+        expect(calls(icon, 'moveTo')).toHaveLength(2)
+        expect(calls(icon, 'closePath')).toHaveLength(2)
+        expect(calls(icon, 'fill')).toHaveLength(2)
     })
 
-    it('drawMergeTargetBorder draws a padded border around the stack', () => {
+    it('drawMergeWash fills the stack frame area with a light accent wash, without any outline', () => {
         const mergeIndicator = makeGraphics()
-        const stack = [makeCard(0, 0, 100, 100, 'a')]
 
-        drawMergeTargetBorder(stack, mergeIndicator)
+        drawMergeWash([makeCard(0, 0, 100, 100, 'a')], mergeIndicator, darkPalette)
 
-        expect(mergeIndicator.calls.some((c: Call): boolean => c.method === 'stroke')).toBe(true)
+        expect(calls(mergeIndicator, 'roundRect')[0].args).toEqual([-20, -20, 140, 140, 24])
+        expect((calls(mergeIndicator, 'fill')[0].args[0] as { color: number }).color).toBe(darkPalette.accent)
+        expect(calls(mergeIndicator, 'stroke')).toHaveLength(0)
     })
 
-    it('drawMergeDim fills a dim overlay over the stack area', () => {
-        const mergeIndicator = makeGraphics()
-        const stack = [makeCard(0, 0, 100, 100, 'a')]
-
-        drawMergeDim(stack, mergeIndicator)
-
-        const fillCall = mergeIndicator.calls.find((c: Call): boolean => c.method === 'fill')!
-        expect(fillCall.args).toEqual([{ color: 0x000000, alpha: 0.15 }])
-    })
-
-    it('drawMergePlus draws a centered plus sign over the stack', () => {
+    it('drawMergePlus draws a centered accent plus sign over the stack', () => {
         const mergePlus = makeGraphics()
-        const stack = [makeCard(0, 0, 100, 100, 'a')]
 
-        drawMergePlus(stack, mergePlus)
+        drawMergePlus([makeCard(0, 0, 100, 100, 'a')], mergePlus, darkPalette)
 
-        expect(mergePlus.calls.filter((c: Call): boolean => c.method === 'rect')).toHaveLength(2)
+        expect(calls(mergePlus, 'roundRect')).toHaveLength(2)
+        expect((calls(mergePlus, 'fill')[0].args[0] as { color: number }).color).toBe(darkPalette.accent)
     })
 
-    it('draws with the dark theme palette when one is passed explicitly', () => {
-        const darkPalette = getPixiThemeColors('dark').stackOverlay
-        const border = makeGraphics()
-        const handle = makeGraphics()
-        const mergeIndicator = makeGraphics()
-        const mergePlus = makeGraphics()
-        const stack = [makeCard(0, 0, 100, 100, 'a')]
-
-        drawSingleStack(stack, border, handle, darkPalette)
-        drawMergeTargetBorder(stack, mergeIndicator, darkPalette)
-        drawMergeDim(stack, mergeIndicator, darkPalette)
-        drawMergePlus(stack, mergePlus, darkPalette)
-
-        const borderStroke = border.calls.find((c: Call): boolean => c.method === 'stroke')!
-        expect((borderStroke.args[0] as { color: number }).color).toBe(darkPalette.border)
-        const handleFill = handle.calls.find((c: Call): boolean => c.method === 'fill')!
-        expect((handleFill.args[0] as { color: number }).color).toBe(darkPalette.handle)
-        const mergeDimFill = mergeIndicator.calls.filter((c: Call): boolean => c.method === 'fill').pop()!
-        expect((mergeDimFill.args[0] as { color: number }).color).toBe(darkPalette.mergeDim)
-        const mergePlusFill = mergePlus.calls.find((c: Call): boolean => c.method === 'fill')!
-        expect((mergePlusFill.args[0] as { color: number }).color).toBe(darkPalette.mergePlus)
-    })
-
-    it('drawNameButton and drawNameIcon draw the pencil icon with the given palette', () => {
-        const darkPalette = getPixiThemeColors('dark').stackOverlay
-        const nameButton = makeGraphics()
-        const stack = [makeCard(0, 0, 100, 100, 'a')]
-
-        drawNameButton(stack, nameButton, darkPalette)
-
-        expect(nameButton.calls.some((c: Call): boolean => c.method === 'roundRect')).toBe(true)
-        const fills = nameButton.calls.filter((c: Call): boolean => c.method === 'fill')
-        expect(fills.some((c: Call): boolean => (c.args[0] as { color: number }).color === darkPalette.controlIcon)).toBe(true)
-    })
-
-    it('drawNameIcon draws a pencil shaft and tip', () => {
+    it('drawNameIcon draws a pencil shaft and tip with the given color and alpha', () => {
         const icon = makeGraphics()
 
-        drawNameIcon({ x: 0, y: 0, width: 24, height: 24 }, icon)
+        drawNameIcon({ x: 0, y: 0, width: 24, height: 24 }, icon, 0x123456, 0.5)
 
-        expect(icon.calls.filter((c: Call): boolean => c.method === 'moveTo')).toHaveLength(2)
-        expect(icon.calls.filter((c: Call): boolean => c.method === 'closePath')).toHaveLength(2)
+        expect(calls(icon, 'moveTo')).toHaveLength(2)
+        expect(calls(icon, 'closePath')).toHaveLength(2)
+        expect(calls(icon, 'fill')[0].args[0]).toEqual({ color: 0x123456, alpha: 0.5 })
     })
 })

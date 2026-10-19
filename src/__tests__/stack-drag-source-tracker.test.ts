@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import { StackDragSourceTracker } from '../features/stack/stack-overlay/stack-drag-source-tracker'
-import { computeLabelAnchorPoint } from '../features/stack/stack-naming'
 import { Card } from '../types/card.types'
 
 function makeCard(x: number, y: number, width: number, height: number, imageUrl: string): Card {
@@ -19,10 +18,9 @@ describe('StackDragSourceTracker', () => {
         expect(tracker.restStacks.get(cardB)).toEqual([cardA, cardB])
         expect(tracker.sourceCards).toBeNull()
         expect(tracker.sourceGroups).toEqual([])
-        expect(tracker.sourceLabelPoint).toBeNull()
     })
 
-    it('captures sourceCards/sourceGroups/sourceLabelPoint for the dragged card\'s stack once a tracked card starts dragging', () => {
+    it('captures sourceCards/sourceGroups for the dragged card\'s stack once a tracked card starts dragging', () => {
         const cardA = makeCard(100, 100, 200, 300, 'a')
         const cardB = makeCard(110, 110, 200, 300, 'b')
         const tracker = new StackDragSourceTracker()
@@ -34,7 +32,6 @@ describe('StackDragSourceTracker', () => {
 
         expect(tracker.sourceCards).toEqual([cardA, cardB])
         expect(tracker.sourceGroups).toEqual([[cardA]])
-        expect(tracker.sourceLabelPoint).toEqual(computeLabelAnchorPoint([cardA, cardB]))
     })
 
     it('keeps the previously captured source values on a second call while still dragging the same card', () => {
@@ -45,7 +42,6 @@ describe('StackDragSourceTracker', () => {
         tracker.captureIfDragStarted([cardA, cardB], undefined)
         tracker.captureIfDragStarted([cardA, cardB], cardB)
         const sourceCardsAfterFirstDrag = tracker.sourceCards
-        const sourceLabelPointAfterFirstDrag = tracker.sourceLabelPoint
 
         // b is dragged further away; a subsequent frame's cards array reflects its new
         // position, but the captured source must not be recomputed mid-drag.
@@ -54,6 +50,5 @@ describe('StackDragSourceTracker', () => {
         tracker.captureIfDragStarted([cardA, cardB], cardB)
 
         expect(tracker.sourceCards).toBe(sourceCardsAfterFirstDrag)
-        expect(tracker.sourceLabelPoint).toEqual(sourceLabelPointAfterFirstDrag)
     })
 })

@@ -1,18 +1,14 @@
 import { Container, FederatedPointerEvent, Graphics, Text } from 'pixi.js'
-import { STACK_NAME_MAX_WIDTH } from '../stack'
+import { STACK_NAME_FONT_FAMILY, STACK_NAME_FONT_SIZE } from '../stack'
 import type { GetResolvedTheme } from '../../../types/theme.types'
 import { DEFAULT_GET_RESOLVED_THEME, getPixiThemeColors } from '../../theme/pixi-theme-colors'
 import type { PixiThemePalette } from '../../../types/pixi-theme-palette.types'
 
 const PADDING_X = 8
 const PADDING_Y = 5
-const RADIUS = 6
-// Matches LABEL_FONT_SIZE in stack-overlay.ts, so the editable field reads at
-// the same size as the label it's editing instead of popping up noticeably smaller.
-const FONT_SIZE = 20
 const BG_ALPHA = 0.95
-const FONT_FAMILY = 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif'
 const CURSOR_WIDTH = 2
+const MIN_INNER_WIDTH = 60
 const CURSOR_BLINK_INTERVAL_MS = 500
 const CLEAR_BUTTON_SIZE = 16
 const CLEAR_BUTTON_GAP = 8
@@ -44,6 +40,7 @@ export class StackNameEditor {
     private cursorPos: number
     private selectionStart: number | null
     private scrollX: number
+    private maxWidth: number
     private open_: boolean
     private cursorVisible: boolean
     private blinkTimer: ReturnType<typeof setInterval> | null
@@ -66,7 +63,7 @@ export class StackNameEditor {
         this.bg = new Graphics()
         this.bg.label = 'stack-name-editor-bg'
 
-        // Clips text/selection/cursor to the box once a name grows past STACK_NAME_MAX_WIDTH,
+        // Clips text/selection/cursor to the box once a name grows past maxWidth,
         // so the box itself never grows past the stack's own frame: the visible text scrolls
         // to keep the caret in view instead, exactly like a native input does when it overflows.
         this.textClip = new Container()
@@ -82,8 +79,8 @@ export class StackNameEditor {
         this.text = new Text({
             text: '',
             style: {
-                fontFamily: FONT_FAMILY,
-                fontSize: FONT_SIZE,
+                fontFamily: STACK_NAME_FONT_FAMILY,
+                fontSize: STACK_NAME_FONT_SIZE,
                 fill: getPixiThemeColors(this.getResolvedTheme()).stackNameEditor.text,
             },
         })
@@ -104,7 +101,7 @@ export class StackNameEditor {
         // positioned without disturbing what's actually drawn as `this.text`.
         this.measurer = new Text({
             text: '',
-            style: { fontFamily: FONT_FAMILY, fontSize: FONT_SIZE, fill: getPixiThemeColors(this.getResolvedTheme()).stackNameEditor.text },
+            style: { fontFamily: STACK_NAME_FONT_FAMILY, fontSize: STACK_NAME_FONT_SIZE, fill: getPixiThemeColors(this.getResolvedTheme()).stackNameEditor.text },
         })
 
         this.textClip.addChild(this.selectionHighlight)
@@ -119,6 +116,7 @@ export class StackNameEditor {
         this.cursorPos = 0
         this.selectionStart = null
         this.scrollX = 0
+        this.maxWidth = 0
         this.open_ = false
         this.cursorVisible = true
         this.blinkTimer = null
@@ -137,8 +135,11 @@ export class StackNameEditor {
         return this.buffer
     }
 
-    /** Opens the editor with its top-center anchored at (x, y) (the same point the label itself is drawn from), prefilled with `initial`. */
-    open(x: number, y: number, initial: string, onCommit: (value: string) => void, onCancel: () => void): void {
+    /**
+     * Opens the editor centered on (x, y), the center of the stack's pill, prefilled with `initial`.
+     * The box and its clear button together never grow wider than `maxWidth`.
+     */
+    open(x: number, y: number, maxWidth: number, initial: string, onCommit: (value: string) => void, onCancel: () => void): void {
         if (this.open_) {
             this.commit()
         }
@@ -148,6 +149,7 @@ export class StackNameEditor {
         this.scrollX = 0
         this.onCommit = onCommit
         this.onCancel = onCancel
+        this.maxWidth = maxWidth
         this.open_ = true
         this.cursorVisible = true
         this.view.position.set(x, y)
@@ -302,15 +304,19 @@ export class StackNameEditor {
         this.text.text = this.buffer.length > 0 ? this.buffer : ' '
         const fullTextWidth = this.text.width
         const textHeight = this.text.height
-        const maxInnerWidth = STACK_NAME_MAX_WIDTH - PADDING_X * 2 - CURSOR_WIDTH
-        const innerWidth = Math.min(Math.max(fullTextWidth, 10), maxInnerWidth)
+        // The clear button sits right of the box; reserving its slot on both sides keeps the centered box clear of the frame edges.
+        const maxBoxWidth = this.maxWidth - (CLEAR_BUTTON_GAP + CLEAR_BUTTON_SIZE) * 2
+        const maxInnerWidth = Math.max(0, maxBoxWidth - PADDING_X * 2 - CURSOR_WIDTH)
+        const innerWidth = Math.min(Math.max(fullTextWidth, MIN_INNER_WIDTH), maxInnerWidth)
         const width = innerWidth + PADDING_X * 2 + CURSOR_WIDTH
         const height = textHeight + PADDING_Y * 2
+        const top = -height / 2
+        const textTop = top + PADDING_Y
 
         this.bg.clear()
-        this.bg.roundRect(-width / 2, 0, width, height, RADIUS)
+        this.bg.roundRect(-width / 2, top, width, height, height / 2)
         this.bg.fill({ color: palette.background, alpha: BG_ALPHA })
-        this.bg.roundRect(-width / 2, 0, width, height, RADIUS)
+        this.bg.roundRect(-width / 2, top, width, height, height / 2)
         this.bg.stroke({ color: palette.border, width: 1.5, alpha: 0.9 })
 
         const textX = -width / 2 + PADDING_X
@@ -318,7 +324,7 @@ export class StackNameEditor {
         // the last character needs that same trailing slot the box itself reserves (width above
         // already adds CURSOR_WIDTH), or a caret sitting exactly at the text's end is clipped away entirely.
         this.clipMask.clear()
-        this.clipMask.rect(textX, 0, innerWidth + CURSOR_WIDTH, height)
+        this.clipMask.rect(textX, top, innerWidth + CURSOR_WIDTH, height)
         this.clipMask.fill({ color: 0xffffff })
 
         // Keeps the caret inside the visible window, like a native input scrolls its content
@@ -329,7 +335,7 @@ export class StackNameEditor {
         this.scrollX = Math.min(Math.max(this.scrollX, 0), maxScroll)
 
         const drawX = textX - this.scrollX
-        this.text.position.set(drawX, PADDING_Y)
+        this.text.position.set(drawX, textTop)
 
         this.selectionHighlight.clear()
         this.cursor.clear()
@@ -338,19 +344,19 @@ export class StackNameEditor {
             const end = Math.max(this.selectionStart, this.cursorPos)
             const selectionX = drawX + this.measureWidth(this.buffer.slice(0, start))
             const selectionWidth = this.measureWidth(this.buffer.slice(start, end))
-            this.selectionHighlight.rect(selectionX, PADDING_Y, selectionWidth, textHeight)
+            this.selectionHighlight.rect(selectionX, textTop, selectionWidth, textHeight)
             this.selectionHighlight.fill({ color: palette.border, alpha: 0.4 })
         } else if (this.cursorVisible) {
             const cursorX = drawX + cursorOffset
-            this.cursor.rect(cursorX, PADDING_Y, CURSOR_WIDTH, textHeight)
+            this.cursor.rect(cursorX, textTop, CURSOR_WIDTH, textHeight)
             this.cursor.fill({ color: palette.text, alpha: 0.9 })
         }
 
-        this.redrawClearButton(width, height, palette)
+        this.redrawClearButton(width, palette)
     }
 
     /** Small "x" sitting just right of the box, only while there's something to clear. */
-    private redrawClearButton(width: number, height: number, palette: PixiThemePalette['stackNameEditor']): void {
+    private redrawClearButton(width: number, palette: PixiThemePalette['stackNameEditor']): void {
         this.clearButton.clear()
         if (this.buffer.length === 0) {
             this.clearButton.eventMode = 'none'
@@ -359,7 +365,7 @@ export class StackNameEditor {
         this.clearButton.eventMode = 'static'
 
         const cx = width / 2 + CLEAR_BUTTON_GAP + CLEAR_BUTTON_SIZE / 2
-        const cy = height / 2
+        const cy = 0
         const half = CLEAR_BUTTON_SIZE / 2
         const inset = CLEAR_BUTTON_SIZE * 0.26
         // A plain IHitArea object rather than a pixi.js Rectangle: several test files mock the
@@ -370,10 +376,9 @@ export class StackNameEditor {
                 x >= cx - hitHalf && x <= cx + hitHalf && y >= cy - hitHalf && y <= cy + hitHalf,
         }
 
-        // A dark chip behind the "x" (same colors as the compact/name buttons), instead of a
-        // bare stroke: floating directly on the canvas's own mid-gray background, a plain white
-        // line at this size read as invisible rather than just low-contrast.
-        this.clearButton.roundRect(cx - half, cy - half, CLEAR_BUTTON_SIZE, CLEAR_BUTTON_SIZE, 4)
+        // A chip behind the "x" instead of a bare stroke: floating directly on the
+        // canvas background, a plain line at this size reads as invisible.
+        this.clearButton.roundRect(cx - half, cy - half, CLEAR_BUTTON_SIZE, CLEAR_BUTTON_SIZE, half)
         this.clearButton.fill({ color: palette.clearButton, alpha: 0.85 })
 
         this.clearButton.moveTo(cx - half + inset, cy - half + inset)

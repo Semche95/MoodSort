@@ -2,8 +2,8 @@ import { FederatedPointerEvent } from 'pixi.js'
 import { Position } from '../../types/position.types'
 import { PointerInteractions, PointerInteractionsDeps } from '../../types/pointer-interactions.types'
 import { findStackAtPoint } from '../stack/stack'
-import { findStackByCompactButtonAtPoint, findStackByNameButtonAtPoint } from '../stack/stack-hit-testing'
-import { findNameAnchor, computeLabelAnchorPoint } from '../stack/stack-naming'
+import { findStackByCompactButtonAtPoint } from '../stack/stack-hit-testing'
+import { findNameAnchor } from '../stack/stack-naming'
 
 export function createPointerInteractions(deps: PointerInteractionsDeps): PointerInteractions {
     const handleStagePointerDown = (): void => {
@@ -79,18 +79,16 @@ export function createPointerInteractions(deps: PointerInteractionsDeps): Pointe
             return
         }
         const point: Position = { x: e.global.x, y: e.global.y }
-        const stack = findStackByNameButtonAtPoint(deps.getStacks(), point)
+        const stack = deps.overlay.findStackByNameButtonAtPoint(point)
         if (!stack) {
             return
         }
         deps.overlay.commitNameEditorIfOpen()
         const anchor = findNameAnchor(stack, deps.cardLayer, deps.getStackNames())
         const currentName = deps.getStackNames()[anchor.imageUrl] ?? null
-        const labelPoint = computeLabelAnchorPoint(stack)
         deps.actionHistory.captureBefore([], { [anchor.imageUrl]: currentName })
         deps.overlay.openNameEditor(
-            labelPoint.x,
-            labelPoint.y,
+            stack,
             currentName ?? '',
             (value: string): void => deps.onCommitStackName(anchor, value),
             (): void => deps.onCancelStackNameEdit(),

@@ -1,17 +1,21 @@
 import { describe, it, expect } from 'vitest'
 import {
     computeCompactButtonBox,
+    computeStackFrame,
+    computeStackNameMaxWidth,
+    computeStackPillLayout,
+    computeStackPillMaxWidth,
     findStackByCompactButtonAtPoint,
-    computeNameButtonBox,
-    findStackByNameButtonAtPoint,
+    isPointInBox,
 } from '../features/stack/stack-hit-testing'
 import {
-    STACK_HANDLE_HEIGHT,
+    STACK_FRAME_RADIUS,
     STACK_HIGHLIGHT_PADDING,
-    STACK_COMPACT_BUTTON_SIZE,
-    STACK_COMPACT_BUTTON_GAP,
-    STACK_NAME_BUTTON_SIZE,
-    STACK_NAME_BUTTON_GAP,
+    STACK_PILL_HEIGHT,
+    STACK_PILL_ICON_WIDTH,
+    STACK_PILL_GRIP_WIDTH,
+    STACK_PILL_NAME_PADDING,
+    STACK_PILL_PADDING,
 } from '../features/stack/stack'
 import { Card } from '../types/card.types'
 
@@ -19,98 +23,108 @@ function makeCard(x: number, y: number, width: number, height: number, imageUrl:
     return { x, y, width, height, imageUrl } as unknown as Card
 }
 
-describe('computeCompactButtonBox', () => {
-    it('returns null for a single-card stack', () => {
-        const stack = [makeCard(0, 0, 100, 100, 'a')]
+const box = { x: 100, y: 100, width: 200, height: 300 }
 
-        expect(computeCompactButtonBox(stack)).toBeNull()
+describe('isPointInBox', () => {
+    it('includes points on the edges and excludes points just outside', () => {
+        expect(isPointInBox({ x: 100, y: 400 }, box)).toBe(true)
+        expect(isPointInBox({ x: 300, y: 100 }, box)).toBe(true)
+        expect(isPointInBox({ x: 99, y: 200 }, box)).toBe(false)
+        expect(isPointInBox({ x: 200, y: 401 }, box)).toBe(false)
+    })
+})
+
+describe('computeStackFrame', () => {
+    it('pads the cards bounding box by STACK_HIGHLIGHT_PADDING on every side', () => {
+        const pad = STACK_HIGHLIGHT_PADDING
+        expect(computeStackFrame(box)).toEqual({ x: 100 - pad, y: 100 - pad, width: 200 + pad * 2, height: 300 + pad * 2 })
+    })
+})
+
+describe('computeStackPillMaxWidth', () => {
+    it('is the frame width minus its two rounded corners', () => {
+        expect(computeStackPillMaxWidth(box)).toBe(200 + STACK_HIGHLIGHT_PADDING * 2 - STACK_FRAME_RADIUS * 2)
+    })
+})
+
+describe('computeStackNameMaxWidth', () => {
+    it('reserves the grip and rename slots, so the name never shrinks when the pill is hovered', () => {
+        const reserved = STACK_PILL_PADDING * 2 + STACK_PILL_GRIP_WIDTH + STACK_PILL_ICON_WIDTH + STACK_PILL_NAME_PADDING * 2
+        expect(computeStackNameMaxWidth(box)).toBe(computeStackPillMaxWidth(box) - reserved)
     })
 
-    it('positions a square button next to the drag handle for a multi-card stack', () => {
-        const stack = [makeCard(0, 0, 100, 100, 'a'), makeCard(10, 10, 100, 100, 'b')]
+    it('never goes negative on a frame too narrow for any name', () => {
+        expect(computeStackNameMaxWidth({ x: 0, y: 0, width: 10, height: 10 })).toBe(0)
+    })
+})
 
-        const pad = STACK_HIGHLIGHT_PADDING
-        const bx = -pad
-        const by = -pad
-        const bw = 110 + pad * 2
-        const handleWidth = Math.min(bw, 80)
-        const hx = bx + (bw - handleWidth) / 2
-        const hy = by - STACK_HANDLE_HEIGHT / 2
+describe('computeStackPillLayout', () => {
+    it('centers an unnamed pill (grip + rename) on the frame top edge', () => {
+        const layout = computeStackPillLayout(box, null)
+        const width = STACK_PILL_PADDING * 2 + STACK_PILL_GRIP_WIDTH + STACK_PILL_ICON_WIDTH
+        const frame = computeStackFrame(box)
+
+        expect(layout.frame).toEqual(frame)
+        expect(layout.pill).toEqual({
+            x: frame.x + (frame.width - width) / 2,
+            y: frame.y - STACK_PILL_HEIGHT / 2,
+            width,
+            height: STACK_PILL_HEIGHT,
+        })
+        expect(layout.name).toBeNull()
+    })
+
+    it('widens the pill around a name and puts the grip, name and rename slots left to right', () => {
+        const layout = computeStackPillLayout(box, 60)
+        const { pill, grip, name, pencil } = layout
+
+        expect(pill.width).toBe(STACK_PILL_PADDING * 2 + STACK_PILL_GRIP_WIDTH + STACK_PILL_ICON_WIDTH + 60 + STACK_PILL_NAME_PADDING * 2)
+        expect(grip).toMatchObject({ x: pill.x + STACK_PILL_PADDING, width: STACK_PILL_GRIP_WIDTH })
+        expect(name).toEqual({ x: grip.x + STACK_PILL_GRIP_WIDTH + STACK_PILL_NAME_PADDING, y: layout.frame.y })
+        expect(pencil.x + pencil.width).toBe(pill.x + pill.width - STACK_PILL_PADDING)
+        expect(name!.x + 60 + STACK_PILL_NAME_PADDING).toBe(pencil.x)
+    })
+
+    it('keeps a name measured at the max width inside the frame straight edge', () => {
+        const { pill } = computeStackPillLayout(box, computeStackNameMaxWidth(box))
+        const frame = computeStackFrame(box)
+
+        expect(pill.x).toBe(frame.x + STACK_FRAME_RADIUS)
+        expect(pill.x + pill.width).toBe(frame.x + frame.width - STACK_FRAME_RADIUS)
+    })
+})
+
+describe('computeCompactButtonBox', () => {
+    it('returns null for a single-card stack', () => {
+        expect(computeCompactButtonBox([makeCard(0, 0, 100, 100, 'a')])).toBeNull()
+    })
+
+    it('centers a one-icon pill on the frame bottom edge of a multi-card stack', () => {
+        const stack = [makeCard(0, 0, 100, 100, 'a'), makeCard(10, 10, 100, 100, 'b')]
+        const frame = computeStackFrame({ x: 0, y: 0, width: 110, height: 110 })
+        const width = STACK_PILL_PADDING * 2 + STACK_PILL_ICON_WIDTH
 
         expect(computeCompactButtonBox(stack)).toEqual({
-            x: hx + handleWidth + STACK_COMPACT_BUTTON_GAP,
-            y: hy + (STACK_HANDLE_HEIGHT - STACK_COMPACT_BUTTON_SIZE) / 2,
-            width: STACK_COMPACT_BUTTON_SIZE,
-            height: STACK_COMPACT_BUTTON_SIZE,
+            x: frame.x + (frame.width - width) / 2,
+            y: frame.y + frame.height - STACK_PILL_HEIGHT / 2,
+            width,
+            height: STACK_PILL_HEIGHT,
         })
     })
 })
 
 describe('findStackByCompactButtonAtPoint', () => {
-    it('returns null when the point is outside every compact button', () => {
-        const single = [makeCard(0, 0, 100, 100, 'a')]
+    it('returns the stack whose compact pill contains the point, skipping single cards', () => {
+        const single = [makeCard(500, 0, 100, 100, 'c')]
+        const stack = [makeCard(0, 0, 100, 100, 'a'), makeCard(10, 10, 100, 100, 'b')]
+        const rect = computeCompactButtonBox(stack)!
 
-        expect(findStackByCompactButtonAtPoint([single], { x: 0, y: 0 })).toBeNull()
+        expect(findStackByCompactButtonAtPoint([single, stack], { x: rect.x + 1, y: rect.y + 1 })).toBe(stack)
     })
 
-    it('finds the stack whose compact button contains the point', () => {
-        const stackA = [makeCard(0, 0, 100, 100, 'a'), makeCard(10, 10, 100, 100, 'b')]
-        const stackB = [makeCard(1000, 1000, 100, 100, 'c'), makeCard(1010, 1010, 100, 100, 'd')]
-        const box = computeCompactButtonBox(stackA)!
-        const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
-
-        expect(findStackByCompactButtonAtPoint([stackA, stackB], point)).toBe(stackA)
-    })
-
-    it('never matches a single-card stack, even near where its handle would be', () => {
-        const single = [makeCard(0, 0, 100, 100, 'a')]
-        const stackB = [makeCard(1000, 1000, 100, 100, 'c'), makeCard(1010, 1010, 100, 100, 'd')]
-        const box = computeCompactButtonBox(stackB)!
-        const point = { x: box.x + 1, y: box.y + 1 }
-
-        expect(findStackByCompactButtonAtPoint([single, stackB], point)).toBe(stackB)
-    })
-})
-
-describe('computeNameButtonBox', () => {
-    it('sits symmetrically opposite the compact button, on the other side of the handle', () => {
+    it('returns null when no compact pill contains the point', () => {
         const stack = [makeCard(0, 0, 100, 100, 'a'), makeCard(10, 10, 100, 100, 'b')]
 
-        const pad = STACK_HIGHLIGHT_PADDING
-        const bx = -pad
-        const by = -pad
-        const bw = 110 + pad * 2
-        const handleWidth = Math.min(bw, 80)
-        const hx = bx + (bw - handleWidth) / 2
-        const hy = by - STACK_HANDLE_HEIGHT / 2
-
-        expect(computeNameButtonBox(stack)).toEqual({
-            x: hx - STACK_NAME_BUTTON_GAP - STACK_NAME_BUTTON_SIZE,
-            y: hy + (STACK_HANDLE_HEIGHT - STACK_NAME_BUTTON_SIZE) / 2,
-            width: STACK_NAME_BUTTON_SIZE,
-            height: STACK_NAME_BUTTON_SIZE,
-        })
-    })
-
-    it('is also defined for a single-card stack, unlike the compact button', () => {
-        const stack = [makeCard(0, 0, 100, 100, 'a')]
-
-        expect(computeNameButtonBox(stack)).not.toBeNull()
-    })
-})
-
-describe('findStackByNameButtonAtPoint', () => {
-    it('finds the stack whose name button contains the point, including a single-card stack', () => {
-        const single = [makeCard(0, 0, 100, 100, 'a')]
-        const box = computeNameButtonBox(single)
-        const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
-
-        expect(findStackByNameButtonAtPoint([single], point)).toBe(single)
-    })
-
-    it('returns null when the point is outside every name button', () => {
-        const single = [makeCard(0, 0, 100, 100, 'a')]
-
-        expect(findStackByNameButtonAtPoint([single], { x: -9999, y: -9999 })).toBeNull()
+        expect(findStackByCompactButtonAtPoint([stack], { x: 1000, y: 1000 })).toBeNull()
     })
 })

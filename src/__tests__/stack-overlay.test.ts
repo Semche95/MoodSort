@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { Application, Container } from 'pixi.js'
 import { StackOverlay } from '../features/stack/stack-overlay/stack-overlay'
 import { Card } from '../types/card.types'
+import { getPixiThemeColors } from '../features/theme/pixi-theme-colors'
 import { createCardLift } from '../features/card/card-lift'
 
 const { pixi } = vi.hoisted(() => {
@@ -69,6 +70,10 @@ const { pixi } = vi.hoisted(() => {
         }
         closePath(...args: unknown[]): this {
             this.calls.push({ method: 'closePath', args })
+            return this
+        }
+        circle(...args: unknown[]): this {
+            this.calls.push({ method: 'circle', args })
             return this
         }
     }
@@ -151,7 +156,7 @@ describe('StackOverlay', () => {
         expect(cardLayer.children).toContain(overlay['draggedBorder'])
         expect(cardLayer.children).toContain(overlay['draggedHandle'])
         const mergeIndicator = overlay['mergeIndicator'] as unknown as { calls: Array<{ method: string }> }
-        expect(mergeIndicator.calls.some((c: { method: string }): boolean => c.method === 'rect')).toBe(true)
+        expect(mergeIndicator.calls.some((c: { method: string }): boolean => c.method === 'roundRect')).toBe(true)
     })
 
     it('showDragHighlights draws merge indicators with colors from the injected getResolvedTheme callback', () => {
@@ -166,8 +171,54 @@ describe('StackOverlay', () => {
         overlay.showDragHighlights([a], [[b]])
 
         const mergeIndicator = overlay['mergeIndicator'] as unknown as { calls: Array<{ method: string; args: unknown[] }> }
-        const strokeCall = mergeIndicator.calls.find((c: { method: string; args: unknown[] }): boolean => c.method === 'stroke')!
-        expect((strokeCall.args[0] as { color: number }).color).toBe(0xcccccc)
+        const fillCall = mergeIndicator.calls.find((c: { method: string; args: unknown[] }): boolean => c.method === 'fill')!
+        expect((fillCall.args[0] as { color: number }).color).toBe(getPixiThemeColors('dark').stackOverlay.accent)
+    })
+
+    it('tints a merge target\'s own frame with the accent, under its pill, during a stack drag', () => {
+        const cardLayer = new pixi.Container()
+        const a = makeCard(0, 0, 200, 300, 'a')
+        const b = makeCard(300, 0, 200, 300, 'b')
+        cardLayer.addChild(a)
+        cardLayer.addChild(b)
+        const { app, tick } = createApp()
+        const overlay = new StackOverlay(app, cardLayer as unknown as Container)
+        overlay.addToStage()
+
+        overlay.showDragHighlights([a], [[b]])
+        tick()
+
+        const border = overlay.stackBorder as unknown as { calls: Array<{ method: string; args: unknown[] }> }
+        const stroke = border.calls.filter((c: { method: string }): boolean => c.method === 'stroke').pop()!
+        expect((stroke.args[0] as { color: number }).color).toBe(getPixiThemeColors('light').stackOverlay.accent)
+
+        overlay.hide()
+        overlay.restoreZOrder()
+        tick()
+        const restStroke = border.calls.filter((c: { method: string }): boolean => c.method === 'stroke').pop()!
+        expect((restStroke.args[0] as { color: number }).color).toBe(getPixiThemeColors('light').stackOverlay.frame)
+    })
+
+    it('tints a merge target\'s own frame with the accent while a single card is dragged over it', () => {
+        const cardLayer = new pixi.Container()
+        const a = makeCard(0, 0, 200, 300, 'a')
+        const b = makeCard(1000, 0, 200, 300, 'b')
+        cardLayer.addChild(a)
+        cardLayer.addChild(b)
+        const { app, tick } = createApp()
+        const overlay = new StackOverlay(app, cardLayer as unknown as Container)
+        overlay.addToStage()
+        tick()
+
+        a.lift.reasons.add('drag')
+        a.x = 1050
+        tick()
+
+        const border = overlay.stackBorder as unknown as { calls: Array<{ method: string; args: unknown[] }> }
+        const stroke = border.calls.filter((c: { method: string }): boolean => c.method === 'stroke').pop()!
+        expect((stroke.args[0] as { color: number }).color).toBe(getPixiThemeColors('light').stackOverlay.accent)
+        const mergeIndicator = overlay['mergeIndicator'] as unknown as { calls: Array<{ method: string }> }
+        expect(mergeIndicator.calls.some((c: { method: string }): boolean => c.method === 'roundRect')).toBe(true)
     })
 
     it('showDragHighlights does not draw merge indicators when there are no merge targets', () => {
@@ -180,7 +231,7 @@ describe('StackOverlay', () => {
         overlay.showDragHighlights([a], [])
 
         const mergeIndicator = overlay['mergeIndicator'] as unknown as { calls: Array<{ method: string }> }
-        expect(mergeIndicator.calls.some((c: { method: string }): boolean => c.method === 'rect')).toBe(false)
+        expect(mergeIndicator.calls.some((c: { method: string }): boolean => c.method === 'roundRect')).toBe(false)
     })
 
     it('restoreZOrder resets the dragged-cards tracking and re-raises the permanent border/handle/compact button', () => {

@@ -4,7 +4,8 @@ import { CanvasScene } from '../app/canvas-scene'
 import { CardStateService } from '../features/card/card-state-service'
 import { InMemoryStore } from './in-memory-store'
 import { Card } from '../types/card.types'
-import { computeNameButtonBox } from '../features/stack/stack-hit-testing'
+import { StackOverlayEntry } from '../types/stack-overlay-entry.types'
+import { Position } from '../types/position.types'
 import { computeStackLabel } from '../features/stack/stack-naming'
 import { HistoryData, HISTORY_KEY } from '../types/history.types'
 
@@ -126,6 +127,8 @@ vi.mock('pixi.js', () => {
         clear(): this { return this }
         moveTo(): this { return this }
         lineTo(): this { return this }
+        closePath(): this { return this }
+        circle(): this { return this }
         filters: unknown[] = []
     }
 
@@ -223,11 +226,19 @@ function pressEnterInNameEditor(): void {
     input?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
 }
 
+/** Renders a frame so the overlay lays out every pill, then returns the center of `stack`'s rename button. */
+function renameButtonCenter(testable: TestableScene, stack: Card[]): Position {
+    const overlay = (testable as unknown as { overlay: { app: { __tick(): void }; entries: StackOverlayEntry[] } }).overlay
+    overlay.app.__tick()
+    const entry = overlay.entries.find((candidate: StackOverlayEntry): boolean =>
+        candidate.stack.length === stack.length && stack.every((card: Card): boolean => candidate.stack.includes(card)))!
+    const { pencil } = entry.layout
+    return { x: pencil.x + pencil.width / 2, y: pencil.y + pencil.height / 2 }
+}
+
 /** Drives the full name-button-click -> type -> Enter flow through real keyboard/input events, exactly as a user would. */
 function nameStack(testable: TestableScene, stack: Card[], name: string): void {
-    const box = computeNameButtonBox(stack)
-    const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
-    testable.handleNameButtonPointerDown({ global: point })
+    testable.handleNameButtonPointerDown({ global: renameButtonCenter(testable, stack) })
     typeIntoNameEditor(name)
     pressEnterInNameEditor()
 }
@@ -415,9 +426,7 @@ describe('CanvasScene stack naming', () => {
         expect(testable.stackNames).toEqual({ 'card-c': 'Joie' })
 
         const overlay = (scene as unknown as { overlay: { nameEditor: { value: string } } }).overlay
-        const box = computeNameButtonBox([a, b, c])
-        const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
-        testable.handleNameButtonPointerDown({ global: point })
+        testable.handleNameButtonPointerDown({ global: renameButtonCenter(testable, [a, b, c]) })
 
         // Must prefill the name that's actually displayed, not an empty field
         // for whichever card is now lowest in z-order.

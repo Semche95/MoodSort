@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { clampCardPosition, computeGroupClampOffset, boxesOverlap, computeBoundingBox } from '../features/stack/stack-geometry'
-import { STACK_HANDLE_TOP_CLEARANCE } from '../features/stack/stack'
+import { STACK_FRAME_CLEARANCE } from '../features/stack/stack'
 import { Card } from '../types/card.types'
 
 function makeCard(x: number, y: number, width: number, height: number, imageUrl: string): Card {
@@ -17,11 +17,11 @@ describe('clampCardPosition', () => {
     })
 
     it('clamps y to the handle top clearance instead of 0', () => {
-        expect(clampCardPosition(300, -50, card, appWidth, appHeight)).toEqual({ x: 300, y: STACK_HANDLE_TOP_CLEARANCE })
+        expect(clampCardPosition(300, -50, card, appWidth, appHeight)).toEqual({ x: 300, y: STACK_FRAME_CLEARANCE })
     })
 
-    it('clamps x and y to the opposite edges', () => {
-        expect(clampCardPosition(900, 900, card, appWidth, appHeight)).toEqual({ x: 750, y: 550 })
+    it('clamps x to the right edge and y to the bottom edge minus STACK_FRAME_CLEARANCE', () => {
+        expect(clampCardPosition(900, 900, card, appWidth, appHeight)).toEqual({ x: 750, y: 550 - STACK_FRAME_CLEARANCE })
     })
 })
 
@@ -38,7 +38,7 @@ describe('computeGroupClampOffset', () => {
     it('pushes the group down to keep the handle clearance at the top edge', () => {
         const cards = [makeCard(100, 0, 50, 50, 'a')]
 
-        expect(computeGroupClampOffset(cards, appWidth, appHeight)).toEqual({ x: 0, y: STACK_HANDLE_TOP_CLEARANCE })
+        expect(computeGroupClampOffset(cards, appWidth, appHeight)).toEqual({ x: 0, y: STACK_FRAME_CLEARANCE })
     })
 
     it('pushes the group right when it goes past the left edge', () => {
@@ -53,17 +53,18 @@ describe('computeGroupClampOffset', () => {
         expect(computeGroupClampOffset(cards, appWidth, appHeight)).toEqual({ x: -30, y: 0 })
     })
 
-    it('pushes the group up when it goes past the bottom edge', () => {
+    it('pushes the group up to keep STACK_FRAME_CLEARANCE below it when it goes past the bottom edge', () => {
         const cards = [makeCard(100, 580, 50, 50, 'a')]
 
-        expect(computeGroupClampOffset(cards, appWidth, appHeight)).toEqual({ x: 0, y: -30 })
+        // Bottom edge at 630 must end at appHeight (600) - STACK_FRAME_CLEARANCE.
+        expect(computeGroupClampOffset(cards, appWidth, appHeight)).toEqual({ x: 0, y: -30 - STACK_FRAME_CLEARANCE })
     })
 
     it('applies the same offset to a multi-card group, derived from its combined bounding box', () => {
         const cards = [makeCard(100, -10, 50, 50, 'a'), makeCard(120, 20, 50, 50, 'b')]
 
-        // Bounding box top is -10, so the group must move down by STACK_HANDLE_TOP_CLEARANCE + 10.
-        expect(computeGroupClampOffset(cards, appWidth, appHeight)).toEqual({ x: 0, y: STACK_HANDLE_TOP_CLEARANCE + 10 })
+        // Bounding box top is -10, so the group must move down by STACK_FRAME_CLEARANCE + 10.
+        expect(computeGroupClampOffset(cards, appWidth, appHeight)).toEqual({ x: 0, y: STACK_FRAME_CLEARANCE + 10 })
     })
 })
 

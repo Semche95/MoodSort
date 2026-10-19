@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { Container, FederatedPointerEvent } from 'pixi.js'
 import { CardDrag } from '../features/drag/card-drag'
-import { STACK_HANDLE_TOP_CLEARANCE } from '../features/stack/stack'
+import { STACK_FRAME_CLEARANCE } from '../features/stack/stack'
 import { Card } from '../types/card.types'
 import { createCardLift } from '../features/card/card-lift'
 
@@ -77,7 +77,7 @@ describe('CardDrag', () => {
     })
 
     describe('top clearance for the stack handle', () => {
-        const handleTopClearance = STACK_HANDLE_TOP_CLEARANCE
+        const handleTopClearance = STACK_FRAME_CLEARANCE
 
         it('keeps the card below the handle clearance while dragging toward the top', async () => {
             const { Container: MockContainer } = await import('pixi.js')

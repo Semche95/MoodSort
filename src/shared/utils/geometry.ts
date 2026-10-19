@@ -8,11 +8,12 @@ export function constrainPosition(
     appWidth: number,
     appHeight: number,
     topMargin: number = 0,
+    bottomMargin: number = 0,
 ): Position {
     const minX = 0
     const minY = topMargin
     const maxX = appWidth - width
-    const maxY = appHeight - height
+    const maxY = appHeight - height - bottomMargin
 
     return {
         x: Math.max(minX, Math.min(x, maxX)),

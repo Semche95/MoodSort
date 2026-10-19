@@ -81,6 +81,10 @@ const { pixi } = vi.hoisted(() => {
             this.calls.push({ method: 'closePath', args })
             return this
         }
+        circle(...args: unknown[]): this {
+            this.calls.push({ method: 'circle', args })
+            return this
+        }
         override on(event: string, fn: Handler): this {
             (this.handlers[event] ??= []).push(fn)
             return this
@@ -194,6 +198,34 @@ describe('StackOverlay compact button', () => {
 
         const compactButton = overlay.stackCompactButton as unknown as { calls: Array<{ method: string }> }
         expect(compactButton.calls.some((call: { method: string }): boolean => call.method === 'roundRect')).toBe(false)
+    })
+
+    it('draws a hover chip on the compact pill while the pointer is over it, and drops it once the pointer leaves', () => {
+        const cardLayer = new pixi.Container()
+        const cardA = makeCard(100, 100, 200, 300, 'a')
+        const cardB = makeCard(110, 110, 200, 300, 'b')
+        cardLayer.addChild(cardA)
+        cardLayer.addChild(cardB)
+        const { app, tick } = createApp()
+        const overlay = new StackOverlay(app, cardLayer as unknown as Container)
+        overlay.addToStage()
+        overlay.initCompactButton(vi.fn())
+        overlay.setHoveredStack([cardA, cardB])
+        const compactButton = overlay.stackCompactButton as unknown as {
+            calls: Array<{ method: string }>
+            emit(event: string, payload: unknown): void
+        }
+        const hasChip = (): boolean => compactButton.calls.slice(compactButton.calls.map((c: { method: string }): string => c.method).lastIndexOf('clear')).some((c: { method: string }): boolean => c.method === 'circle')
+        const box = computeCompactButtonBox([cardA, cardB])!
+
+        tick()
+        expect(hasChip()).toBe(false)
+        compactButton.emit('pointerover', { global: { x: box.x + box.width / 2, y: box.y + box.height / 2 } })
+        tick()
+        expect(hasChip()).toBe(true)
+        compactButton.emit('pointerout', {})
+        tick()
+        expect(hasChip()).toBe(false)
     })
 
     it('shows a "Compacter le tas" tooltip when hovering the compact button of a multi-card stack', () => {
