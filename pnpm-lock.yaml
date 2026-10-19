@@ -34,8 +34,8 @@ importers:
         specifier: ^30.1.3
         version: 30.1.3
       lucide-static:
-        specifier: ^1.54.0
-        version: 1.54.0
+        specifier: ^1.58.0
+        version: 1.58.0
       sharp:
         specifier: ^0.35.5
         version: 0.35.5(@types/node@26.6.5)
@@ -909,8 +909,8 @@ packages:
     resolution: {integrity: sha512-U4N8FgzmWxc8k1VH8Kr6lQg18U7Fjvby6wXHVRX/ZZ7IwWbRMgrRbP0Wrb5q5NVinryp4SQampHKdvtecItxUg==}
     engines: {node: 20 || >=22}
 
-  lucide-static@1.54.0:
-    resolution: {integrity: sha512-Y0NVQ7uX17m+Jee/coLs7uxGF3bEyWHXiXFBXxmE7BnjjMa5o0s1gR4zQHBQHN19RYaQWVG2cx4GdrW/WroyrA==}
+  lucide-static@1.58.0:
+    resolution: {integrity: sha512-VFE2ZEq3yEwjBH0El9CA9lHgDWKKXPKgKxFzX+/JN1FPa4maQbtl/pT4B62aJkUEpODT5octDsyGy7tPVE2svQ==}
 
   magic-string@1.4.3:
     resolution: {integrity: sha512-z12OxmaPGE0F4xlpGdjuAUckipLpQlTAuAmyGhNoD7ODpYUzvDfvtxUbjM/jwznyP178oju/KDdyi220wNJ0RQ==}
@@ -1965,7 +1965,7 @@ snapshots:
 
   lru-cache@11.5.3: {}
 
-  lucide-static@1.54.0: {}
+  lucide-static@1.58.0: {}
 
   magic-string@1.4.3:
     dependencies:
