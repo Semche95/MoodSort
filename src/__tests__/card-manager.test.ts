@@ -104,6 +104,19 @@ function makeCard(imageUrl: string, x: number, y: number, width: number = 200, h
     return { imageUrl, x, y, width, height, scale: { set: vi.fn() } } as unknown as Card
 }
 
+/** A card whose size follows its scale, as a Pixi container's does, at 200x300 for scale 1. */
+function makeScaledCard(imageUrl: string, x: number, y: number, initialScale: number): Card {
+    const scale = { x: initialScale, y: initialScale, set(v: number): void { scale.x = v; scale.y = v } }
+    return {
+        imageUrl,
+        x,
+        y,
+        scale,
+        get width(): number { return 200 * scale.x },
+        get height(): number { return 300 * scale.y },
+    } as unknown as Card
+}
+
 function makeState(order: string[]): CardState {
     return { positions: {}, order, onboardingDismissed: false, stackNames: {}, viewport: null }
 }
@@ -546,7 +559,7 @@ describe('CardManager', () => {
             const a = makeCard('a', 200, 100)
             const b = makeCard('b', 240, 160)
 
-            manager.rescaleFromViewport([[a, b]], { width: 2560, height: 1440 })
+            manager.rescaleFromViewport([a, b], { width: 2560, height: 1440 })
 
             expect({ x: a.x, y: a.y }).toEqual({ x: 100, y: 50 })
             expect({ x: b.x, y: b.y }).toEqual({ x: 120, y: 80 })
@@ -557,11 +570,22 @@ describe('CardManager', () => {
             const a = makeCard('b', 1050, 100)
             const b = makeCard('c', 1100, 100)
 
-            manager.rescaleFromViewport([[inside], [a, b]], null)
+            manager.rescaleFromViewport([inside, a, b], null)
 
             expect({ x: inside.x, y: inside.y }).toEqual({ x: 100, y: 100 })
             expect(a.x).toBe(1030)
             expect(b.x).toBe(1080)
+        })
+
+        it('keeps together a pile whose cards only overlap at the card scale of the saved size', () => {
+            const currentScale = app.screen.width / CARD_REFERENCE_WIDTH
+            const a = makeScaledCard('a', 100, 100, currentScale)
+            const b = makeScaledCard('b', 100, 300, currentScale)
+
+            manager.rescaleFromViewport([a, b], { width: 2560, height: 720 })
+
+            expect({ x: b.x, y: b.y }).toEqual({ x: 50, y: 200 })
+            expect(b.y).toBeLessThan(a.y + a.height)
         })
     })
 

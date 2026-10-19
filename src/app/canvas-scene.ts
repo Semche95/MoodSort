@@ -276,8 +276,8 @@ export class CanvasScene {
     /** The entry may predate a resize: cards it restores without an anchor are rescaled from its canvas size, then every stack is clamped. */
     private applyHistory(entry: CardActionEntry, reverse: boolean): void {
         const unanchored = applyHistoryEntry(entry, this.cards, this.cardLayer, reverse)
-        this.cardManager.rescaleFromViewport(computeStacks(unanchored), entry.viewport ?? null)
-        this.cardManager.rescaleFromViewport(computeStacks(this.cards), null)
+        this.cardManager.rescaleFromViewport(unanchored, entry.viewport ?? null)
+        this.cardManager.rescaleFromViewport(this.cards, null)
         applyStackNameChanges(entry, this.stackNames, reverse)
     }
 

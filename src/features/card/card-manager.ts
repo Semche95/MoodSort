@@ -142,7 +142,7 @@ export class CardManager {
             this.cardLayer.addChild(card)
         }
         const restored = cards.filter((card: Card): boolean => positions[card.imageUrl] !== undefined)
-        this.rescaleFromViewport(computeStacks(restored), savedViewport)
+        this.rescaleFromViewport(restored, savedViewport)
         return cards
     }
 
@@ -220,11 +220,19 @@ export class CardManager {
         }
     }
 
-    /** Rescales stacks laid out under `savedViewport` to the current canvas; an unknown size only clamps them as whole stacks. */
-    rescaleFromViewport(stacks: Card[][], savedViewport: ViewportSize | null): void {
+    /**
+     * Rescales cards laid out under `savedViewport` to the current canvas; an unknown size only clamps them as whole stacks.
+     * Their stacks are found at the card scale of that size, since the current one would split or merge piles.
+     */
+    rescaleFromViewport(cards: Card[], savedViewport: ViewportSize | null): void {
+        if (savedViewport) {
+            for (const card of cards) {
+                card.scale.set(savedViewport.width / CARD_REFERENCE_WIDTH)
+            }
+        }
         const ratioX = savedViewport ? this.app.screen.width / savedViewport.width : 1
         const ratioY = savedViewport ? this.app.screen.height / savedViewport.height : 1
-        this.rescaleStacks(stacks, ratioX, ratioY)
+        this.rescaleStacks(computeStacks(cards), ratioX, ratioY)
     }
 
     shuffleAndBuildTargets(cards: Card[]): AnimationTarget[] {
