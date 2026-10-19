@@ -23,6 +23,11 @@ export interface PixiThemePalette {
             liftAlpha: number
             liftBlurStrength: number
         }
+        stackShadow: {
+            color: number
+            alpha: number
+            blurStrength: number
+        }
     }
     icon: number
     toolbar: {

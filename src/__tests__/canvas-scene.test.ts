@@ -5,6 +5,8 @@ import { CardStateService } from '../features/card/card-state-service'
 import { InMemoryStore } from './in-memory-store'
 import { Card } from '../types/card.types'
 import { applyCanvasBackgroundTheme, createCanvasBackground, resizeCanvasBackground } from '../features/background/canvas-background'
+import { getPixiThemeColors } from '../features/theme/pixi-theme-colors'
+import type { StackShadow } from '../types/stack-shadow.types'
 
 const { mockSpritesheet } = vi.hoisted(() => {
     const mockTexture = { width: 200, height: 300 }
@@ -144,6 +146,7 @@ vi.mock('pixi.js', () => {
         Sprite: MockSprite,
         Text: MockText,
         BlurFilter: class MockBlurFilter { constructor() {} },
+        AlphaFilter: class MockAlphaFilter { alpha: number = 1 },
         Rectangle: class MockRectangle {},
         FederatedPointerEvent: class MockFederatedPointerEvent {},
         __getMockApp: (): Record<string, unknown> => mockApp,
@@ -156,6 +159,7 @@ async function importMockedPixi(): Promise<{ __getMockApp: () => Record<string, 
 
 interface TestableScene {
     cards: Card[]
+    stackShadow: StackShadow
     cardLayer: { children: unknown[] }
     app: { stage: { children: unknown[] }; renderer: unknown }
 }
@@ -371,6 +375,23 @@ describe('CanvasScene', () => {
         expect(resizeCanvasBackground).toHaveBeenLastCalledWith(background, 1400, 900)
     })
 
+    it('mounts the pile shadow between the background and the card layer', async () => {
+        const { testable } = await setup()
+
+        const children = testable.app.stage.children
+        expect(children.indexOf(testable.stackShadow.graphics)).toBe(children.indexOf(testable.cardLayer) - 1)
+        expect(children.indexOf(testable.stackShadow.graphics)).toBeGreaterThan(0)
+    })
+
+    it('redraws the pile shadow from the cards on every frame', async () => {
+        const { testable, tick } = await setup()
+        const roundRect = vi.spyOn(testable.stackShadow.graphics, 'roundRect')
+
+        tick()
+
+        expect(roundRect).toHaveBeenCalledTimes(testable.cards.length)
+    })
+
     it('eases a dragged card upward on every frame', async () => {
         const { testable, tick } = await setup()
         testable.cards[0].lift.reasons.add('drag')
@@ -378,6 +399,14 @@ describe('CanvasScene', () => {
         tick()
 
         expect(testable.cards[0].lift.progress).toBeGreaterThan(0)
+    })
+
+    it('retunes the pile shadow on applyTheme', async () => {
+        const { scene, testable } = await setup()
+
+        scene.applyTheme('dark')
+
+        expect(testable.stackShadow.graphics.tint).toBe(getPixiThemeColors('dark').card.stackShadow.color)
     })
 
 })

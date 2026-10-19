@@ -17,6 +17,8 @@ import { CardStateService } from '../features/card/card-state-service'
 import { ActionHistory } from '../features/history/action-history'
 import { IStore } from '../types/store.types'
 import { computeStacks } from '../features/stack/stack'
+import { applyStackShadowTheme, createStackShadow, drawStackShadow } from '../features/stack/stack-shadow'
+import type { StackShadow } from '../types/stack-shadow.types'
 import { resolveNameSplits, resolveNameMerges } from '../features/stack/stack-naming'
 import { snapshotCards, applyHistoryEntry, applyStackNameChanges } from '../features/history/history'
 import { createPointerInteractions } from '../features/interactions/pointer-interactions'
@@ -27,6 +29,7 @@ export class CanvasScene {
     private app: Application
     private cardLayer: Container
     private background: CanvasBackground | null = null
+    private stackShadow: StackShadow
     private cards: Card[]
     private cardManager: CardManager
     private dragHandler: DragHandler
@@ -53,6 +56,7 @@ export class CanvasScene {
         this.onResize = (): void => {}
         this.resolvedTheme = themeService?.getResolvedTheme() ?? 'light'
         this.locale = locale
+        this.stackShadow = createStackShadow(getPixiThemeColors(this.resolvedTheme).card.stackShadow)
         this.positionPersistence = new PositionPersistence(store)
         this.cardManager = new CardManager(this.app, this.cardLayer)
         this.cardManager.setResolvedTheme(this.resolvedTheme)
@@ -106,6 +110,7 @@ export class CanvasScene {
         this.resolvedTheme = resolved
         this.cardManager.setResolvedTheme(resolved)
         this.cardManager.updateShadows(this.cards)
+        applyStackShadowTheme(this.stackShadow, getPixiThemeColors(resolved).card.stackShadow)
         const renderer = this.app.renderer as unknown as { background?: { color: number } } | undefined
         if (renderer?.background) {
             renderer.background.color = getPixiThemeColors(resolved).canvasBackground
@@ -164,6 +169,7 @@ export class CanvasScene {
         this.app.renderer.resize(window.innerWidth, window.innerHeight)
         this.background = createCanvasBackground(this.app.renderer, this.app.screen.width, this.app.screen.height, this.resolvedTheme)
         this.app.stage.addChild(this.background.sprite)
+        this.app.stage.addChild(this.stackShadow.graphics)
         this.app.stage.addChild(this.cardLayer)
 
         const saved = this.positionPersistence.load()
@@ -259,6 +265,7 @@ export class CanvasScene {
 
     private handleTick: () => void = (): void => {
         this.cardManager.updateLifts(this.cards, this.app.ticker.deltaTime)
+        drawStackShadow(this.stackShadow, this.cards)
     }
 
     private handleStagePointerDown: () => void = (): void => this.pointerInteractions.handleStagePointerDown()

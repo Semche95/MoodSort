@@ -25,6 +25,11 @@ const LIGHT_PIXI_THEME_COLORS: PixiThemePalette = {
             liftAlpha: 0.28,
             liftBlurStrength: 10,
         },
+        stackShadow: {
+            color: 0x4f342a,
+            alpha: 0.35,
+            blurStrength: 12,
+        },
     },
     icon: 0x6b4a3d,
     toolbar: {
@@ -93,6 +98,11 @@ const DARK_PIXI_THEME_COLORS: PixiThemePalette = {
             restAlpha: 0.6,
             liftAlpha: 0.5,
             liftBlurStrength: 12,
+        },
+        stackShadow: {
+            color: 0x000000,
+            alpha: 0.6,
+            blurStrength: 14,
         },
     },
     icon: 0xf3dccb,
