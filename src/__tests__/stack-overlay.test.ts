@@ -221,6 +221,45 @@ describe('StackOverlay', () => {
         expect(mergeIndicator.calls.some((c: { method: string }): boolean => c.method === 'roundRect')).toBe(true)
     })
 
+    it('keeps the merge plus above the dragged stack, its frame, pill and name on every frame of a stack drag', () => {
+        const cardLayer = new pixi.Container()
+        const a = makeCard(0, 0, 200, 300, 'a')
+        const b = makeCard(300, 0, 200, 300, 'b')
+        cardLayer.addChild(a)
+        cardLayer.addChild(b)
+        const { app, tick } = createApp()
+        const overlay = new StackOverlay(app, cardLayer as unknown as Container)
+        overlay.addToStage()
+
+        overlay.showDragHighlights([a], [[b]])
+        tick()
+        tick()
+
+        const plusIndex = cardLayer.children.indexOf(overlay['mergePlus'])
+        for (const dragged of [a, overlay['draggedBorder'], overlay['draggedHandle'], overlay['draggedLabelContainer']]) {
+            expect(plusIndex).toBeGreaterThan(cardLayer.children.indexOf(dragged))
+        }
+    })
+
+    it('keeps the merge plus above a single dragged card on every frame', () => {
+        const cardLayer = new pixi.Container()
+        const a = makeCard(0, 0, 200, 300, 'a')
+        const b = makeCard(1000, 0, 200, 300, 'b')
+        cardLayer.addChild(a)
+        cardLayer.addChild(b)
+        const { app, tick } = createApp()
+        const overlay = new StackOverlay(app, cardLayer as unknown as Container)
+        overlay.addToStage()
+        tick()
+
+        a.lift.reasons.add('drag')
+        a.x = 1050
+        tick()
+        tick()
+
+        expect(cardLayer.children.indexOf(overlay['mergePlus'])).toBeGreaterThan(cardLayer.children.indexOf(a))
+    })
+
     it('showDragHighlights does not draw merge indicators when there are no merge targets', () => {
         const cardLayer = new pixi.Container()
         const a = makeCard(0, 0, 200, 300, 'a')

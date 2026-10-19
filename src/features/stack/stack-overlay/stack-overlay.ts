@@ -233,10 +233,6 @@ export class StackOverlay {
         }
         this.cardLayer.addChild(this.draggedBorder)
         this.cardLayer.addChild(this.draggedHandle)
-
-        if (mergeTargets.length > 0) {
-            this.cardLayer.addChild(this.mergePlus)
-        }
     }
 
     hide(): void {
@@ -369,6 +365,10 @@ export class StackOverlay {
             // just re-raised above: the dragged stack's own name must stay readable
             // above its own cards.
             this.cardLayer.addChild(this.draggedLabelContainer)
+        }
+        // Above everything dragged: the `+` must stay visible over the cards about to land on it.
+        if (this.mergeTargets.length > 0) {
+            this.cardLayer.addChild(this.mergePlus)
         }
         this.cardLayer.addChild(this.compactTooltip.view)
         this.cardLayer.addChild(this.nameTooltip.view)
