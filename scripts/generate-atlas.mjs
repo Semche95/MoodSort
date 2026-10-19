@@ -2,6 +2,7 @@ import { readFile, writeFile, stat } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import sharp from 'sharp'
 import { AVAILABLE_LOCALES } from '../src/i18n/locales.ts'
+import { CARD_CORNER_RADIUS } from '../src/features/card/card-corner-radius.ts'
 
 const CARDS_DIR = resolve(import.meta.dirname, '..', 'src', 'cards')
 const OUT_DIR = resolve(import.meta.dirname, '..', 'src', 'assets')
@@ -171,6 +172,14 @@ function buildBackgroundBuffer(theme) {
     return sharp(data, { raw: { width: FRAME_W, height: FRAME_H, channels } }).png().toBuffer()
 }
 
+function buildCornerMaskBuffer() {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${FRAME_W}" height="${FRAME_H}">
+        <rect width="${FRAME_W}" height="${FRAME_H}" rx="${CARD_CORNER_RADIUS}" ry="${CARD_CORNER_RADIUS}" fill="#fff" />
+    </svg>`
+
+    return sharp(Buffer.from(svg)).png().toBuffer()
+}
+
 function buildShadowBuffer(theme) {
     const { cx, cy, rx, ry } = SHADOW_ELLIPSE
     const opacity = THEME_SHADOW_OPACITY[theme]
@@ -185,6 +194,7 @@ async function generateAtlas(lang, theme, cardNames, fontFaceCss) {
     const dictionary = (await import(`../src/i18n/locales/${lang}.json`, { with: { type: 'json' } })).default
     const cardLabels = dictionary.cards
     const backgroundBuffer = await buildBackgroundBuffer(theme)
+    const cornerMaskBuffer = await buildCornerMaskBuffer()
 
     const rows = Math.ceil(cardNames.length / COLS)
     const atlasW = COLS * FRAME_W
@@ -213,12 +223,19 @@ async function generateAtlas(lang, theme, cardNames, fontFaceCss) {
             throw new Error(`Missing image file for card "${name}" (expected src/cards/${name}.webp)`)
         }
 
-        const cardBuffer = await sharp(backgroundBuffer)
+        const squareCardBuffer = await sharp(backgroundBuffer)
             .composite([
                 { input: await buildShadowBuffer(theme) },
                 { input: imagePath },
                 { input: await buildLabelOverlay(label, fontFaceCss, theme) },
             ])
+            .png()
+            .toBuffer()
+        // A separate pass: dest-in must apply to the flattened card, not to each layer composited above.
+        const cardBuffer = await sharp(squareCardBuffer)
+            .ensureAlpha()
+            .composite([{ input: cornerMaskBuffer, blend: 'dest-in' }])
+            .png()
             .toBuffer()
 
         composites.push({ input: cardBuffer, left, top })
@@ -297,6 +314,7 @@ async function computeComboKey(lang, theme, sharedKey) {
         background: THEME_BACKGROUND_COLORS[theme],
         textColor: THEME_TEXT_COLORS[theme],
         shadowOpacity: THEME_SHADOW_OPACITY[theme],
+        cornerRadius: CARD_CORNER_RADIUS,
     })
 }
 

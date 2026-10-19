@@ -189,6 +189,7 @@ export class CanvasScene {
         this.app.stage.on('pointerup', this.handleStackDragEnd)
         this.app.stage.on('pointerupoutside', this.handleStackDragEnd)
         this.app.stage.on('pointerdown', this.handleStagePointerDown)
+        this.app.ticker.add(this.handleTick)
         window.addEventListener('resize', this.handleResize)
         document.body.appendChild(this.app.canvas)
     }
@@ -254,6 +255,10 @@ export class CanvasScene {
         }
         this.positionPersistence.saveFromStage(this.cardLayer, this.stackNames)
         this.stacks = computeStacks(this.cards)
+    }
+
+    private handleTick: () => void = (): void => {
+        this.cardManager.updateLifts(this.cards, this.app.ticker.deltaTime)
     }
 
     private handleStagePointerDown: () => void = (): void => this.pointerInteractions.handleStagePointerDown()

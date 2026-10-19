@@ -12,13 +12,16 @@ export interface PixiThemePalette {
         grainAlpha: number
     }
     card: {
-        hoverTint: number
-        shadow: {
+        hoverOutline: {
             color: number
             alpha: number
-            blurStrength: number
-            offsetX: number
-            offsetY: number
+            width: number
+        }
+        shadow: {
+            color: number
+            restAlpha: number
+            liftAlpha: number
+            liftBlurStrength: number
         }
     }
     icon: number

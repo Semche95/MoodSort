@@ -5,6 +5,7 @@ import { CardDrag } from '../features/drag/card-drag'
 import { ActionHistory } from '../features/history/action-history'
 import { InMemoryStore } from './in-memory-store'
 import { Card } from '../types/card.types'
+import { createCardLift } from '../features/card/card-lift'
 
 vi.mock('pixi.js', () => {
     class MockContainer {
@@ -52,6 +53,7 @@ async function makeCard(imageUrl: string): Promise<Card> {
     const { Sprite } = await import('pixi.js')
     const card = new Sprite() as unknown as Card
     card.imageUrl = imageUrl
+    card.lift = createCardLift()
     return card
 }
 

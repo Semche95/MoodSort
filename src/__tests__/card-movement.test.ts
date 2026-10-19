@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { CardDrag, DRAGGING_OPACITY, DEFAULT_OPACITY } from '../features/drag/card-drag'
+import { CardDrag } from '../features/drag/card-drag'
 import { Card } from '../types/card.types'
 import { Container, FederatedPointerEvent, Sprite } from 'pixi.js'
+import { createCardLift } from '../features/card/card-lift'
 
 // Mock PixiJS objects
 vi.mock('pixi.js', () => {
@@ -103,6 +104,7 @@ describe('CardDrag', () => {
         mockCard = new Container() as Card
         mockCard.imageUrl = 'test.png'
         mockCard.innerSprite = new Sprite()
+        mockCard.lift = createCardLift()
         mockCard.x = 50
         mockCard.y = 60
         mockCard.width = 100
@@ -144,14 +146,21 @@ describe('CardDrag', () => {
     })
 
     describe('handleDragStart', () => {
-        it('should set up the drag state correctly', () => {
+        it('should set up the drag state correctly, keeping the card opaque', () => {
             cardDrag.handleDragStart(mockEvent, mockStage, mockCardLayer, onDragMoveMock)
 
             expect(cardDrag.dragState.dragTarget).toBe(mockCard)
             expect(cardDrag.dragState.cardMoved).toBe(false)
-            expect(mockCard.alpha).toBe(DRAGGING_OPACITY)
+            expect(mockCard.alpha).toBe(1)
             expect(vi.mocked(mockCardLayer.addChild)).toHaveBeenCalledWith(mockCard)
             expect(vi.mocked(mockStage.on)).toHaveBeenCalledWith('pointermove', onDragMoveMock)
+        })
+
+        it('raises the card off the table and shows a closed-hand cursor while it is held', () => {
+            cardDrag.handleDragStart(mockEvent, mockStage, mockCardLayer, onDragMoveMock)
+
+            expect(mockCard.lift.reasons.has('drag')).toBe(true)
+            expect(mockCard.cursor).toBe('grabbing')
         })
 
         it('should calculate the drag offset correctly', () => {
@@ -208,14 +217,23 @@ describe('CardDrag', () => {
             expect(vi.mocked(mockStage.off)).not.toHaveBeenCalled()
         })
 
-        it('should reset the card opacity and drag state', () => {
+        it('should reset the drag state', () => {
             mockCard.parent = mockStage
 
             cardDrag.handleDragEnd(mockStage, onDragMoveMock, 800, 600)
 
-            expect(mockCard.alpha).toBe(DEFAULT_OPACITY)
             expect(cardDrag.dragState.dragTarget).toBeNull()
             expect(cardDrag.dragState.originalParent).toBeNull()
+        })
+
+        it('sets the card back down and restores the open-hand cursor', () => {
+            mockCard.parent = mockStage
+            mockCard.lift.reasons.add('drag')
+
+            cardDrag.handleDragEnd(mockStage, onDragMoveMock, 800, 600)
+
+            expect(mockCard.lift.reasons.has('drag')).toBe(false)
+            expect(mockCard.cursor).toBe('grab')
         })
 
         it('should return the card to its original position if it was not moved', () => {
@@ -226,7 +244,6 @@ describe('CardDrag', () => {
 
             expect(mockCard.x).toBe(50)
             expect(mockCard.y).toBe(60)
-            expect(mockCard.alpha).toBe(DEFAULT_OPACITY)
             expect(cardDrag.dragState.dragTarget).toBeNull()
         })
 

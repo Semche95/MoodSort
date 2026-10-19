@@ -10,7 +10,7 @@ The interface is available in Dutch, English, Esperanto, French, German, and Spa
 
 ## Features
 
-- Drag and drop cards freely across the canvas
+- Drag and drop cards freely across the canvas; a hovered card gets an accent outline, a held card lifts off the table (slight zoom, deeper shadow) and settles back on release
 - Overlapping cards form stacks, each always shown with a border and a drag handle (a lone card included), plus a hover-only button to re-gather a stack of two or more cards around its top card
 - Undo/redo (toolbar buttons, Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, Ctrl/Cmd+Y), persisted across sessions
 - Positions and history are saved to `localStorage` and restored on the next visit
@@ -103,7 +103,8 @@ src/
                 # toolbar, onboarding, settings, footer, screen-share, theme,
                 # screen-size, fullscreen, background
   shared/       # Cross-feature UI widgets and utilities: icons (used app-wide),
-                # tooltip, loading overlay, geometry, localStorage wrapper
+                # tooltip, loading overlay, geometry, localStorage wrapper,
+                # reduced-motion check
   types/        # One file per domain type (card, drag, stack, history, etc.)
   __tests__/
 ```
@@ -112,7 +113,7 @@ src/
 
 ### Cards
 
-A `Card` is a Pixi `Container` with an image sprite and a blurred drop-shadow layer. Each card frame is baked from three layers: an opaque light/dark gradient background, the character illustration, and the label text in a theme-matching color. Cards are cut from a single pre-built atlas for the resolved locale and theme (`atlas.<locale>.<theme>.webp` paired with the single shared `atlas.json` manifest, since the frame layout is the same for every locale and theme, see `loadCardAtlas`/`loadCardAtlasSpritesheet` in `src/i18n/card-atlas.ts`), loaded once in `bootstrap.ts` and handed to `CardManager` as frame names + textures. No per-card loading at runtime. Scaling is proportional to a 2560px reference width. Switching locale still reloads the page, but switching theme reloads the matching atlas and swaps every card's texture in place (`CanvasScene.swapCardAtlas`), with no reload.
+A `Card` is a Pixi `Container` whose `body` holds an image sprite, a hover outline and its own shadow, a soft halo at rest built from stacked translucent rings (no per-card blur filter). Raising a card while it is dragged eases `body` into a slightly larger scale and the shadow into a deeper, blurred drop shadow (`card-lift.ts`, instant under `prefers-reduced-motion`); the card's bounds and hit area are pinned to the resting card, so lifting never changes stacking, clamping or persisted positions. Each card frame is baked from three layers: an opaque light/dark gradient background, the character illustration, and the label text in a theme-matching color, then cut to rounded corners (`CARD_CORNER_RADIUS` in `src/features/card/card-corner-radius.ts`, kept dependency-free so the atlas script can import it; the shadows and hover outline reuse it). Cards are cut from a single pre-built atlas for the resolved locale and theme (`atlas.<locale>.<theme>.webp` paired with the single shared `atlas.json` manifest, since the frame layout is the same for every locale and theme, see `loadCardAtlas`/`loadCardAtlasSpritesheet` in `src/i18n/card-atlas.ts`), loaded once in `bootstrap.ts` and handed to `CardManager` as frame names + textures. No per-card loading at runtime. Scaling is proportional to a 2560px reference width. Switching locale still reloads the page, but switching theme reloads the matching atlas and swaps every card's texture in place (`CanvasScene.swapCardAtlas`), with no reload.
 
 ### Stacks
 
@@ -126,7 +127,7 @@ Each stack can also carry a name. A dedicated button next to the drag handle, sh
 
 ### Drag and drop
 
-`CardDrag` handles the single-card lifecycle: reparent to stage, follow the cursor, clamp to the viewport, snap back if nothing moved, drop opacity to 50% while dragging. `DragHandler` wires it to the stage and captures undo history around each drag.
+`CardDrag` handles the single-card lifecycle: reparent to stage, follow the cursor, clamp to the viewport, snap back if nothing moved, lift the card while it is held (the stack overlay also reads this lift to know which card is being dragged). `DragHandler` wires it to the stage and captures undo history around each drag.
 
 ### Persistence and history
 

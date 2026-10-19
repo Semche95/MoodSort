@@ -42,6 +42,8 @@ vi.mock('pixi.js', () => {
             resolution: 2,
         },
         ticker: {
+            deltaTime: 1,
+            deltaMS: 16,
             add: (fn: () => void): void => {
                 tickers.push(fn)
             },
@@ -142,6 +144,7 @@ vi.mock('pixi.js', () => {
         Sprite: MockSprite,
         Text: MockText,
         BlurFilter: class MockBlurFilter { constructor() {} },
+        Rectangle: class MockRectangle {},
         FederatedPointerEvent: class MockFederatedPointerEvent {},
         __getMockApp: (): Record<string, unknown> => mockApp,
     }
@@ -366,6 +369,15 @@ describe('CanvasScene', () => {
         ;(scene as unknown as { handleResize: () => void }).handleResize()
 
         expect(resizeCanvasBackground).toHaveBeenLastCalledWith(background, 1400, 900)
+    })
+
+    it('eases a dragged card upward on every frame', async () => {
+        const { testable, tick } = await setup()
+        testable.cards[0].lift.reasons.add('drag')
+
+        tick()
+
+        expect(testable.cards[0].lift.progress).toBeGreaterThan(0)
     })
 
 })

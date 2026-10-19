@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { Application, Container } from 'pixi.js'
 import { StackOverlay } from '../features/stack/stack-overlay/stack-overlay'
 import { Card } from '../types/card.types'
+import { createCardLift } from '../features/card/card-lift'
 
 const { pixi } = vi.hoisted(() => {
     class Container {
@@ -89,7 +90,7 @@ const { pixi } = vi.hoisted(() => {
 vi.mock('pixi.js', () => ({ ...pixi }))
 
 function makeCard(x: number, y: number, width: number, height: number, imageUrl: string): Card {
-    return { imageUrl, x, y, width, height, alpha: 1 } as unknown as Card
+    return { imageUrl, x, y, width, height, lift: createCardLift() } as unknown as Card
 }
 
 function createApp(): { tick: () => void; app: Application } {

@@ -3,11 +3,7 @@ import { Card } from '../../types/card.types'
 import { CardDragState } from '../../types/drag.types'
 import { Position } from '../../types/position.types'
 import { clampCardPosition } from '../stack/stack-geometry'
-
-/** Opacity of a card while it is being dragged */
-export const DRAGGING_OPACITY: number = 0.5
-/** Default (resting) opacity for cards */
-export const DEFAULT_OPACITY: number = 1
+import { lowerCard, raiseCard } from '../card/card-lift'
 
 /** Decoupled from the PixiJS Application for testability. */
 export class CardDrag {
@@ -30,7 +26,8 @@ export class CardDrag {
         onDragMove: (event: FederatedPointerEvent) => void,
     ): void {
         const target = event.currentTarget as Card
-        target.alpha = DRAGGING_OPACITY
+        target.cursor = 'grabbing'
+        raiseCard(target, 'drag')
         this.dragState.dragTarget = target
         this.dragState.cardMoved = false
 
@@ -86,7 +83,8 @@ export class CardDrag {
         stage.off('pointermove', onDragMove)
 
         const card = this.dragState.dragTarget
-        card.alpha = DEFAULT_OPACITY
+        card.cursor = 'grab'
+        lowerCard(card, 'drag')
 
         if (!this.dragState.cardMoved) {
             const currentParent = card.parent

@@ -19,18 +19,18 @@ describe('getPixiThemeColors', () => {
         const palette = getPixiThemeColors('light')
 
         expect(palette.canvasBackground).toBe(0xcdbfad)
-        expect(palette.card.hoverTint).toBe(0xffeedd)
+        expect(palette.card.hoverOutline).toEqual({ color: 0xb4462c, alpha: 0.9, width: 2 })
         expect(palette.icon).toBe(0x6b4a3d)
-        expect(palette.card.shadow).toEqual({ color: 0x000000, alpha: 0.18, blurStrength: 4, offsetX: 0, offsetY: 0 })
+        expect(palette.card.shadow).toEqual({ color: 0x4f342a, restAlpha: 0.35, liftAlpha: 0.28, liftBlurStrength: 10 })
     })
 
     it('returns the dark palette for "dark"', () => {
         const palette = getPixiThemeColors('dark')
 
         expect(palette.canvasBackground).toBe(0x24202a)
-        expect(palette.card.hoverTint).toBe(0xffd9a8)
+        expect(palette.card.hoverOutline).toEqual({ color: 0xe9775a, alpha: 0.9, width: 2 })
         expect(palette.icon).toBe(0xf3dccb)
-        expect(palette.card.shadow).toEqual({ color: 0x000000, alpha: 0.55, blurStrength: 6, offsetX: 0, offsetY: 0 })
+        expect(palette.card.shadow).toEqual({ color: 0x000000, restAlpha: 0.6, liftAlpha: 0.5, liftBlurStrength: 12 })
     })
 
     it('keeps the share button and the active/viewer status colors identical across themes, since they carry meaning', () => {

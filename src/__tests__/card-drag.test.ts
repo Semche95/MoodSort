@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { Container, FederatedPointerEvent } from 'pixi.js'
-import { CardDrag, DRAGGING_OPACITY, DEFAULT_OPACITY } from '../features/drag/card-drag'
+import { CardDrag } from '../features/drag/card-drag'
 import { STACK_HANDLE_TOP_CLEARANCE } from '../features/stack/stack'
 import { Card } from '../types/card.types'
+import { createCardLift } from '../features/card/card-lift'
 
 vi.mock('pixi.js', () => {
     class MockContainer {
@@ -50,6 +51,7 @@ async function makeCard(imageUrl: string): Promise<Card> {
     const { Sprite } = await import('pixi.js')
     const card = new Sprite() as unknown as Card
     card.imageUrl = imageUrl
+    card.lift = createCardLift()
     return card
 }
 
@@ -71,16 +73,6 @@ describe('CardDrag', () => {
             expect(cardDrag.dragState.originalParent).toBeNull()
             expect(cardDrag.dragState.originalPosition).toEqual({ x: 0, y: 0 })
             expect(cardDrag.dragState.cardMoved).toBe(false)
-        })
-    })
-
-    describe('styling constants', () => {
-        it('should have the correct DRAGGING_OPACITY', () => {
-            expect(DRAGGING_OPACITY).toBe(0.5)
-        })
-
-        it('should have the correct DEFAULT_OPACITY', () => {
-            expect(DEFAULT_OPACITY).toBe(1)
         })
     })
 

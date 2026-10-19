@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { Application, Container } from 'pixi.js'
 import { StackOverlay } from '../features/stack/stack-overlay/stack-overlay'
 import { computeNameButtonBox } from '../features/stack/stack-hit-testing'
-import { DRAGGING_OPACITY } from '../features/drag/card-drag'
+import { createCardLift } from '../features/card/card-lift'
 import { Card } from '../types/card.types'
 import { I18n } from '../i18n/I18n'
 
@@ -87,7 +87,7 @@ const { pixi } = vi.hoisted(() => {
 vi.mock('pixi.js', () => ({ ...pixi }))
 
 function makeCard(x: number, y: number, width: number, height: number, imageUrl: string): Card {
-    return { imageUrl, x, y, width, height, alpha: 1 } as unknown as Card
+    return { imageUrl, x, y, width, height, lift: createCardLift() } as unknown as Card
 }
 
 function createApp(): { tick: () => void; app: Application } {
@@ -278,7 +278,7 @@ describe('StackOverlay name label and button', () => {
         tick() // establishes the resting {a, b} stack before any drag starts
 
         // b is picked up (mouse still down) and pulled out, leaving a alone.
-        ;(cardB as unknown as { alpha: number }).alpha = DRAGGING_OPACITY
+        cardB.lift.reasons.add('drag')
         tick()
 
         const labelContainer = overlay['labelContainer'] as unknown as { children: Array<{ text: string; visible: boolean }> }
@@ -305,8 +305,8 @@ describe('StackOverlay name label and button', () => {
         const originalY = originalLabel?.y
 
         // a (the named card itself) is picked up (mirrors CardDrag.handleDragStart,
-        // which flips alpha but leaves the card at its resting spot) ...
-        ;(cardA as unknown as { alpha: number }).alpha = DRAGGING_OPACITY
+        // which raises it but leaves the card at its resting spot) ...
+        cardA.lift.reasons.add('drag')
         tick()
 
         // ... then dragged far away over subsequent pointermove-driven frames.
@@ -337,7 +337,7 @@ describe('StackOverlay name label and button', () => {
 
         // a is picked up directly (not via the drag handle): it was alone in its pile,
         // so nothing is left behind, just like no frame is drawn for the empty pile.
-        ;(cardA as unknown as { alpha: number }).alpha = DRAGGING_OPACITY
+        cardA.lift.reasons.add('drag')
         tick()
 
         expect(labelContainer.children.find((t: { text: string }): boolean => t.text === 'Joie')?.visible).toBe(false)
@@ -376,7 +376,7 @@ describe('StackOverlay name label and button', () => {
         tick()
 
         // a is dragged toward wherever b's name label sits.
-        ;(cardA as unknown as { alpha: number }).alpha = DRAGGING_OPACITY
+        cardA.lift.reasons.add('drag')
         tick()
 
         const labelContainer = overlay['labelContainer']
@@ -450,7 +450,7 @@ describe('StackOverlay name label and button', () => {
 
         // c is picked up alone (mouse held, no drag handle involved) and dragged
         // straight over a's label position (computeLabelAnchorPoint([a]) is (200, 90)).
-        ;(cardC as unknown as { alpha: number }).alpha = DRAGGING_OPACITY
+        cardC.lift.reasons.add('drag')
         cardC.x = 190
         cardC.y = 85
         tick()

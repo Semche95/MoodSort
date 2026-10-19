@@ -1,12 +1,15 @@
-import { Application, BlurFilter, Container, FederatedPointerEvent, Graphics, Spritesheet, Sprite, Texture } from 'pixi.js'
+import { Application, Container, FederatedPointerEvent, Graphics, Rectangle, Spritesheet, Sprite, Texture } from 'pixi.js'
 import { Card } from '../../types/card.types'
 import { AnimationTarget } from '../../types/animation.types'
 import { CardState } from '../../types/card-state.types'
 import { Position } from '../../types/position.types'
-import { PixiThemePalette } from '../../types/pixi-theme-palette.types'
 import { GetResolvedTheme, ResolvedTheme } from '../../types/theme.types'
+import { PixiThemePalette } from '../../types/pixi-theme-palette.types'
 import { clampCardPosition } from '../stack/stack-geometry'
 import { DEFAULT_GET_RESOLVED_THEME, getPixiThemeColors } from '../theme/pixi-theme-colors'
+import { prefersReducedMotion } from '../../shared/utils/reduced-motion'
+import { applyCardLift, createCardLift, updateCardLifts } from './card-lift'
+import { CARD_CORNER_RADIUS } from './card-corner-radius'
 
 /** Screen width (in px) at which cards render at native size */
 export const CARD_REFERENCE_WIDTH: number = 2560
@@ -20,13 +23,25 @@ function jitteredPosition(centerX: number, centerY: number): Position {
     }
 }
 
-function drawCardShadow(shadow: Graphics, texture: Texture, shadowTheme: PixiThemePalette['card']['shadow']): void {
-    shadow.clear()
-    shadow.roundRect(0, 0, texture.width, texture.height, 8)
-    shadow.fill({ color: shadowTheme.color, alpha: shadowTheme.alpha })
-    shadow.filters = [new BlurFilter({ strength: shadowTheme.blurStrength })]
-    shadow.x = shadowTheme.offsetX
-    shadow.y = shadowTheme.offsetY
+/** Rings stacked around each card's shadow: their alphas add up toward the card, giving a soft edge without a per-card blur filter */
+export const REST_SHADOW_LAYERS: number = 3
+/** Width of each ring, in card-local px */
+export const REST_SHADOW_SPREAD: number = 1.5
+const REST_SHADOW_LAYER_ALPHA: number = 0.1
+
+export function drawCardShadowShape(shadow: Graphics, width: number, height: number): void {
+    for (let layer = REST_SHADOW_LAYERS; layer >= 1; layer--) {
+        const spread = layer * REST_SHADOW_SPREAD
+        shadow.roundRect(-spread, -spread, width + spread * 2, height + spread * 2, CARD_CORNER_RADIUS + spread)
+        shadow.fill({ color: 0xFFFFFF, alpha: REST_SHADOW_LAYER_ALPHA })
+    }
+}
+
+export function drawCardHighlight(highlight: Graphics, width: number, height: number, outline: PixiThemePalette['card']['hoverOutline']): void {
+    highlight.clear()
+    // Inner alignment keeps the outline on the card, so it never spills over a neighbouring card.
+    highlight.roundRect(0, 0, width, height, CARD_CORNER_RADIUS)
+    highlight.stroke({ color: outline.color, alpha: outline.alpha, width: outline.width, alignment: 0 })
 }
 
 export function createCard(
@@ -38,22 +53,40 @@ export function createCard(
     const card = new Container() as Card
     card.imageUrl = frameName
 
-    const shadowTheme = getPixiThemeColors(getResolvedTheme()).card.shadow
+    const body = new Container()
+    card.addChild(body)
+    card.body = body
+
     const shadow = new Graphics()
-    drawCardShadow(shadow, texture, shadowTheme)
-    card.addChild(shadow)
+    drawCardShadowShape(shadow, texture.width, texture.height)
+    body.addChild(shadow)
     card.shadow = shadow
 
     const sprite = new Sprite(texture)
-    card.addChild(sprite)
+    body.addChild(sprite)
     card.innerSprite = sprite
 
+    const highlight = new Graphics()
+    highlight.visible = false
+    body.addChild(highlight)
+    card.highlight = highlight
+
+    card.lift = createCardLift()
+    // The lift grows the body and its shadow: pinning bounds and hit area to the resting card keeps stacking, clamping and persistence unaffected.
+    card.boundsArea = new Rectangle(0, 0, texture.width, texture.height)
+    card.hitArea = card.boundsArea
+    card.interactiveChildren = false
+    applyCardLift(card, getPixiThemeColors(getResolvedTheme()).card.shadow)
+
     card.eventMode = 'static'
-    card.cursor = 'move'
+    card.cursor = 'grab'
     card.on('pointerdown', onDragStart, card)
-    // Read fresh on every hover so a theme flip is picked up without re-tinting existing cards.
-    card.on('pointerover', (): void => { sprite.tint = getPixiThemeColors(getResolvedTheme()).card.hoverTint })
-    card.on('pointerout', (): void => { sprite.tint = 0xFFFFFF })
+    // Read fresh on every hover so a theme flip is picked up without restyling existing cards.
+    card.on('pointerover', (): void => {
+        drawCardHighlight(highlight, texture.width, texture.height, getPixiThemeColors(getResolvedTheme()).card.hoverOutline)
+        highlight.visible = true
+    })
+    card.on('pointerout', (): void => { highlight.visible = false })
 
     return card
 }
@@ -111,12 +144,17 @@ export class CardManager {
         }
     }
 
-    /** Redraws every card's shadow with the current resolved theme's colors, e.g. after a theme change. */
+    /** Restyles every card's shadow with the current resolved theme, e.g. after a theme change. */
     updateShadows(cards: Card[]): void {
         const shadowTheme = getPixiThemeColors(this.resolvedTheme).card.shadow
         for (const card of cards) {
-            drawCardShadow(card.shadow, card.innerSprite.texture, shadowTheme)
+            applyCardLift(card, shadowTheme)
         }
+    }
+
+    /** Eases every raised or settling card one frame further; called from the scene's ticker. */
+    updateLifts(cards: Card[], deltaFrames: number): void {
+        updateCardLifts(cards, deltaFrames, prefersReducedMotion(), getPixiThemeColors(this.resolvedTheme).card.shadow)
     }
 
     applyScale(card: Card): void {

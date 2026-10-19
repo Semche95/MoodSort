@@ -4,6 +4,7 @@ import { StackOverlay } from '../features/stack/stack-overlay/stack-overlay'
 import { computeCompactButtonBox } from '../features/stack/stack-hit-testing'
 import { Card } from '../types/card.types'
 import { I18n } from '../i18n/I18n'
+import { createCardLift } from '../features/card/card-lift'
 
 type Handler = (payload: unknown) => void
 
@@ -110,7 +111,7 @@ const { pixi } = vi.hoisted(() => {
 vi.mock('pixi.js', () => ({ ...pixi }))
 
 function makeCard(x: number, y: number, width: number, height: number, imageUrl: string): Card {
-    return { imageUrl, x, y, width, height, alpha: 1 } as unknown as Card
+    return { imageUrl, x, y, width, height, lift: createCardLift() } as unknown as Card
 }
 
 function createApp(): { tick: () => void; app: Application } {

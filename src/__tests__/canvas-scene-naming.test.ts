@@ -156,6 +156,7 @@ vi.mock('pixi.js', () => {
         BlurFilter: class MockBlurFilter {
             constructor() {}
         },
+        Rectangle: class MockRectangle {},
         FederatedPointerEvent: class MockFederatedPointerEvent {},
         __getMockApp: (): Record<string, unknown> => mockApp,
     }

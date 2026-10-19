@@ -11,7 +11,7 @@ import {
     findStackByNameButtonAtPoint,
 } from '../stack-hit-testing'
 import { computeLabelAnchorPoint, computeStackLabel } from '../stack-naming'
-import { DRAGGING_OPACITY } from '../../drag/card-drag'
+import { isCardDragged } from '../../card/card-lift'
 import { CanvasTooltip } from '../../../shared/ui/canvas-tooltip'
 import { StackNameEditor } from './stack-name-editor'
 import { StackLabelPool } from './stack-label-pool'
@@ -241,9 +241,7 @@ export class StackOverlay {
         this.draggedBorder.clear()
         this.draggedHandle.clear()
 
-        const draggingCard = this.cards.find(
-            (card: Card): boolean => card.alpha === DRAGGING_OPACITY,
-        )
+        const draggingCard = this.cards.find(isCardDragged)
         if (draggingCard) {
             this.compactTooltip.hide()
         }
@@ -257,7 +255,7 @@ export class StackOverlay {
         const draggedStack = new Set<Card>(this.draggedCards)
         const stackedCards = this.cards.filter(
             (card: Card): boolean =>
-                card.alpha !== DRAGGING_OPACITY && !excluded.has(card) && !draggedStack.has(card),
+                !isCardDragged(card) && !excluded.has(card) && !draggedStack.has(card),
         )
 
         const labelEntries: Array<{ stack: Card[]; point: Position }> = []

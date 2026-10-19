@@ -10,6 +10,7 @@ vi.mock('pixi.js', () => ({
     Graphics: class MockGraphics {},
     Sprite: class MockSprite {},
     BlurFilter: class MockBlurFilter {},
+    Rectangle: class MockRectangle {},
 }))
 
 function makeCard(x: number, y: number, imageUrl: string): Card {
