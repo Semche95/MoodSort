@@ -53,6 +53,7 @@ vi.mock('pixi.js', () => {
             }),
             background: { color: 0 },
             resolution: 2,
+            events: { rootBoundary: { hitTest: vi.fn((): null => null) } },
         },
         ticker: {
             deltaTime: 1,
@@ -580,6 +581,22 @@ describe('CanvasScene', () => {
         handlers.handlePointerLeave()
         tick()
         expect(cardA.highlight.visible).toBe(false)
+    })
+
+    it('outlines no card the toolbar covers under the pointer, as Pixi hit-tests it', async () => {
+        const { testable, tick } = await setup()
+        const pixi = await importMockedPixi()
+        const hitTest = (pixi.__getMockApp().renderer as { events: { rootBoundary: { hitTest: ReturnType<typeof vi.fn> } } }).events.rootBoundary.hitTest
+        const handlers = testable as unknown as { handlePointerMove(e: unknown): void }
+        const [cardA] = testable.cards as unknown as Array<{ highlight: { visible: boolean } }>
+        hitTest.mockReturnValue({ parent: testable.app.stage })
+
+        handlers.handlePointerMove({ global: { x: 150, y: 150 }, nativeEvent: { isTrusted: true } })
+        tick()
+
+        expect(hitTest).toHaveBeenCalledWith(150, 150)
+        expect(cardA.highlight.visible).toBe(false)
+        hitTest.mockReturnValue(null)
     })
 
     it('blocks the canvas context menu during the stack drag a Ctrl+press on a stack starts, so macOS cannot swallow its release', async () => {

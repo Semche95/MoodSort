@@ -13,6 +13,7 @@ import { CardManager } from '../features/card/card-manager'
 import { DragHandler } from '../features/drag/drag-handler'
 import { CardDrag } from '../features/drag/card-drag'
 import { PositionPersistence } from '../features/card/position-persistence'
+import { Position } from '../types/position.types'
 import { StackOverlay } from '../features/stack/stack-overlay/stack-overlay'
 import { StackDragManager } from '../features/stack/stack-drag-manager'
 import { CardStateService } from '../features/card/card-state-service'
@@ -94,6 +95,7 @@ export class CanvasScene {
             stackDragManager: this.stackDragManager,
             actionHistory: this.actionHistory,
             getStacks: (): Card[][] => this.stacks,
+            hitTest: (point: Position): Container | null => this.app.renderer.events.rootBoundary.hitTest(point.x, point.y),
             getStackNames: (): Record<string, string> => this.stackNames,
             isBusy: (): boolean => this.isBusy,
             isCompacting: (): boolean => this.isCompacting,

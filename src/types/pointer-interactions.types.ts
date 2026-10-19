@@ -1,5 +1,6 @@
 import { Container, FederatedPointerEvent } from 'pixi.js'
 import { Card } from './card.types'
+import { Position } from './position.types'
 import { ForcedCursor } from './forced-cursor.types'
 import { DragHandler } from '../features/drag/drag-handler'
 import { StackOverlay } from '../features/stack/stack-overlay/stack-overlay'
@@ -13,6 +14,8 @@ export interface PointerInteractionsDeps {
     stackDragManager: StackDragManager
     actionHistory: ActionHistory
     getStacks: () => Card[][]
+    /** Topmost interactive object at `point`, as Pixi's event system would pick it */
+    hitTest: (point: Position) => Container | null
     getStackNames: () => Record<string, string>
     isBusy: () => boolean
     isCompacting: () => boolean

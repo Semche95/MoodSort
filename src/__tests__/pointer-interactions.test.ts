@@ -9,6 +9,14 @@ function makeCard(x: number, y: number, width: number = 200, height: number = 30
     return { x, y, width, height, imageUrl } as unknown as Card
 }
 
+/** A stage holding the card layer and a toolbar drawn above it, for hit tests to land on. */
+function makeStage(cardLayer: { children: unknown[] }): { stage: object; toolbarButton: object } {
+    const stage = { parent: null }
+    Object.assign(cardLayer, { parent: stage })
+    const toolbarButton = { parent: { parent: stage } }
+    return { stage, toolbarButton }
+}
+
 function makeEvent(x: number, y: number, extra: { ctrlKey?: boolean, metaKey?: boolean, currentTarget?: Card, nativeEvent?: { isTrusted: boolean } } = {}): FederatedPointerEvent {
     return { global: { x, y }, ctrlKey: false, metaKey: false, nativeEvent: { isTrusted: true }, ...extra } as unknown as FederatedPointerEvent
 }
@@ -48,6 +56,7 @@ function makeDeps(overrides: Partial<PointerInteractionsDeps> = {}): {
         stackDragManager: stackDragManager as unknown as PointerInteractionsDeps['stackDragManager'],
         actionHistory: actionHistory as unknown as PointerInteractionsDeps['actionHistory'],
         getStacks: (): Card[][] => [],
+        hitTest: (): PointerInteractionsDeps['cardLayer'] | null => null,
         getStackNames: (): Record<string, string> => ({}),
         isBusy: (): boolean => false,
         isCompacting: (): boolean => false,
@@ -192,6 +201,19 @@ describe('createPointerInteractions', () => {
         expect(overlay.hide).not.toHaveBeenCalled()
     })
 
+    it('handlePointerMove hovers no stack whose frame lies under UI drawn above the cards', () => {
+        const stack = [makeCard(100, 100)]
+        const { deps, overlay, cardLayer } = makeDeps({ getStacks: (): Card[][] => [stack] })
+        const { toolbarButton } = makeStage(cardLayer)
+        deps.hitTest = (): PointerInteractionsDeps['cardLayer'] => toolbarButton as PointerInteractionsDeps['cardLayer']
+        const interactions = createPointerInteractions(deps)
+
+        interactions.handlePointerMove(makeEvent(150, 150))
+
+        expect(overlay.setHoveredStack).toHaveBeenCalledWith(null)
+        expect(overlay.showHighlight).not.toHaveBeenCalled()
+    })
+
     it('handlePointerMove hides the overlay when the pointer is over no stack', () => {
         const { deps, overlay } = makeDeps({ getStacks: (): Card[][] => [] })
         const interactions = createPointerInteractions(deps)
@@ -260,6 +282,26 @@ describe('createPointerInteractions', () => {
         expect(interactions.findHoveredCard()).toBeNull()
     })
 
+    it('findHoveredCard returns nothing under UI drawn above the cards, but the card when the hit lands on the card layer or the bare stage', () => {
+        const { deps, cardLayer } = makeDeps()
+        const card = makeCard(0, 0)
+        cardLayer.children.push(card)
+        const { stage, toolbarButton } = makeStage(cardLayer)
+        Object.assign(card, { parent: cardLayer })
+        let hit: object | null = toolbarButton
+        deps.hitTest = (): PointerInteractionsDeps['cardLayer'] | null => hit as PointerInteractionsDeps['cardLayer'] | null
+        const interactions = createPointerInteractions(deps)
+        interactions.handlePointerMove(makeEvent(50, 10))
+
+        expect(interactions.findHoveredCard()).toBeNull()
+
+        hit = card
+        expect(interactions.findHoveredCard()).toBe(card)
+
+        hit = stage
+        expect(interactions.findHoveredCard()).toBe(card)
+    })
+
     it('findHoveredCard returns nothing while a stack is being dragged', () => {
         const { deps, cardLayer, stackDragManager } = makeDeps()
         cardLayer.children.push(makeCard(0, 0))
@@ -293,6 +335,21 @@ describe('createPointerInteractions', () => {
 
         interactions.handlePointerMove(makeEvent(900, 900, { ctrlKey: true }))
         expect(interactions.findArmedStack()).toBeNull()
+    })
+
+    it('findArmedStack returns nothing under UI drawn above the cards, so a Ctrl+press on a toolbar button carries no stack', () => {
+        const stack = [makeCard(0, 0)]
+        const { deps, cardLayer, stackDragManager } = makeDeps({ getStacks: (): Card[][] => [stack] })
+        cardLayer.children.push(...stack)
+        const { toolbarButton } = makeStage(cardLayer)
+        deps.hitTest = (): PointerInteractionsDeps['cardLayer'] => toolbarButton as PointerInteractionsDeps['cardLayer']
+        const interactions = createPointerInteractions(deps)
+
+        interactions.handlePointerMove(makeEvent(50, 50, { ctrlKey: true }))
+        expect(interactions.findArmedStack()).toBeNull()
+
+        interactions.handleStagePointerDown(makeEvent(50, 50, { ctrlKey: true }))
+        expect(stackDragManager.startDrag).not.toHaveBeenCalled()
     })
 
     it('handlePointerMove keeps a held key armed through a replayed move, which carries no modifier state', () => {

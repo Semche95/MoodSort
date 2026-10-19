@@ -31,7 +31,7 @@ vi.mock('pixi.js', () => {
     const mockApp: Record<string, unknown> = {
         stage: undefined,
         screen: { width: 800, height: 600 },
-        renderer: { resize: vi.fn() },
+        renderer: { resize: vi.fn(), events: { rootBoundary: { hitTest: vi.fn((): null => null) } } },
         ticker: {
             add: (fn: () => void): void => {
                 tickers.push(fn)

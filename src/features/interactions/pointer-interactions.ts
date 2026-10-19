@@ -17,6 +17,20 @@ function findTopCardAt(cardLayer: Container, point: Position): Card | null {
     return cards.reverse().find((card: Card): boolean => isPointInBox(point, card)) ?? null
 }
 
+/** UI drawn above the card layer, such as a toolbar button, hides the cards and stack frames under it from the pointer. */
+function isCoveredByUi(deps: PointerInteractionsDeps, point: Position): boolean {
+    let target = deps.hitTest(point)
+    if (!target?.parent) {
+        return false
+    }
+    for (; target; target = target.parent) {
+        if (target === deps.cardLayer) {
+            return false
+        }
+    }
+    return true
+}
+
 /** Pill buttons sit under every card, so they only take a press no card covers. */
 function isOnPillButton(deps: PointerInteractionsDeps, point: Position): boolean {
     return findStackByCompactButtonAtPoint(deps.getStacks(), point) !== null || deps.overlay.findStackByNameButtonAtPoint(point) !== null
@@ -67,7 +81,7 @@ export function createPointerInteractions(deps: PointerInteractionsDeps): Pointe
             return
         }
         const point: Position = { x: e.global.x, y: e.global.y }
-        const stack = findStackAtPoint(deps.getStacks(), point)
+        const stack = isCoveredByUi(deps, point) ? null : findStackAtPoint(deps.getStacks(), point)
         deps.overlay.setHoveredStack(stack)
         if (stack) {
             deps.overlay.showHighlight(stack)
@@ -109,11 +123,11 @@ export function createPointerInteractions(deps: PointerInteractionsDeps): Pointe
     }
 
     /**
-     * The stack a press would carry whole right now: Ctrl/Cmd held anywhere within its frame but on a pill button,
-     * the card on top deciding where frames overlap.
+     * The stack a press would carry whole right now: Ctrl/Cmd held anywhere within its frame but on a pill button
+     * or under UI drawn above the cards, the card on top deciding where frames overlap.
      */
     const findArmedStack = (): Card[] | null => {
-        if (!modKeyHeld || !pointer || deps.isBusy()) {
+        if (!modKeyHeld || !pointer || deps.isBusy() || isCoveredByUi(deps, pointer)) {
             return null
         }
         const card = findTopCardAt(deps.cardLayer, pointer)
@@ -133,7 +147,7 @@ export function createPointerInteractions(deps: PointerInteractionsDeps): Pointe
 
     /** Topmost card under the last known pointer, by z-order; none while a stack is carried or armed, so only its pile is marked. */
     const findHoveredCard = (): Card | null => {
-        if (!pointer || deps.stackDragManager.isDragging || findArmedStack()) {
+        if (!pointer || deps.stackDragManager.isDragging || findArmedStack() || isCoveredByUi(deps, pointer)) {
             return null
         }
         return findTopCardAt(deps.cardLayer, pointer)
