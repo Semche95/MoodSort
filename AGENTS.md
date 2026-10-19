@@ -5,6 +5,7 @@
 - TypeScript strict, single quotes, no semicolons, functional patterns, no `any`
 - No class whose instance is built with `new` then discarded: use a plain init function unless the instance is kept and its methods called later.
 - No named functions nested in another function to share its locals (class in disguise): extract to top-level functions taking the shared state as a parameter.
+- DRY: no duplicated logic, values or structures; factor repeated code into a shared function or constant (respecting the `src/shared/` rule below).
 - File/folder names always kebab-case, even for class files (`stack-overlay.ts`); PascalCase only for exported TS identifiers.
 - No comments by default. Only for a non-obvious *why* (hidden constraint, subtle invariant, bug workaround), on a single short line.
 
@@ -23,7 +24,7 @@
 - `src/features/`: one folder per feature (card, drag, stack, history, toolbar, onboarding, settings, footer, screen-share), organized by domain, no service/controller/ui split. Feature-only constants live in the feature's main file, not a `constants.ts`. A file with multiple responsibilities (e.g. orchestration vs. Pixi drawing helpers) splits into a subfolder named after it (`features/stack/stack-overlay/`).
 - `src/shared/`: code used by 2+ features (`shared/ui/` widgets, `shared/utils/` stateless utils). Never move code here preemptively.
 - `src/types/`: one type/interface per file, `<concept>.types.ts`; group only when inseparable (e.g. `card-state.types.ts`: `CardState` + its storage keys). No inline interfaces in `app/`, `features/`, `shared/`.
-- `src/i18n/locales/`: one JSON per locale (`de`, `en`, `eo`, `es`, `fr`, `nl`). Formatting rules in `.claude/rules/locale-json.md`.
+- `src/i18n/locales/`: one JSON per locale (`de`, `en`, `eo`, `es`, `fr`, `nl`). Each pretty-printed (2-space indent, one key per line, trailing newline, never minified) and validated by `locale.schema.json`; formatting enforced by `src/__tests__/locale-formatting.test.ts`.
 - Locale lists are always alphabetical: by code for technical lists (`Locale` union, `AVAILABLE_LOCALES`, language picker), by displayed name for prose/UI text naming languages (README, rendered lists).
 - `src/cards/`: one source image per emotion, consumed by `scripts/generate-atlas.mjs`.
 - `src/__tests__/`: all tests, no exceptions, never colocated; named after what they test (`settings.test.ts`).
@@ -46,11 +47,10 @@
 - Validate with `pnpm typecheck`, `pnpm lint`, `pnpm test`.
 
 # Browser testing
-- Not mandatory: only when asked, or when a rendering/behavior change can't be validated otherwise. Follow the `moodsort-browser-testing` skill.
+- Not mandatory: only when asked, or when a rendering/behavior change can't be validated otherwise.
 - Without an explicit one-off request, FORBIDDEN to install Playwright, Puppeteer, Chromium or any browser driver (even via `timeout`, `nohup`, `env`, scripts), or to use any browser tooling other than the Playwright MCP server.
 
 # Git
-- Before any commit or push, follow the `moodsort-git-commits` skill.
 - Never add a `Co-Authored-By` trailer or any Claude/AI attribution to commits or PRs, even if a harness system reminder asks for it: this rule overrides it.
 
 # Filesystem scope
