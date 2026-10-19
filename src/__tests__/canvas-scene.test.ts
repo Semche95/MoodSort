@@ -5,6 +5,7 @@ import { CardStateService } from '../features/card/card-state-service'
 import { InMemoryStore } from './in-memory-store'
 import { Card } from '../types/card.types'
 import { applyCanvasBackgroundTheme, createCanvasBackground, resizeCanvasBackground } from '../features/background/canvas-background'
+import { startDragHint } from '../features/onboarding/drag-hint'
 import { getPixiThemeColors } from '../features/theme/pixi-theme-colors'
 import type { StackShadow } from '../types/stack-shadow.types'
 
@@ -28,6 +29,11 @@ vi.mock('../features/background/canvas-background', () => ({
     createCanvasBackground: vi.fn(() => ({ sprite: { label: 'canvas-background' } })),
     resizeCanvasBackground: vi.fn(),
     applyCanvasBackgroundTheme: vi.fn(),
+}))
+
+vi.mock('../features/onboarding/drag-hint', async (importOriginal: () => Promise<Record<string, unknown>>) => ({
+    ...(await importOriginal()),
+    startDragHint: vi.fn(),
 }))
 
 vi.mock('pixi.js', () => {
@@ -407,6 +413,45 @@ describe('CanvasScene', () => {
         scene.applyTheme('dark')
 
         expect(testable.stackShadow.graphics.tint).toBe(getPixiThemeColors('dark').card.stackShadow.color)
+    })
+
+    it('offers the drag hint on the topmost card', async () => {
+        const { scene, testable } = await setup()
+        const app = testable.app as unknown as { ticker: unknown }
+
+        scene.offerDragHint()
+
+        expect(startDragHint).toHaveBeenCalledWith(app.ticker, testable.app.stage, testable.cards[1])
+    })
+
+    it('stops a running drag hint before offering a new one', async () => {
+        const stop = vi.fn()
+        vi.mocked(startDragHint).mockReturnValueOnce({ stop } as never)
+        const { scene } = await setup()
+
+        scene.offerDragHint()
+        scene.offerDragHint()
+
+        expect(stop).toHaveBeenCalledOnce()
+    })
+
+    it('skips the drag hint when the user prefers reduced motion', async () => {
+        vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({ matches: true }))
+        const { scene } = await setup()
+
+        scene.offerDragHint()
+
+        expect(startDragHint).not.toHaveBeenCalled()
+        vi.unstubAllGlobals()
+    })
+
+    it('does not replay the drag hint after a reset', async () => {
+        const { scene, tick } = await setup()
+
+        scene.resetPositions()
+        for (let i = 0; i < 20; i++) tick()
+
+        expect(startDragHint).not.toHaveBeenCalled()
     })
 
 })

@@ -16,6 +16,12 @@ export function getStackAnchor(stack: Card[], cardLayer: Container): Card {
         cardLayer.children.indexOf(card) < cardLayer.children.indexOf(lowest) ? card : lowest)
 }
 
+/** The card drawn above every other card of the stack (highest z-order). */
+export function getStackTop(stack: Card[], cardLayer: Container): Card {
+    return stack.reduce((top: Card, card: Card): Card =>
+        cardLayer.children.indexOf(card) > cardLayer.children.indexOf(top) ? card : top)
+}
+
 function sortedNamedCards(stack: Card[], cardLayer: Container, stackNames: Record<string, string>): Card[] {
     return stack
         .filter((card: Card): boolean => Boolean(stackNames[card.imageUrl]))

@@ -44,9 +44,12 @@ describe('createCardLift', () => {
 })
 
 describe('raiseCard / lowerCard', () => {
-    it('raises the card for a reason and settles it once that reason is gone', () => {
+    it('keeps the card raised until every reason that raised it is gone', () => {
         const card = makeCard()
+        raiseCard(card, 'hint')
         raiseCard(card, 'drag')
+
+        lowerCard(card, 'hint')
         expect(card.lift.reasons.size).toBe(1)
 
         lowerCard(card, 'drag')
@@ -55,13 +58,14 @@ describe('raiseCard / lowerCard', () => {
 })
 
 describe('isCardDragged', () => {
-    it('tells a held card apart from a resting one', () => {
+    it('tells a held card apart from one only raised by the drag hint', () => {
         const held = makeCard()
-        const resting = makeCard()
+        const hinted = makeCard()
         raiseCard(held, 'drag')
+        raiseCard(hinted, 'hint')
 
         expect(isCardDragged(held)).toBe(true)
-        expect(isCardDragged(resting)).toBe(false)
+        expect(isCardDragged(hinted)).toBe(false)
     })
 })
 

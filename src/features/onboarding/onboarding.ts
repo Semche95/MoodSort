@@ -15,16 +15,15 @@ export function dismissOnboarding(store: CardStateService): void {
     })
 }
 
-export function initOnboarding(store: CardStateService): void {
-    const showOnboarding = (): void => {
-        const existing = document.querySelector('.onboarding-overlay')
-        if (existing) return
-        document.body.appendChild(createOnboarding((): void => { dismissOnboarding(store) }))
+/** `onFirstDismiss` runs when a first-time visitor closes the onboarding, never on later visits. */
+export function initOnboarding(store: CardStateService, onFirstDismiss: () => void): void {
+    if (isOnboardingDismissed(store) || document.querySelector('.onboarding-overlay')) {
+        return
     }
-
-    if (!isOnboardingDismissed(store)) {
-        showOnboarding()
-    }
+    document.body.appendChild(createOnboarding((): void => {
+        dismissOnboarding(store)
+        onFirstDismiss()
+    }))
 }
 
 export function createOnboarding(onDismiss: () => void): HTMLDivElement {

@@ -53,7 +53,7 @@ export async function bootApp(locale: Locale): Promise<void> {
 
     document.body.appendChild(createFooter())
 
-    initOnboarding(cardStateService)
+    initOnboarding(cardStateService, (): void => { scene.offerDragHint() })
 
     const iconTextures = await loadIconTextures()
     const brandingTextures = await loadBrandingTextures(scene.resolution)

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import type { Container } from 'pixi.js'
 import {
     getStackAnchor,
+    getStackTop,
     computeStackLabel,
     findNameAnchor,
     computeLabelAnchorPoint,
@@ -23,6 +24,17 @@ function makeCard(x: number, y: number, width: number, height: number, imageUrl:
 function makeCardLayer(cards: Card[]): Container {
     return { children: cards } as unknown as Container
 }
+
+describe('getStackTop', () => {
+    it('returns the card with the highest z-order (index) in the layer', () => {
+        const a = makeCard(0, 0, 100, 100, 'a')
+        const b = makeCard(0, 0, 100, 100, 'b')
+        const c = makeCard(0, 0, 100, 100, 'c')
+        const cardLayer = makeCardLayer([c, a, b, makeCard(0, 0, 100, 100, 'other')])
+
+        expect(getStackTop([a, c, b], cardLayer)).toBe(b)
+    })
+})
 
 describe('getStackAnchor', () => {
     it('returns the card with the lowest z-order (index) in the layer', () => {

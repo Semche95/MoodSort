@@ -18,8 +18,10 @@ import { ActionHistory } from '../features/history/action-history'
 import { IStore } from '../types/store.types'
 import { computeStacks } from '../features/stack/stack'
 import { applyStackShadowTheme, createStackShadow, drawStackShadow } from '../features/stack/stack-shadow'
+import { shouldPlayDragHint, startDragHint } from '../features/onboarding/drag-hint'
 import type { StackShadow } from '../types/stack-shadow.types'
-import { resolveNameSplits, resolveNameMerges } from '../features/stack/stack-naming'
+import type { DragHint } from '../types/drag-hint.types'
+import { getStackTop, resolveNameSplits, resolveNameMerges } from '../features/stack/stack-naming'
 import { snapshotCards, applyHistoryEntry, applyStackNameChanges } from '../features/history/history'
 import { createPointerInteractions } from '../features/interactions/pointer-interactions'
 import type { PointerInteractions } from '../types/pointer-interactions.types'
@@ -30,6 +32,7 @@ export class CanvasScene {
     private cardLayer: Container
     private background: CanvasBackground | null = null
     private stackShadow: StackShadow
+    private dragHint: DragHint | null = null
     private cards: Card[]
     private cardManager: CardManager
     private dragHandler: DragHandler
@@ -263,6 +266,14 @@ export class CanvasScene {
         this.stacks = computeStacks(this.cards)
     }
 
+    /** Nudges the top card out of the pile to show cards can be moved; offered once, when a first-time visitor closes the onboarding. */
+    offerDragHint(): void {
+        this.dragHint?.stop()
+        this.dragHint = shouldPlayDragHint()
+            ? startDragHint(this.app.ticker, this.app.stage, getStackTop(this.cards, this.cardLayer))
+            : null
+    }
+
     private handleTick: () => void = (): void => {
         this.cardManager.updateLifts(this.cards, this.app.ticker.deltaTime)
         drawStackShadow(this.stackShadow, this.cards)
@@ -304,10 +315,7 @@ export class CanvasScene {
     }
 
     private compactStack(stack: Card[]): void {
-        const topCard = stack.reduce(
-            (top: Card, card: Card): Card =>
-                this.cardLayer.children.indexOf(card) > this.cardLayer.children.indexOf(top) ? card : top,
-        )
+        const topCard = getStackTop(stack, this.cardLayer)
         const others = stack.filter((card: Card): boolean => card !== topCard)
         if (others.length === 0) {
             return
