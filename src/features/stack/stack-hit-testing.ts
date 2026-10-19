@@ -2,6 +2,7 @@ import { Card } from '../../types/card.types'
 import { Box } from '../../types/box.types'
 import { Position } from '../../types/position.types'
 import { StackPillLayout } from '../../types/stack-pill-layout.types'
+import { StackAction, StackActionHit, StackActionsLayout } from '../../types/stack-actions-layout.types'
 import { computeBoundingBox } from './stack-geometry'
 import {
     STACK_HIGHLIGHT_PADDING,
@@ -12,6 +13,8 @@ import {
     STACK_PILL_GRIP_WIDTH,
     STACK_PILL_NAME_PADDING,
 } from './stack'
+
+const STACK_ACTIONS: StackAction[] = ['compact', 'spread']
 
 const PILL_ICONS_WIDTH = STACK_PILL_PADDING * 2 + STACK_PILL_GRIP_WIDTH + STACK_PILL_ICON_WIDTH
 
@@ -64,26 +67,42 @@ export function computeStackPillLayout(box: Box, nameWidth: number | null): Stac
     }
 }
 
-// Returns null for stacks with fewer than 2 cards: compacting only makes sense on an actual stack.
-export function computeCompactButtonBox(stack: Card[]): Box | null {
+// Returns null for stacks with fewer than 2 cards: compacting or spreading only makes sense on an actual stack.
+export function computeStackActionsLayout(stack: Card[]): StackActionsLayout | null {
     if (stack.length < 2) {
         return null
     }
     const frame = computeStackFrame(computeBoundingBox(stack))
-    const width = STACK_PILL_PADDING * 2 + STACK_PILL_ICON_WIDTH
-    return {
-        x: frame.x + (frame.width - width) / 2,
+    const slotWidth = STACK_PILL_PADDING + STACK_PILL_ICON_WIDTH
+    const pill = {
+        x: frame.x + frame.width / 2 - slotWidth,
         y: frame.y + frame.height - STACK_PILL_HEIGHT / 2,
-        width,
+        width: slotWidth * 2,
         height: STACK_PILL_HEIGHT,
+    }
+    return {
+        pill,
+        compact: { ...pill, width: slotWidth },
+        spread: { ...pill, x: pill.x + slotWidth, width: slotWidth },
     }
 }
 
-export function findStackByCompactButtonAtPoint(stacks: Card[][], point: Position): Card[] | null {
+export function findStackByActionAtPoint(stacks: Card[][], point: Position, action: StackAction): Card[] | null {
     for (const stack of stacks) {
-        const box = computeCompactButtonBox(stack)
-        if (box && isPointInBox(point, box)) {
+        const layout = computeStackActionsLayout(stack)
+        if (layout && isPointInBox(point, layout[action])) {
             return stack
+        }
+    }
+    return null
+}
+
+/** The bottom-pill button under `point`, if any, with the stack it acts on. */
+export function findStackActionAtPoint(stacks: Card[][], point: Position): StackActionHit | null {
+    for (const action of STACK_ACTIONS) {
+        const stack = findStackByActionAtPoint(stacks, point, action)
+        if (stack) {
+            return { stack, action }
         }
     }
     return null

@@ -86,6 +86,12 @@
         "compactTooltip": {
           "type": "string"
         },
+        "spreadTooltip": {
+          "type": "string"
+        },
+        "spreadCardCount": {
+          "type": "string"
+        },
         "nameTooltipNamed": {
           "type": "string"
         },
@@ -95,6 +101,8 @@
       },
       "required": [
         "compactTooltip",
+        "spreadTooltip",
+        "spreadCardCount",
         "nameTooltipNamed",
         "nameTooltipUnnamed"
       ],

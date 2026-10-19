@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import {
-    computeCompactButtonBox,
+    computeStackActionsLayout,
     computeStackFrame,
     computeStackNameMaxWidth,
     computeStackPillLayout,
     computeStackPillMaxWidth,
-    findStackByCompactButtonAtPoint,
+    findStackActionAtPoint,
+    findStackByActionAtPoint,
     isPointInBox,
 } from '../features/stack/stack-hit-testing'
 import {
@@ -94,37 +95,58 @@ describe('computeStackPillLayout', () => {
     })
 })
 
-describe('computeCompactButtonBox', () => {
+describe('computeStackActionsLayout', () => {
     it('returns null for a single-card stack', () => {
-        expect(computeCompactButtonBox([makeCard(0, 0, 100, 100, 'a')])).toBeNull()
+        expect(computeStackActionsLayout([makeCard(0, 0, 100, 100, 'a')])).toBeNull()
     })
 
-    it('centers a one-icon pill on the frame bottom edge of a multi-card stack', () => {
+    it('centers a two-button pill on the frame bottom edge, compact on the left and spread on the right', () => {
         const stack = [makeCard(0, 0, 100, 100, 'a'), makeCard(10, 10, 100, 100, 'b')]
         const frame = computeStackFrame({ x: 0, y: 0, width: 110, height: 110 })
-        const width = STACK_PILL_PADDING * 2 + STACK_PILL_ICON_WIDTH
-
-        expect(computeCompactButtonBox(stack)).toEqual({
-            x: frame.x + (frame.width - width) / 2,
+        const slot = STACK_PILL_PADDING + STACK_PILL_ICON_WIDTH
+        const pill = {
+            x: frame.x + frame.width / 2 - slot,
             y: frame.y + frame.height - STACK_PILL_HEIGHT / 2,
-            width,
+            width: slot * 2,
             height: STACK_PILL_HEIGHT,
+        }
+
+        expect(computeStackActionsLayout(stack)).toEqual({
+            pill,
+            compact: { ...pill, width: slot },
+            spread: { ...pill, x: pill.x + slot, width: slot },
         })
     })
 })
 
-describe('findStackByCompactButtonAtPoint', () => {
-    it('returns the stack whose compact pill contains the point, skipping single cards', () => {
-        const single = [makeCard(500, 0, 100, 100, 'c')]
-        const stack = [makeCard(0, 0, 100, 100, 'a'), makeCard(10, 10, 100, 100, 'b')]
-        const rect = computeCompactButtonBox(stack)!
+describe('findStackByActionAtPoint', () => {
+    const single = [makeCard(500, 0, 100, 100, 'c')]
+    const stack = [makeCard(0, 0, 100, 100, 'a'), makeCard(10, 10, 100, 100, 'b')]
 
-        expect(findStackByCompactButtonAtPoint([single, stack], { x: rect.x + 1, y: rect.y + 1 })).toBe(stack)
+    it('returns the stack whose given button contains the point, skipping single cards', () => {
+        const { spread } = computeStackActionsLayout(stack)!
+
+        expect(findStackByActionAtPoint([single, stack], { x: spread.x + 1, y: spread.y + 1 }, 'spread')).toBe(stack)
     })
 
-    it('returns null when no compact pill contains the point', () => {
-        const stack = [makeCard(0, 0, 100, 100, 'a'), makeCard(10, 10, 100, 100, 'b')]
+    it('returns null on the other button of the same pill', () => {
+        const { compact } = computeStackActionsLayout(stack)!
 
-        expect(findStackByCompactButtonAtPoint([stack], { x: 1000, y: 1000 })).toBeNull()
+        expect(findStackByActionAtPoint([stack], { x: compact.x + 1, y: compact.y + 1 }, 'spread')).toBeNull()
+    })
+})
+
+describe('findStackActionAtPoint', () => {
+    const stack = [makeCard(0, 0, 100, 100, 'a'), makeCard(10, 10, 100, 100, 'b')]
+
+    it('names the button under the point along with its stack', () => {
+        const { compact, spread } = computeStackActionsLayout(stack)!
+
+        expect(findStackActionAtPoint([stack], { x: compact.x + 1, y: compact.y + 1 })).toEqual({ stack, action: 'compact' })
+        expect(findStackActionAtPoint([stack], { x: spread.x + 1, y: spread.y + 1 })).toEqual({ stack, action: 'spread' })
+    })
+
+    it('returns null away from every bottom pill', () => {
+        expect(findStackActionAtPoint([stack], { x: 1000, y: 1000 })).toBeNull()
     })
 })

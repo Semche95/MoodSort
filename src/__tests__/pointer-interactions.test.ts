@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { FederatedPointerEvent } from 'pixi.js'
 import { createPointerInteractions } from '../features/interactions/pointer-interactions'
 import { Card } from '../types/card.types'
-import { computeCompactButtonBox } from '../features/stack/stack-hit-testing'
+import { computeStackActionsLayout } from '../features/stack/stack-hit-testing'
 import { PointerInteractionsDeps } from '../types/pointer-interactions.types'
 
 function makeCard(x: number, y: number, width: number = 200, height: number = 300, imageUrl: string = 'card'): Card {
@@ -61,6 +61,7 @@ function makeDeps(overrides: Partial<PointerInteractionsDeps> = {}): {
         isBusy: (): boolean => false,
         isCompacting: (): boolean => false,
         onCompactButton: vi.fn(),
+        onSpreadButton: vi.fn(),
         onCommitStackName: vi.fn(),
         onCancelStackNameEdit: vi.fn(),
         ...overrides,
@@ -410,7 +411,7 @@ describe('createPointerInteractions', () => {
         const { deps, cardLayer, overlay } = makeDeps({ getStacks: (): Card[][] => [stack] })
         cardLayer.children.push(...stack)
         const interactions = createPointerInteractions(deps)
-        const compact = computeCompactButtonBox(stack)!
+        const { compact } = computeStackActionsLayout(stack)!
 
         interactions.handlePointerMove(makeEvent(compact.x + 1, compact.y + 1, { ctrlKey: true }))
         expect(interactions.findArmedStack()).toBeNull()
@@ -535,39 +536,63 @@ describe('createPointerInteractions', () => {
         expect(stackDragManager.startDrag).toHaveBeenCalledWith(stack, stack, { x: 150, y: 150 })
     })
 
-    it('handleCompactButtonPointerDown no-ops while busy', () => {
+    it('handleActionsPillPointerDown no-ops while busy', () => {
         const stack = [makeCard(100, 100), makeCard(110, 110)]
         const { deps } = makeDeps({ getStacks: (): Card[][] => [stack], isBusy: (): boolean => true })
         const interactions = createPointerInteractions(deps)
-        const box = computeCompactButtonBox(stack)!
+        const box = computeStackActionsLayout(stack)!.compact
         const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
 
-        interactions.handleCompactButtonPointerDown(makeEvent(point.x, point.y))
+        interactions.handleActionsPillPointerDown(makeEvent(point.x, point.y))
 
         expect(deps.onCompactButton).not.toHaveBeenCalled()
     })
 
-    it('handleCompactButtonPointerDown no-ops when the point misses the compact button', () => {
+    it('handleActionsPillPointerDown no-ops when the point misses the action pill', () => {
         const stack = [makeCard(100, 100), makeCard(110, 110)]
         const { deps } = makeDeps({ getStacks: (): Card[][] => [stack] })
         const interactions = createPointerInteractions(deps)
 
-        interactions.handleCompactButtonPointerDown(makeEvent(-9999, -9999))
+        interactions.handleActionsPillPointerDown(makeEvent(-9999, -9999))
 
         expect(deps.onCompactButton).not.toHaveBeenCalled()
     })
 
-    it('handleCompactButtonPointerDown commits any pending edit and invokes onCompactButton on target', () => {
+    it('handleActionsPillPointerDown commits any pending edit and invokes onCompactButton on target', () => {
         const stack = [makeCard(100, 100), makeCard(110, 110)]
         const { deps, overlay } = makeDeps({ getStacks: (): Card[][] => [stack] })
         const interactions = createPointerInteractions(deps)
-        const box = computeCompactButtonBox(stack)!
+        const box = computeStackActionsLayout(stack)!.compact
         const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
 
-        interactions.handleCompactButtonPointerDown(makeEvent(point.x, point.y))
+        interactions.handleActionsPillPointerDown(makeEvent(point.x, point.y))
 
         expect(overlay.commitNameEditorIfOpen).toHaveBeenCalledTimes(1)
         expect(deps.onCompactButton).toHaveBeenCalledWith(stack)
+    })
+
+    it('handleActionsPillPointerDown opens the spread of the stack whose spread button is pressed, without compacting it', () => {
+        const stack = [makeCard(100, 100), makeCard(110, 110)]
+        const { deps, overlay } = makeDeps({ getStacks: (): Card[][] => [stack] })
+        const interactions = createPointerInteractions(deps)
+        const box = computeStackActionsLayout(stack)!.spread
+
+        interactions.handleActionsPillPointerDown(makeEvent(box.x + box.width / 2, box.y + box.height / 2))
+
+        expect(overlay.commitNameEditorIfOpen).toHaveBeenCalledTimes(1)
+        expect(deps.onSpreadButton).toHaveBeenCalledWith(stack)
+        expect(deps.onCompactButton).not.toHaveBeenCalled()
+    })
+
+    it('handleActionsPillPointerDown does not open a spread while busy', () => {
+        const stack = [makeCard(100, 100), makeCard(110, 110)]
+        const { deps } = makeDeps({ getStacks: (): Card[][] => [stack], isBusy: (): boolean => true })
+        const interactions = createPointerInteractions(deps)
+        const box = computeStackActionsLayout(stack)!.spread
+
+        interactions.handleActionsPillPointerDown(makeEvent(box.x + box.width / 2, box.y + box.height / 2))
+
+        expect(deps.onSpreadButton).not.toHaveBeenCalled()
     })
 
     it('handleNameButtonPointerDown no-ops while busy', () => {

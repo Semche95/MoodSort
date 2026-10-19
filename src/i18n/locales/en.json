@@ -20,6 +20,8 @@
   },
   "stack": {
     "compactTooltip": "Compact the stack",
+    "spreadTooltip": "Show all cards",
+    "spreadCardCount": "{count} cards",
     "nameTooltipNamed": "Rename the stack",
     "nameTooltipUnnamed": "Name the stack"
   },

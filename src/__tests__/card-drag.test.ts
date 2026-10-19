@@ -104,4 +104,46 @@ describe('CardDrag', () => {
             expect(card.y).toBe(handleTopClearance)
         })
     })
+
+    describe('startDrag', () => {
+        it('keeps the card where it is, under the pointer offset of the press, when no grab offset is given', async () => {
+            const { Container: MockContainer } = await import('pixi.js')
+            const stage = new MockContainer() as unknown as Container
+            const cardLayer = new MockContainer() as unknown as Container
+            const card = await makeCard('card-a')
+            card.position.set(100, 200)
+
+            cardDrag.startDrag(card, { x: 130, y: 250 }, stage, cardLayer, vi.fn())
+            cardDrag.handleDragMove(makeEvent(card, { x: 140, y: 260 }), 800, 600)
+
+            expect({ x: card.x, y: card.y }).toEqual({ x: 110, y: 210 })
+        })
+
+        it('moves the card to the grab offset from the pointer at once, and snaps it back to its board spot if it never moves', async () => {
+            const { Container: MockContainer } = await import('pixi.js')
+            const stage = new MockContainer() as unknown as Container
+            const cardLayer = new MockContainer() as unknown as Container
+            const card = await makeCard('card-a')
+            card.position.set(100, 200)
+
+            cardDrag.startDrag(card, { x: 400, y: 300 }, stage, cardLayer, vi.fn(), { x: -20, y: -30 })
+            expect({ x: card.x, y: card.y }).toEqual({ x: 380, y: 270 })
+            expect(cardDrag.dragState.originalPosition).toEqual({ x: 100, y: 200 })
+
+            cardDrag.handleDragEnd(stage, vi.fn(), 800, 600)
+            expect({ x: card.x, y: card.y }).toEqual({ x: 100, y: 200 })
+        })
+
+        it('keeps the grab offset while the pointer moves', async () => {
+            const { Container: MockContainer } = await import('pixi.js')
+            const stage = new MockContainer() as unknown as Container
+            const cardLayer = new MockContainer() as unknown as Container
+            const card = await makeCard('card-a')
+
+            cardDrag.startDrag(card, { x: 400, y: 300 }, stage, cardLayer, vi.fn(), { x: -20, y: -30 })
+            cardDrag.handleDragMove(makeEvent(card, { x: 450, y: 320 }), 800, 600)
+
+            expect({ x: card.x, y: card.y }).toEqual({ x: 430, y: 290 })
+        })
+    })
 })

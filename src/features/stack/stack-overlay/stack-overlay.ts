@@ -1,15 +1,15 @@
 import { Application, Container, FederatedPointerEvent, Graphics } from 'pixi.js'
 import { Card } from '../../../types/card.types'
 import { Position } from '../../../types/position.types'
-import { computeStacks } from '../stack'
+import { computeStacks, listLayerCards } from '../stack'
 import { computeBoundingBox, computeCardLayoutKey } from '../stack-geometry'
 import { findMergeTargets } from '../stack-merge'
 import {
-    computeCompactButtonBox,
+    computeStackActionsLayout,
     computeStackNameMaxWidth,
     computeStackPillLayout,
     computeStackPillMaxWidth,
-    findStackByCompactButtonAtPoint,
+    findStackActionAtPoint,
     isPointInBox,
 } from '../stack-hit-testing'
 import { computeStackLabel, pickWinningGroup } from '../stack-naming'
@@ -18,20 +18,22 @@ import { CanvasTooltip } from '../../../shared/ui/canvas-tooltip'
 import { StackNameEditor } from './stack-name-editor'
 import { StackLabelPool } from './stack-label-pool'
 import { StackDragSourceTracker } from './stack-drag-source-tracker'
-import { drawCompactButton, drawMergePlus, drawMergeWash, drawNameButton, drawStackFrame, drawStackPill } from './stack-overlay-view'
+import { drawMergePlus, drawMergeWash, drawNameButton, drawStackActions, drawStackFrame, drawStackPill } from './stack-overlay-view'
 import { I18n } from '../../../i18n/I18n'
 import type { GetResolvedTheme } from '../../../types/theme.types'
 import { DEFAULT_GET_RESOLVED_THEME, getPixiThemeColors } from '../../theme/pixi-theme-colors'
 import type { PixiThemePalette } from '../../../types/pixi-theme-palette.types'
 import type { StackOverlayEntry } from '../../../types/stack-overlay-entry.types'
 import type { StackDrawTarget } from '../../../types/stack-draw-target.types'
+import type { StackAction } from '../../../types/stack-actions-layout.types'
+import type { TranslationKey } from '../../../i18n/i18n.types'
 
-const COMPACT_TOOLTIP_GAP = 6
-const NAME_TOOLTIP_GAP = 6
-
-function listLayerCards(cardLayer: Container): Card[] {
-    return cardLayer.children.filter((child: Container): child is Card => 'imageUrl' in child)
+const ACTIONS_TOOLTIP_GAP = 6
+const ACTION_TOOLTIP_KEYS: Record<StackAction, TranslationKey> = {
+    compact: 'stack.compactTooltip',
+    spread: 'stack.spreadTooltip',
 }
+const NAME_TOOLTIP_GAP = 6
 
 function computeCardsKey(cards: Iterable<Card> | null): string {
     return cards ? [...cards].map((card: Card): string => card.imageUrl).join(',') : ''
@@ -61,18 +63,18 @@ function isSameStack(stack: Card[], cards: Set<Card> | null): boolean {
 
 /**
  * Every stack's frame and top pill (grip, name, rename button) are redrawn from the cards on the
- * stage whenever anything they show changes, so they stay visible on every stack regardless of hover; the compact pill
- * on the frame's bottom edge only shows on the hovered stack.
+ * stage whenever anything they show changes, so they stay visible on every stack regardless of hover; the action pill
+ * on the frame's bottom edge (compact, spread) only shows on the hovered stack.
  */
 export class StackOverlay {
     private app: Application
     private cardLayer: Container
     stackBorder: Graphics
     stackDragHandle: Graphics
-    stackCompactButton: Graphics
+    stackActionsPill: Graphics
     stackNameButton: Graphics
     private pillTopLayer: Container
-    private compactTooltip: CanvasTooltip
+    private actionsTooltip: CanvasTooltip
     private nameTooltip: CanvasTooltip
     private nameEditor: StackNameEditor
     private labelPool: StackLabelPool
@@ -89,7 +91,7 @@ export class StackOverlay {
     private hoveredCards: Set<Card> | null
     private namePointer: Position | null
     private armedCards: Set<Card> | null
-    private compactPointer: Position | null
+    private actionsPointer: Position | null
     private editingCards: Set<Card> | null
     private entries: StackOverlayEntry[]
     private mergeTargets: Card[][]
@@ -107,9 +109,9 @@ export class StackOverlay {
         this.getResolvedTheme = getResolvedTheme
         this.stackBorder = new Graphics()
         this.stackDragHandle = new Graphics()
-        this.stackCompactButton = new Graphics()
+        this.stackActionsPill = new Graphics()
         this.stackNameButton = new Graphics()
-        this.compactTooltip = new CanvasTooltip(getResolvedTheme)
+        this.actionsTooltip = new CanvasTooltip(getResolvedTheme)
         this.nameTooltip = new CanvasTooltip(getResolvedTheme)
         this.nameEditor = new StackNameEditor(getResolvedTheme)
         const labelContainer = new Container()
@@ -139,7 +141,7 @@ export class StackOverlay {
         this.hoveredCards = null
         this.namePointer = null
         this.armedCards = null
-        this.compactPointer = null
+        this.actionsPointer = null
         this.editingCards = null
         this.entries = []
         this.mergeTargets = []
@@ -160,13 +162,13 @@ export class StackOverlay {
         this.stackDragHandle.on('pointerout', this.handleNameOut)
     }
 
-    initCompactButton(onPointerDown: (e: FederatedPointerEvent) => void): void {
-        this.stackCompactButton.eventMode = 'static'
-        this.stackCompactButton.cursor = 'pointer'
-        this.stackCompactButton.on('pointerdown', onPointerDown)
-        this.stackCompactButton.on('pointerover', this.handleCompactHover)
-        this.stackCompactButton.on('pointermove', this.handleCompactHover)
-        this.stackCompactButton.on('pointerout', this.handleCompactOut)
+    initActionsPill(onPointerDown: (e: FederatedPointerEvent) => void): void {
+        this.stackActionsPill.eventMode = 'static'
+        this.stackActionsPill.cursor = 'pointer'
+        this.stackActionsPill.on('pointerdown', onPointerDown)
+        this.stackActionsPill.on('pointerover', this.handleActionsHover)
+        this.stackActionsPill.on('pointermove', this.handleActionsHover)
+        this.stackActionsPill.on('pointerout', this.handleActionsOut)
     }
 
     initNameButton(onPointerDown: (e: FederatedPointerEvent) => void): void {
@@ -220,7 +222,7 @@ export class StackOverlay {
     addToStage(): void {
         this.cardLayer.addChildAt(this.stackBorder, 0)
         this.cardLayer.addChildAt(this.stackDragHandle, 1)
-        this.cardLayer.addChildAt(this.stackCompactButton, 2)
+        this.cardLayer.addChildAt(this.stackActionsPill, 2)
         this.cardLayer.addChildAt(this.pillTopLayer, 3)
         this.cardLayer.addChild(this.mergeIndicator)
         this.cardLayer.addChild(this.draggedBorder)
@@ -228,7 +230,7 @@ export class StackOverlay {
         // Matches the exact order these are re-raised in every render() frame,
         // so that first frame's re-raise is a no-op instead of a visible reorder.
         this.cardLayer.addChild(this.draggedLabelContainer)
-        this.cardLayer.addChild(this.compactTooltip.view)
+        this.cardLayer.addChild(this.actionsTooltip.view)
         this.cardLayer.addChild(this.nameTooltip.view)
         this.cardLayer.addChild(this.nameEditor.view)
         this.collectCards()
@@ -241,8 +243,8 @@ export class StackOverlay {
     }
 
     /**
-     * Records which stack the pointer is currently hovering, so the compact
-     * button is only drawn for that stack (it must stay hidden otherwise).
+     * Records which stack the pointer is currently hovering, so the action pill
+     * is only drawn for that stack (it must stay hidden otherwise).
      */
     setHoveredStack(stack: Card[] | null): void {
         this.hoveredCards = stack ? new Set(stack) : null
@@ -304,7 +306,7 @@ export class StackOverlay {
         this.draggedCards = []
         this.cardLayer.addChildAt(this.stackBorder, 0)
         this.cardLayer.addChildAt(this.stackDragHandle, 1)
-        this.cardLayer.addChildAt(this.stackCompactButton, 2)
+        this.cardLayer.addChildAt(this.stackActionsPill, 2)
         this.cardLayer.addChildAt(this.pillTopLayer, 3)
     }
 
@@ -337,7 +339,7 @@ export class StackOverlay {
             computeCardsKey(this.armedCards),
             computeCardsKey(this.editingCards),
             computePointKey(this.namePointer),
-            computePointKey(this.compactPointer),
+            computePointKey(this.actionsPointer),
         ].join('#')
     }
 
@@ -345,16 +347,16 @@ export class StackOverlay {
         const palette = getPixiThemeColors(this.getResolvedTheme()).stackOverlay
         this.stackBorder.clear()
         this.stackDragHandle.clear()
-        this.stackCompactButton.clear()
+        this.stackActionsPill.clear()
         this.stackNameButton.clear()
         this.draggedBorder.clear()
         this.draggedHandle.clear()
 
         if (draggingCard || this.draggedCards.length > 0) {
-            this.compactTooltip.hide()
+            this.actionsTooltip.hide()
             this.nameTooltip.hide()
             this.namePointer = null
-            this.compactPointer = null
+            this.actionsPointer = null
         }
         if (!draggingCard && this.draggedCards.length === 0) {
             this.clearMergeTargets()
@@ -391,9 +393,8 @@ export class StackOverlay {
             const label = isSameStack(stack, this.editingCards) ? '' : computeStackLabel(stack, this.cardLayer, stackNames)
             entries.push(this.drawStack(stack, label, hovered || this.isMergeTarget(stack), resting, palette))
             if (hovered) {
-                const compactRect = computeCompactButtonBox(stack)
-                const compactHovered = compactRect !== null && this.compactPointer !== null && isPointInBox(this.compactPointer, compactRect)
-                drawCompactButton(stack, this.stackCompactButton, compactHovered, palette)
+                const hoveredAction = this.actionsPointer ? findStackActionAtPoint([stack], this.actionsPointer)?.action ?? null : null
+                drawStackActions(stack, this.stackActionsPill, hoveredAction, palette)
             }
         }
         for (const stack of computeStacks(this.draggedCards)) {
@@ -419,7 +420,7 @@ export class StackOverlay {
             ...dragged,
             // Above everything dragged: the `+` must stay visible over the cards about to land on it.
             ...(this.mergeTargets.length > 0 ? [this.mergePlus] : []),
-            this.compactTooltip.view,
+            this.actionsTooltip.view,
             this.nameTooltip.view,
             this.nameEditor.view,
         ])
@@ -448,25 +449,25 @@ export class StackOverlay {
         )
     }
 
-    private handleCompactHover: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void => {
+    private handleActionsHover: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void => {
         const point: Position = { x: e.global.x, y: e.global.y }
-        this.compactPointer = point
-        const stack = findStackByCompactButtonAtPoint(computeStacks(this.cards), point)
-        const rect = stack ? computeCompactButtonBox(stack) : null
-        if (!rect) {
-            this.compactTooltip.hide()
+        this.actionsPointer = point
+        const hit = findStackActionAtPoint(computeStacks(this.cards), point)
+        const rect = hit ? computeStackActionsLayout(hit.stack)?.[hit.action] : null
+        if (!hit || !rect) {
+            this.actionsTooltip.hide()
             return
         }
-        this.compactTooltip.show(
+        this.actionsTooltip.show(
             rect.x + rect.width / 2,
-            rect.y + rect.height + COMPACT_TOOLTIP_GAP,
-            I18n.t('stack.compactTooltip'),
+            rect.y + rect.height + ACTIONS_TOOLTIP_GAP,
+            I18n.t(ACTION_TOOLTIP_KEYS[hit.action]),
         )
     }
 
-    private handleCompactOut: () => void = (): void => {
-        this.compactPointer = null
-        this.compactTooltip.hide()
+    private handleActionsOut: () => void = (): void => {
+        this.actionsPointer = null
+        this.actionsTooltip.hide()
     }
 
     private handleNameHover: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void => {

@@ -20,6 +20,8 @@
   },
   "stack": {
     "compactTooltip": "Compacter le tas",
+    "spreadTooltip": "Voir toutes les cartes",
+    "spreadCardCount": "{count} cartes",
     "nameTooltipNamed": "Renommer le tas",
     "nameTooltipUnnamed": "Nommer le tas"
   },

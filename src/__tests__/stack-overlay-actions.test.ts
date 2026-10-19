@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Application, Container } from 'pixi.js'
 import { StackOverlay } from '../features/stack/stack-overlay/stack-overlay'
-import { computeCompactButtonBox } from '../features/stack/stack-hit-testing'
+import { computeStackActionsLayout } from '../features/stack/stack-hit-testing'
 import { Card } from '../types/card.types'
 import { I18n } from '../i18n/I18n'
 import { createCardLift } from '../features/card/card-lift'
@@ -130,8 +130,8 @@ function createApp(): { tick: () => void; app: Application } {
     return { app, tick: (): void => tickFn?.() }
 }
 
-describe('StackOverlay compact button', () => {
-    it('does not draw the compact button before the stack is hovered', () => {
+describe('StackOverlay action pill', () => {
+    it('does not draw the action pill before the stack is hovered', () => {
         const cardLayer = new pixi.Container()
         const cardA = makeCard(100, 100, 200, 300, 'a')
         const cardB = makeCard(110, 110, 200, 300, 'b')
@@ -143,11 +143,11 @@ describe('StackOverlay compact button', () => {
         overlay.addToStage()
         tick()
 
-        const compactButton = overlay.stackCompactButton as unknown as { calls: Array<{ method: string }> }
-        expect(compactButton.calls.some((call: { method: string }): boolean => call.method === 'roundRect')).toBe(false)
+        const actionsPill = overlay.stackActionsPill as unknown as { calls: Array<{ method: string }> }
+        expect(actionsPill.calls.some((call: { method: string }): boolean => call.method === 'roundRect')).toBe(false)
     })
 
-    it('draws the compact button only once the stack with 2+ overlapping cards is hovered', () => {
+    it('draws the action pill only once the stack with 2+ overlapping cards is hovered', () => {
         const cardLayer = new pixi.Container()
         const cardA = makeCard(100, 100, 200, 300, 'a')
         const cardB = makeCard(110, 110, 200, 300, 'b')
@@ -160,11 +160,11 @@ describe('StackOverlay compact button', () => {
         overlay.setHoveredStack([cardA, cardB])
         tick()
 
-        const compactButton = overlay.stackCompactButton as unknown as { calls: Array<{ method: string }> }
-        expect(compactButton.calls.some((call: { method: string }): boolean => call.method === 'roundRect')).toBe(true)
+        const actionsPill = overlay.stackActionsPill as unknown as { calls: Array<{ method: string }> }
+        expect(actionsPill.calls.some((call: { method: string }): boolean => call.method === 'roundRect')).toBe(true)
     })
 
-    it('stops drawing the compact button once the hover leaves the stack', () => {
+    it('stops drawing the action pill once the hover leaves the stack', () => {
         const cardLayer = new pixi.Container()
         const cardA = makeCard(100, 100, 200, 300, 'a')
         const cardB = makeCard(110, 110, 200, 300, 'b')
@@ -179,13 +179,13 @@ describe('StackOverlay compact button', () => {
         overlay.setHoveredStack(null)
         tick()
 
-        const compactButton = overlay.stackCompactButton as unknown as { calls: Array<{ method: string }> }
-        const lastClearIndex = compactButton.calls.map((call: { method: string }): string => call.method).lastIndexOf('clear')
-        const callsSinceLastClear = compactButton.calls.slice(lastClearIndex + 1)
+        const actionsPill = overlay.stackActionsPill as unknown as { calls: Array<{ method: string }> }
+        const lastClearIndex = actionsPill.calls.map((call: { method: string }): string => call.method).lastIndexOf('clear')
+        const callsSinceLastClear = actionsPill.calls.slice(lastClearIndex + 1)
         expect(callsSinceLastClear.some((call: { method: string }): boolean => call.method === 'roundRect')).toBe(false)
     })
 
-    it('does not draw the compact button for a lone single-card stack, even when "hovered"', () => {
+    it('does not draw the action pill for a lone single-card stack, even when "hovered"', () => {
         const cardLayer = new pixi.Container()
         const cardA = makeCard(100, 100, 200, 300, 'a')
         cardLayer.addChild(cardA)
@@ -196,11 +196,11 @@ describe('StackOverlay compact button', () => {
         overlay.setHoveredStack([cardA])
         tick()
 
-        const compactButton = overlay.stackCompactButton as unknown as { calls: Array<{ method: string }> }
-        expect(compactButton.calls.some((call: { method: string }): boolean => call.method === 'roundRect')).toBe(false)
+        const actionsPill = overlay.stackActionsPill as unknown as { calls: Array<{ method: string }> }
+        expect(actionsPill.calls.some((call: { method: string }): boolean => call.method === 'roundRect')).toBe(false)
     })
 
-    it('draws a hover chip on the compact pill while the pointer is over it, and drops it once the pointer leaves', () => {
+    it('draws a hover chip on the compact button while the pointer is over it, and drops it once the pointer leaves', () => {
         const cardLayer = new pixi.Container()
         const cardA = makeCard(100, 100, 200, 300, 'a')
         const cardB = makeCard(110, 110, 200, 300, 'b')
@@ -209,21 +209,21 @@ describe('StackOverlay compact button', () => {
         const { app, tick } = createApp()
         const overlay = new StackOverlay(app, cardLayer as unknown as Container)
         overlay.addToStage()
-        overlay.initCompactButton(vi.fn())
+        overlay.initActionsPill(vi.fn())
         overlay.setHoveredStack([cardA, cardB])
-        const compactButton = overlay.stackCompactButton as unknown as {
+        const actionsPill = overlay.stackActionsPill as unknown as {
             calls: Array<{ method: string }>
             emit(event: string, payload: unknown): void
         }
-        const hasChip = (): boolean => compactButton.calls.slice(compactButton.calls.map((c: { method: string }): string => c.method).lastIndexOf('clear')).some((c: { method: string }): boolean => c.method === 'circle')
-        const box = computeCompactButtonBox([cardA, cardB])!
+        const hasChip = (): boolean => actionsPill.calls.slice(actionsPill.calls.map((c: { method: string }): string => c.method).lastIndexOf('clear')).some((c: { method: string }): boolean => c.method === 'circle')
+        const box = computeStackActionsLayout([cardA, cardB])!.compact
 
         tick()
         expect(hasChip()).toBe(false)
-        compactButton.emit('pointerover', { global: { x: box.x + box.width / 2, y: box.y + box.height / 2 } })
+        actionsPill.emit('pointerover', { global: { x: box.x + box.width / 2, y: box.y + box.height / 2 } })
         tick()
         expect(hasChip()).toBe(true)
-        compactButton.emit('pointerout', {})
+        actionsPill.emit('pointerout', {})
         tick()
         expect(hasChip()).toBe(false)
     })
@@ -238,24 +238,52 @@ describe('StackOverlay compact button', () => {
         const { app, tick } = createApp()
         const overlay = new StackOverlay(app, cardLayer as unknown as Container)
         overlay.addToStage()
-        overlay.initCompactButton(vi.fn())
+        overlay.initActionsPill(vi.fn())
         overlay.setHoveredStack([cardA, cardB])
         tick()
 
-        const compactButton = overlay.stackCompactButton as unknown as { emit(event: string, payload: unknown): void }
-        const tooltipView = overlay['compactTooltip'].view as unknown as {
+        const actionsPill = overlay.stackActionsPill as unknown as { emit(event: string, payload: unknown): void }
+        const tooltipView = overlay['actionsTooltip'].view as unknown as {
             visible: boolean
             children: Array<{ text?: string }>
         }
-        const box = computeCompactButtonBox([cardA, cardB])!
+        const box = computeStackActionsLayout([cardA, cardB])!.compact
         const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
 
-        compactButton.emit('pointerover', { global: point })
+        actionsPill.emit('pointerover', { global: point })
 
         expect(tooltipView.visible).toBe(true)
         expect(tooltipView.children[1].text).toBe(I18n.t('stack.compactTooltip'))
 
-        compactButton.emit('pointerout', {})
+        actionsPill.emit('pointerout', {})
         expect(tooltipView.visible).toBe(false)
+    })
+
+    it('shows a "Voir toutes les cartes" tooltip and a chip on the spread button while the pointer is over it', () => {
+        const cardLayer = new pixi.Container()
+        const cardA = makeCard(100, 100, 200, 300, 'a')
+        const cardB = makeCard(110, 110, 200, 300, 'b')
+        cardLayer.addChild(cardA)
+        cardLayer.addChild(cardB)
+        const { app, tick } = createApp()
+        const overlay = new StackOverlay(app, cardLayer as unknown as Container)
+        overlay.addToStage()
+        overlay.initActionsPill(vi.fn())
+        overlay.setHoveredStack([cardA, cardB])
+        const actionsPill = overlay.stackActionsPill as unknown as {
+            calls: Array<{ method: string; args: unknown[] }>
+            emit(event: string, payload: unknown): void
+        }
+        const tooltipView = overlay['actionsTooltip'].view as unknown as { visible: boolean; children: Array<{ text?: string }> }
+        const box = computeStackActionsLayout([cardA, cardB])!.spread
+        const center = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
+
+        actionsPill.emit('pointerover', { global: center })
+        tick()
+
+        expect(tooltipView.visible).toBe(true)
+        expect(tooltipView.children[1].text).toBe(I18n.t('stack.spreadTooltip'))
+        const chip = actionsPill.calls.slice(actionsPill.calls.map((c: { method: string }): string => c.method).lastIndexOf('clear')).find((c: { method: string }): boolean => c.method === 'circle')
+        expect(chip?.args.slice(0, 2)).toEqual([center.x, center.y])
     })
 })

@@ -20,7 +20,7 @@ How the app behaves and the business rules it must keep. The README covers setup
 - A stack is any group of cards whose bounds overlap; a lone card is a stack too.
 - Every stack always shows a dashed rounded frame and, on its top edge, a pill holding the drag grip, the stack's name if any, and a rename pencil.
 - A name never makes the pill wider than the frame's straight edge: it is cut with an ellipsis and shown in full in a tooltip on hover. The pencil's slot is always reserved, so the name never reflows.
-- Hovering a stack tints its frame with the accent and brings the pencil to full opacity. For two or more cards, it also shows a pill on the bottom edge whose button re-gathers every card around the top card, keeping their z-order.
+- Hovering a stack tints its frame with the accent and brings the pencil to full opacity. For two or more cards, it also shows a pill on the bottom edge with two buttons: one re-gathers every card around the top card, keeping their z-order; the other opens the stack's spread.
 - A resting stack's pill, name and pencil sit under every card: an overlapping neighbour pile covers them as a whole.
 - Every placement keeps enough room above and below a stack's cards for both pills to stay on-canvas.
 
@@ -36,6 +36,15 @@ How the app behaves and the business rules it must keep. The README covers setup
 - Z-order during a drag, bottom to top: resting cards and their overlays, the dragged cards with their own frame, pill and name, then the `+` of every merge target. The `+` always stays visible above the cards about to land on it, whether a whole stack or a single card is dragged, on every frame of the drag.
 - A card dragged out of a pile leaves the pile's frames in place until it is dropped.
 - A press that moves nothing snaps the card back.
+
+## Stack spread
+
+- The spread shows every card of a stack of two or more, top card first, in a centered grid on a layer drawn on the canvas above the board, so share viewers see it too. The board stays faintly visible under a veil in the background color. The toolbar stays above the spread and keeps working.
+- Cards show at the largest size that fits them all, never above the board card size unless board cards are too small to read; they never go below the size where the card title stays readable (141px wide). Past that, the grid scrolls by whole rows with the mouse wheel or the thin scrollbar on the right.
+- A pill just above the first card row shows the stack name, if any, and the card count, with a close button. Escape or a press in empty space closes the spread too.
+- The topmost spread card under the pointer gets the accent outline, which follows the cards scrolling under a still pointer. Board cards and stacks under the spread are out of the pointer's reach.
+- Pressing a spread card and moving drags the real card, exactly as a board drag (clamping, merge targets, one undo entry). During the drag, the veil and grid disappear and only the pill stays. A click that doesn't move changes nothing.
+- Once nothing is being dragged, the spread follows the stack that holds most of its cards (after a drop, undo, redo or resize) and closes when a single card is left. Resetting the positions closes it.
 
 ## Stack names
 

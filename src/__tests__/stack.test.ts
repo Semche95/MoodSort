@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { computeStacks, findStack, findStackAtPoint, STACK_FRAME_CLEARANCE, STACK_HIGHLIGHT_PADDING } from '../features/stack/stack'
+import { computeStacks, findStack, findStackAtPoint, listLayerCards, STACK_FRAME_CLEARANCE, STACK_HIGHLIGHT_PADDING } from '../features/stack/stack'
+import type { Container } from 'pixi.js'
 import { Card } from '../types/card.types'
 
 function makeCard(x: number, y: number, width: number, height: number, imageUrl: string): Card {
@@ -75,5 +76,15 @@ describe('findStackAtPoint', () => {
         expect(findStackAtPoint([stack], { x: 100 - STACK_HIGHLIGHT_PADDING - 1, y: 200 })).toBeNull()
         expect(findStackAtPoint([stack], { x: 200, y: 100 - STACK_FRAME_CLEARANCE - 1 })).toBeNull()
         expect(findStackAtPoint([stack], { x: 200, y: 400 + STACK_FRAME_CLEARANCE + 1 })).toBeNull()
+    })
+})
+
+describe('listLayerCards', () => {
+    it('keeps only the cards of the layer, in z-order', () => {
+        const a = { imageUrl: 'a' }
+        const b = { imageUrl: 'b' }
+        const layer = { children: [{ label: 'frame' }, a, { label: 'pill' }, b] } as unknown as Container
+
+        expect(listLayerCards(layer)).toEqual([a, b])
     })
 })

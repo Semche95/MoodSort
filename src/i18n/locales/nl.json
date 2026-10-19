@@ -20,6 +20,8 @@
   },
   "stack": {
     "compactTooltip": "De stapel samenvoegen",
+    "spreadTooltip": "Alle kaarten tonen",
+    "spreadCardCount": "{count} kaarten",
     "nameTooltipNamed": "De stapel hernoemen",
     "nameTooltipUnnamed": "De stapel benoemen"
   },

@@ -4,7 +4,7 @@ import { PointerInteractions, PointerInteractionsDeps } from '../../types/pointe
 import { Card } from '../../types/card.types'
 import { ForcedCursor } from '../../types/forced-cursor.types'
 import { findStackAtPoint } from '../stack/stack'
-import { findStackByCompactButtonAtPoint, isPointInBox } from '../stack/stack-hit-testing'
+import { findStackActionAtPoint, isPointInBox } from '../stack/stack-hit-testing'
 import { findNameAnchor } from '../stack/stack-naming'
 import { isModKeyPressed } from '../../shared/utils/mod-key'
 
@@ -33,7 +33,7 @@ function isCoveredByUi(deps: PointerInteractionsDeps, point: Position): boolean 
 
 /** Pill buttons sit under every card, so they only take a press no card covers. */
 function isOnPillButton(deps: PointerInteractionsDeps, point: Position): boolean {
-    return findStackByCompactButtonAtPoint(deps.getStacks(), point) !== null || deps.overlay.findStackByNameButtonAtPoint(point) !== null
+    return findStackActionAtPoint(deps.getStacks(), point) !== null || deps.overlay.findStackByNameButtonAtPoint(point) !== null
 }
 
 function startStackDrag(deps: PointerInteractionsDeps, stack: Card[], point: Position): void {
@@ -165,17 +165,21 @@ export function createPointerInteractions(deps: PointerInteractionsDeps): Pointe
         startStackDrag(deps, stack, point)
     }
 
-    const handleCompactButtonPointerDown = (e: FederatedPointerEvent): void => {
+    const handleActionsPillPointerDown = (e: FederatedPointerEvent): void => {
         if (deps.isBusy()) {
             return
         }
         const point: Position = { x: e.global.x, y: e.global.y }
-        const stack = findStackByCompactButtonAtPoint(deps.getStacks(), point)
-        if (!stack) {
+        const hit = findStackActionAtPoint(deps.getStacks(), point)
+        if (!hit) {
             return
         }
         deps.overlay.commitNameEditorIfOpen()
-        deps.onCompactButton(stack)
+        if (hit.action === 'spread') {
+            deps.onSpreadButton(hit.stack)
+            return
+        }
+        deps.onCompactButton(hit.stack)
     }
 
     const handleNameButtonPointerDown = (e: FederatedPointerEvent): void => {
@@ -213,7 +217,7 @@ export function createPointerInteractions(deps: PointerInteractionsDeps): Pointe
         findForcedCursor,
         findHoveredCard,
         handleDragHandlePointerDown,
-        handleCompactButtonPointerDown,
+        handleActionsPillPointerDown,
         handleNameButtonPointerDown,
     }
 }

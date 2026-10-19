@@ -20,6 +20,7 @@ export interface PointerInteractionsDeps {
     isBusy: () => boolean
     isCompacting: () => boolean
     onCompactButton: (stack: Card[]) => void
+    onSpreadButton: (stack: Card[]) => void
     onCommitStackName: (anchor: Card, value: string) => void
     onCancelStackNameEdit: () => void
 }
@@ -38,6 +39,6 @@ export interface PointerInteractions {
     findForcedCursor: () => ForcedCursor | null
     findHoveredCard: () => Card | null
     handleDragHandlePointerDown: (e: FederatedPointerEvent) => void
-    handleCompactButtonPointerDown: (e: FederatedPointerEvent) => void
+    handleActionsPillPointerDown: (e: FederatedPointerEvent) => void
     handleNameButtonPointerDown: (e: FederatedPointerEvent) => void
 }

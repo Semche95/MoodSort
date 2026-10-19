@@ -173,7 +173,7 @@ async function importMockedPixi(): Promise<{ __getMockApp: () => { __tick: () =>
 interface TestableScene {
     cards: Card[]
     cardLayer: { children: unknown[] }
-    handleCompactButtonPointerDown: (e: { global: { x: number; y: number } }) => void
+    handleActionsPillPointerDown: (e: { global: { x: number; y: number } }) => void
 }
 
 function seedStore(historyStore: InMemoryStore, priorEntry?: CardActionEntry): CardStateService {
@@ -232,19 +232,19 @@ describe('CanvasScene compact stack action', () => {
 
     it('leaves the top card in place and disperses the others around it, without touching unrelated cards or z-order', async () => {
         const { testable, tick } = await setup()
-        const { computeCompactButtonBox } = await import('../features/stack/stack-hit-testing')
+        const { computeStackActionsLayout } = await import('../features/stack/stack-hit-testing')
 
-        const box = computeCompactButtonBox([
+        const box = computeStackActionsLayout([
             { x: 100, y: 100, width: 200, height: 300 } as unknown as Card,
             { x: 110, y: 110, width: 200, height: 300 } as unknown as Card,
             { x: 90, y: 95, width: 200, height: 300 } as unknown as Card,
-        ])!
+        ])!.compact
         const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
 
         const orderBefore = [...testable.cardLayer.children]
         const other = findCard(testable, 'card-other')
 
-        testable.handleCompactButtonPointerDown({ global: point })
+        testable.handleActionsPillPointerDown({ global: point })
         for (let i = 0; i < 25; i++) {
             tick()
         }
@@ -281,18 +281,18 @@ describe('CanvasScene compact stack action', () => {
             },
         }
         const { scene, testable, tick } = await setup(priorEntry)
-        const { computeCompactButtonBox } = await import('../features/stack/stack-hit-testing')
+        const { computeStackActionsLayout } = await import('../features/stack/stack-hit-testing')
 
-        const box = computeCompactButtonBox([
+        const box = computeStackActionsLayout([
             { x: 100, y: 100, width: 200, height: 300 } as unknown as Card,
             { x: 110, y: 110, width: 200, height: 300 } as unknown as Card,
             { x: 90, y: 95, width: 200, height: 300 } as unknown as Card,
-        ])!
+        ])!.compact
         const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
 
         expect(scene.canUndo).toBe(true)
 
-        testable.handleCompactButtonPointerDown({ global: point })
+        testable.handleActionsPillPointerDown({ global: point })
         for (let i = 0; i < 25; i++) {
             tick()
         }
@@ -329,7 +329,7 @@ describe('CanvasScene compact stack action', () => {
     it('does nothing when the point does not land on any compact button', async () => {
         const { scene, testable } = await setup()
 
-        testable.handleCompactButtonPointerDown({ global: { x: -9999, y: -9999 } })
+        testable.handleActionsPillPointerDown({ global: { x: -9999, y: -9999 } })
 
         expect(scene.canUndo).toBe(false)
         const a = findCard(testable, 'card-a')

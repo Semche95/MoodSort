@@ -98,6 +98,18 @@ describe('DragHandler', () => {
         expect(captureSpy).toHaveBeenCalledWith([{ id: 'card-a', x: 0, y: 0, index: -1 }])
     })
 
+    it('startDrag snapshots the card at its board spot, then carries it at the grab offset from the pointer', async () => {
+        const card = await makeCard('card-a')
+        card.position.set(50, 60)
+        const captureSpy = vi.spyOn(actionHistory, 'captureBefore')
+
+        dragHandler.startDrag(card, { x: 300, y: 200 }, { x: -10, y: -20 })
+
+        expect(dragHandler.isDragging).toBe(true)
+        expect(captureSpy).toHaveBeenCalledWith([{ id: 'card-a', x: 50, y: 60, index: -1 }])
+        expect({ x: card.x, y: card.y }).toEqual({ x: 290, y: 180 })
+    })
+
     it('ends the drag and records the after-snapshot on handleDragEnd', async () => {
         const card = await makeCard('card-a')
         const recordSpy = vi.spyOn(actionHistory, 'recordAfter')

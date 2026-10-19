@@ -1,5 +1,6 @@
 import { Application, Container, FederatedPointerEvent } from 'pixi.js'
 import { Card } from '../../types/card.types'
+import { Position } from '../../types/position.types'
 import { CardDrag } from './card-drag'
 import { ActionHistory } from '../history/action-history'
 import { snapshotCards } from '../history/history'
@@ -39,10 +40,14 @@ export class DragHandler {
     }
 
     handleDragStart: (event: FederatedPointerEvent) => void = (event: FederatedPointerEvent) => {
-        const card = event.currentTarget as Card
+        this.startDrag(event.currentTarget as Card, event.global)
+    }
+
+    /** Same drag as a press on the card itself; `grabOffset` is for a card picked up away from its spot on the board (see CardDrag.startDrag). */
+    startDrag(card: Card, pointer: Position, grabOffset?: Position): void {
         this.lastDraggedCard = card
         this.actionHistory.captureBefore(snapshotCards([card], this.cardLayer))
-        this.cardDrag.handleDragStart(event, this.app.stage, this.cardLayer, this.handleDragMove)
+        this.cardDrag.startDrag(card, pointer, this.app.stage, this.cardLayer, this.handleDragMove, grabOffset)
     }
 
     handleDragMove: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent) => {

@@ -25,7 +25,18 @@ export class CardDrag {
         cardLayer: Container,
         onDragMove: (event: FederatedPointerEvent) => void,
     ): void {
-        const target = event.currentTarget as Card
+        this.startDrag(event.currentTarget as Card, event.global, stage, cardLayer, onDragMove)
+    }
+
+    /** `grabOffset` puts the card's top-left corner that far from `pointer` at once, for a card picked up somewhere else than on the board. */
+    startDrag(
+        target: Card,
+        pointer: Position,
+        stage: Container,
+        cardLayer: Container,
+        onDragMove: (event: FederatedPointerEvent) => void,
+        grabOffset?: Position,
+    ): void {
         target.cursor = 'grabbing'
         raiseCard(target, 'drag')
         this.dragState.dragTarget = target
@@ -35,10 +46,10 @@ export class CardDrag {
         this.dragState.originalPosition.x = target.x
         this.dragState.originalPosition.y = target.y
 
-        const globalPosition: Position = target.getGlobalPosition()
+        const globalPosition: Position = grabOffset ? { x: pointer.x + grabOffset.x, y: pointer.y + grabOffset.y } : target.getGlobalPosition()
 
-        this.dragState.dragOffset.x = globalPosition.x - event.global.x
-        this.dragState.dragOffset.y = globalPosition.y - event.global.y
+        this.dragState.dragOffset.x = globalPosition.x - pointer.x
+        this.dragState.dragOffset.y = globalPosition.y - pointer.y
 
         const parent = target.parent
         if (parent) {

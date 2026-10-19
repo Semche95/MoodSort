@@ -16,6 +16,7 @@ import { PositionPersistence } from '../features/card/position-persistence'
 import { Position } from '../types/position.types'
 import { StackOverlay } from '../features/stack/stack-overlay/stack-overlay'
 import { StackDragManager } from '../features/stack/stack-drag-manager'
+import { StackSpread } from '../features/stack/stack-spread/stack-spread'
 import { CardStateService } from '../features/card/card-state-service'
 import { ActionHistory } from '../features/history/action-history'
 import { IStore } from '../types/store.types'
@@ -42,6 +43,7 @@ export class CanvasScene {
     private positionPersistence: PositionPersistence
     private overlay: StackOverlay
     private stackDragManager: StackDragManager
+    private stackSpread: StackSpread
     private actionHistory: ActionHistory
     private pointerInteractions: PointerInteractions
     private isCompacting: boolean
@@ -87,6 +89,12 @@ export class CanvasScene {
             (): Card[][] => this.stacks,
             this.actionHistory,
         )
+        this.stackSpread = new StackSpread(this.app, this.cardLayer, {
+            getStackNames: (): Record<string, string> => this.stackNames,
+            getResolvedTheme: (): ResolvedTheme => this.resolvedTheme,
+            isDragging: (): boolean => this.dragHandler.isDragging,
+            onCardGrab: (card: Card, e: FederatedPointerEvent, grabOffset: Position): void => this.grabSpreadCard(card, e, grabOffset),
+        })
         this.stacks = []
         this.pointerInteractions = createPointerInteractions({
             cardLayer: this.cardLayer,
@@ -100,11 +108,12 @@ export class CanvasScene {
             isBusy: (): boolean => this.isBusy,
             isCompacting: (): boolean => this.isCompacting,
             onCompactButton: (stack: Card[]): void => this.compactStack(stack),
+            onSpreadButton: (stack: Card[]): void => this.stackSpread.open(stack),
             onCommitStackName: (anchor: Card, value: string): void => this.commitStackName(anchor, value),
             onCancelStackNameEdit: (): void => this.cancelStackNameEdit(),
         })
         this.overlay.initHandle(this.handleDragHandlePointerDown)
-        this.overlay.initCompactButton(this.handleCompactButtonPointerDown)
+        this.overlay.initActionsPill(this.handleActionsPillPointerDown)
         this.overlay.initNameButton(this.handleNameButtonPointerDown)
         themeService?.onChange((resolved: ResolvedTheme): void => {
             this.applyTheme(resolved)
@@ -193,6 +202,7 @@ export class CanvasScene {
         this.positionPersistence.saveFromStage(this.cardLayer, this.stackNames)
 
         this.overlay.addToStage()
+        this.stackSpread.addToStage()
         this.dragHandler.wireStageHandlers()
         this.app.stage.on('pointermove', this.handlePointerMove)
         this.app.stage.on('pointerout', this.handlePointerOut)
@@ -206,6 +216,7 @@ export class CanvasScene {
         this.app.canvas.addEventListener('mousedown', this.pointerInteractions.handleMouseDown)
         window.addEventListener('keydown', this.pointerInteractions.handleModKey)
         window.addEventListener('keyup', this.pointerInteractions.handleModKey)
+        window.addEventListener('keydown', this.stackSpread.handleKeyDown)
         window.addEventListener('blur', this.pointerInteractions.handleWindowBlur)
         document.body.appendChild(this.app.canvas)
     }
@@ -315,8 +326,8 @@ export class CanvasScene {
     private handleDragHandlePointerDown: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void =>
         this.pointerInteractions.handleDragHandlePointerDown(e)
 
-    private handleCompactButtonPointerDown: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void =>
-        this.pointerInteractions.handleCompactButtonPointerDown(e)
+    private handleActionsPillPointerDown: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void =>
+        this.pointerInteractions.handleActionsPillPointerDown(e)
 
     private handleNameButtonPointerDown: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void =>
         this.pointerInteractions.handleNameButtonPointerDown(e)
@@ -354,6 +365,15 @@ export class CanvasScene {
         })
     }
 
+    /** A card pulled out of the spread is dragged like one pressed on the board, from the move that pulled it out. */
+    private grabSpreadCard(card: Card, e: FederatedPointerEvent, grabOffset: Position): void {
+        if (this.isBusy) {
+            return
+        }
+        this.dragHandler.startDrag(card, e.global, grabOffset)
+        this.dragHandler.handleDragMove(e)
+    }
+
     private handleStackDragEnd: () => void = (): void => {
         if (!this.stackDragManager.isDragging) {
             return
@@ -368,6 +388,7 @@ export class CanvasScene {
             return
         }
         this.overlay.commitNameEditorIfOpen()
+        this.stackSpread.close()
         this.actionHistory.clear()
         this.positionPersistence.clear()
         this.stackNames = {}

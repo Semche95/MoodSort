@@ -20,6 +20,8 @@
   },
   "stack": {
     "compactTooltip": "Stapel zusammenschieben",
+    "spreadTooltip": "Alle Karten anzeigen",
+    "spreadCardCount": "{count} Karten",
     "nameTooltipNamed": "Stapel umbenennen",
     "nameTooltipUnnamed": "Stapel benennen"
   },

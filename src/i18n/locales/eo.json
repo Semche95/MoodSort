@@ -20,6 +20,8 @@
   },
   "stack": {
     "compactTooltip": "Kompaktigi la stakon",
+    "spreadTooltip": "Montri ĉiujn kartojn",
+    "spreadCardCount": "{count} kartoj",
     "nameTooltipNamed": "Renomi la stakon",
     "nameTooltipUnnamed": "Nomi la stakon"
   },

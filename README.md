@@ -127,6 +127,8 @@ Stacks aren't a real entity, just cards whose bounding boxes overlap. `computeSt
 
 Carrying a whole stack reparents its cards to the top of the stage in their current order. While dragging, `findMergeTargets` checks AABB overlap against every other stack, and `StackOverlay` re-raises the dragged cards, their overlays and the merge `+` on every frame to keep the z-order described in [BEHAVIOR.md](BEHAVIOR.md). On release, stacks are recomputed and positions saved.
 
+`StackSpread` (`src/features/stack/stack-spread/`) lays a stack's cards out as a grid on a layer added to the stage above the card layer (and below the toolbar), so share viewers see it too. It only draws copies of the cards (`stack-spread-view.ts`), at a size worked out by `computeStackSpreadLayout` (`stack-spread-layout.ts`). Pressing a copy and moving hands the real card to `DragHandler.startDrag` with a grab offset, so the drop goes through the regular drag path (clamping, merge, history). While that drag runs, the veil, grid and scrollbar are hidden and stop taking the pointer, since Pixi still hit-tests hidden objects. Once nothing is dragged, the spread follows the stack that now holds most of its cards (`findFollowedStack`), which covers drops, undo, redo and resizes with no extra wiring.
+
 `StackNameEditor` is drawn entirely in Pixi (text, caret, selection, clear button) but backed by a hidden native `<input>` so typing, native copy/paste and IME composition work as expected. Names are keyed to the stack's lowest z-order card and persisted alongside positions; `resolveNameMerges` and `resolveNameSplits` (`stack-naming.ts`) apply the fusion and split rules.
 
 ### Drag and drop

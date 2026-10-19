@@ -3,8 +3,9 @@ import { Card } from '../../../types/card.types'
 import { Box } from '../../../types/box.types'
 import { Position } from '../../../types/position.types'
 import { StackPillLayout } from '../../../types/stack-pill-layout.types'
+import { StackAction } from '../../../types/stack-actions-layout.types'
 import { computeBoundingBox } from '../stack-geometry'
-import { computeCompactButtonBox, computeStackFrame } from '../stack-hit-testing'
+import { computeStackActionsLayout, computeStackFrame } from '../stack-hit-testing'
 import { STACK_FRAME_RADIUS, STACK_PILL_HEIGHT } from '../stack'
 import { getPixiThemeColors } from '../../theme/pixi-theme-colors'
 import type { PixiThemePalette } from '../../../types/pixi-theme-palette.types'
@@ -31,6 +32,8 @@ const ICON_REST_ALPHA = 0.35
 const GRIP_DOT_RADIUS = 2
 const GRIP_DOT_SPACING = 7
 const GRIP_ALPHA = 0.8
+const CLOSE_ICON_HALF_SIZE = 5.5
+const CLOSE_ICON_STROKE_WIDTH = 2.4
 
 function centeredIconBox(slot: Box): Box {
     return {
@@ -168,21 +171,23 @@ export function drawNameButton(
     drawNameIcon(centeredIconBox(pencil), g, palette.controlIcon, stackHovered ? ICON_ALPHA : ICON_REST_ALPHA)
 }
 
-export function drawCompactButton(
+/** Bottom pill of a stack of two or more cards: compact and spread buttons, the one under the pointer lit with a chip and the accent. */
+export function drawStackActions(
     stack: Card[],
-    compactButton: Graphics,
-    buttonHovered: boolean,
+    g: Graphics,
+    hoveredAction: StackAction | null,
     palette: PixiThemePalette['stackOverlay'] = DEFAULT_PALETTE,
 ): void {
-    const rect = computeCompactButtonBox(stack)
-    if (!rect) {
+    const layout = computeStackActionsLayout(stack)
+    if (!layout) {
         return
     }
-    drawPillShape(compactButton, rect, palette)
-    if (buttonHovered) {
-        drawControlHover(rect, compactButton, palette)
+    drawPillShape(g, layout.pill, palette)
+    if (hoveredAction) {
+        drawControlHover(layout[hoveredAction], g, palette)
     }
-    drawCompactIcon(centeredIconBox(rect), compactButton, buttonHovered ? palette.accent : palette.controlIcon)
+    drawCompactIcon(centeredIconBox(layout.compact), g, hoveredAction === 'compact' ? palette.accent : palette.controlIcon)
+    drawSpreadIcon(centeredIconBox(layout.spread), g, hoveredAction === 'spread' ? palette.accent : palette.controlIcon)
 }
 
 /**
@@ -236,6 +241,27 @@ export function drawArrow(
     icon.lineTo(shaftEndX - px * halfHeadWidth, shaftEndY - py * halfHeadWidth)
     icon.closePath()
     icon.fill({ color, alpha: ICON_ALPHA })
+}
+
+/** "Four tiles" icon, the usual "show all as a grid" metaphor, on the same 24x24 reference grid as drawCompactIcon. */
+export function drawSpreadIcon(rect: Box, g: Graphics, color: number = DEFAULT_PALETTE.controlIcon): void {
+    const scaleX = rect.width / 24
+    const scaleY = rect.height / 24
+    for (const [px, py] of [[3, 3], [13, 3], [3, 13], [13, 13]]) {
+        g.roundRect(rect.x + px * scaleX, rect.y + py * scaleY, 8 * scaleX, 8 * scaleY, 1.6 * Math.min(scaleX, scaleY))
+    }
+    g.fill({ color, alpha: ICON_ALPHA })
+}
+
+/** "×" centered on `slot`, the usual close metaphor. */
+export function drawCloseIcon(slot: Box, g: Graphics, color: number = DEFAULT_PALETTE.controlIcon): void {
+    const cx = slot.x + slot.width / 2
+    const cy = slot.y + slot.height / 2
+    g.moveTo(cx - CLOSE_ICON_HALF_SIZE, cy - CLOSE_ICON_HALF_SIZE)
+    g.lineTo(cx + CLOSE_ICON_HALF_SIZE, cy + CLOSE_ICON_HALF_SIZE)
+    g.moveTo(cx + CLOSE_ICON_HALF_SIZE, cy - CLOSE_ICON_HALF_SIZE)
+    g.lineTo(cx - CLOSE_ICON_HALF_SIZE, cy + CLOSE_ICON_HALF_SIZE)
+    g.stroke({ color, alpha: ICON_ALPHA, width: CLOSE_ICON_STROKE_WIDTH, cap: 'round' })
 }
 
 /**

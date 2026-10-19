@@ -20,6 +20,8 @@
   },
   "stack": {
     "compactTooltip": "Compactar el montón",
+    "spreadTooltip": "Ver todas las cartas",
+    "spreadCardCount": "{count} cartas",
     "nameTooltipNamed": "Renombrar el montón",
     "nameTooltipUnnamed": "Nombrar el montón"
   },

@@ -273,7 +273,7 @@ describe('StackOverlay', () => {
         expect(mergeIndicator.calls.some((c: { method: string }): boolean => c.method === 'roundRect')).toBe(false)
     })
 
-    it('restoreZOrder resets the dragged-cards tracking and re-raises the permanent border/handle/compact button', () => {
+    it('restoreZOrder resets the dragged-cards tracking and re-raises the permanent border/handle/action pill', () => {
         const cardLayer = new pixi.Container()
         const a = makeCard(0, 0, 200, 300, 'a')
         cardLayer.addChild(a)
@@ -285,10 +285,10 @@ describe('StackOverlay', () => {
 
         expect(cardLayer.children.indexOf(overlay.stackBorder)).toBe(0)
         expect(cardLayer.children.indexOf(overlay.stackDragHandle)).toBe(1)
-        expect(cardLayer.children.indexOf(overlay.stackCompactButton)).toBe(2)
+        expect(cardLayer.children.indexOf(overlay.stackActionsPill)).toBe(2)
     })
 
-    it('setHoveredStack(null) makes the render loop stop drawing the compact button even for a previously hovered stack', () => {
+    it('setHoveredStack(null) makes the render loop stop drawing the action pill even for a previously hovered stack', () => {
         const cardLayer = new pixi.Container()
         const cardA = makeCard(100, 100, 200, 300, 'a')
         const cardB = makeCard(110, 110, 200, 300, 'b')
@@ -302,11 +302,11 @@ describe('StackOverlay', () => {
         tick()
         overlay.setHoveredStack(null)
 
-        const compactButton = overlay.stackCompactButton as unknown as { calls: Array<{ method: string }> }
-        compactButton.calls = []
+        const actionsPill = overlay.stackActionsPill as unknown as { calls: Array<{ method: string }> }
+        actionsPill.calls = []
         tick()
 
-        expect(compactButton.calls.some((c: { method: string }): boolean => c.method === 'roundRect')).toBe(false)
+        expect(actionsPill.calls.some((c: { method: string }): boolean => c.method === 'roundRect')).toBe(false)
     })
 
     describe('redraw skipping', () => {

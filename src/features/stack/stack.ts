@@ -1,3 +1,4 @@
+import type { Container } from 'pixi.js'
 import { Card } from '../../types/card.types'
 import { Position } from '../../types/position.types'
 import { Box } from '../../types/box.types'
@@ -35,6 +36,11 @@ export const STACK_NAME_FONT_SIZE: number = 14
  * edges always stay fully on-canvas and clickable.
  */
 export const STACK_FRAME_CLEARANCE: number = STACK_HIGHLIGHT_PADDING + STACK_PILL_HEIGHT / 2
+
+/** Every card on `cardLayer`, in z-order, leaving out the overlay graphics drawn among them. */
+export function listLayerCards(cardLayer: Container): Card[] {
+    return cardLayer.children.filter((child: Container): child is Card => 'imageUrl' in child)
+}
 
 /** Reading a card's size makes Pixi recompute its bounds, far too costly for a pairwise flood fill run every frame. */
 function snapshotBoxes(cards: Card[]): Map<Card, Box> {

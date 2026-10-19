@@ -3,7 +3,6 @@ import type { Graphics } from 'pixi.js'
 import { Card } from '../types/card.types'
 import {
     drawArrow,
-    drawCompactButton,
     drawCompactIcon,
     drawControlHover,
     drawGripIcon,
@@ -13,11 +12,14 @@ import {
     drawNameIcon,
     drawPillShape,
     drawStackFrame,
+    drawStackActions,
     drawStackPill,
+    drawSpreadIcon,
+    drawCloseIcon,
     roundRectOutline,
     traceDashedPath,
 } from '../features/stack/stack-overlay/stack-overlay-view'
-import { computeStackPillLayout } from '../features/stack/stack-hit-testing'
+import { computeStackActionsLayout, computeStackPillLayout } from '../features/stack/stack-hit-testing'
 import { STACK_PILL_HEIGHT } from '../features/stack/stack'
 import { getPixiThemeColors } from '../features/theme/pixi-theme-colors'
 
@@ -226,34 +228,63 @@ describe('stack-overlay-view', () => {
         expect((calls(g, 'fill')[0].args[0] as { color: number }).color).toBe(darkPalette.controlHover)
     })
 
-    it('drawCompactButton draws nothing for a lone single-card stack', () => {
-        const compactButton = makeGraphics()
+    it('drawStackActions draws nothing for a lone single-card stack', () => {
+        const g = makeGraphics()
 
-        drawCompactButton([makeCard(0, 0, 100, 100, 'a')], compactButton, false)
+        drawStackActions([makeCard(0, 0, 100, 100, 'a')], g, null)
 
-        expect(compactButton.calls).toHaveLength(0)
+        expect(g.calls).toHaveLength(0)
     })
 
-    it('drawCompactButton draws a pill with the converging-arrows icon for a multi-card stack', () => {
-        const compactButton = makeGraphics()
+    it('drawStackActions draws one pill holding the converging-arrows and four-tiles icons, both in the icon color at rest', () => {
+        const g = makeGraphics()
         const stack = [makeCard(0, 0, 100, 100, 'a'), makeCard(50, 50, 100, 100, 'b')]
 
-        drawCompactButton(stack, compactButton, false, darkPalette)
+        drawStackActions(stack, g, null, darkPalette)
 
-        expect(calls(compactButton, 'roundRect')).toHaveLength(2)
-        expect(calls(compactButton, 'moveTo')).toHaveLength(4)
-        expect(calls(compactButton, 'circle')).toHaveLength(0)
-        expect((calls(compactButton, 'fill').pop()!.args[0] as { color: number }).color).toBe(darkPalette.controlIcon)
+        expect(calls(g, 'roundRect')).toHaveLength(2 + 4)
+        expect(calls(g, 'moveTo')).toHaveLength(4)
+        expect(calls(g, 'circle')).toHaveLength(0)
+        const iconFills = calls(g, 'fill').slice(2).map((call: Call): number => (call.args[0] as { color: number }).color)
+        expect(iconFills.every((color: number): boolean => color === darkPalette.controlIcon)).toBe(true)
     })
 
-    it('drawCompactButton adds a hover chip and tints the arrows with the accent while hovered', () => {
-        const compactButton = makeGraphics()
+    it('drawStackActions puts the hover chip under the hovered button and tints only its icon with the accent', () => {
+        const g = makeGraphics()
         const stack = [makeCard(0, 0, 100, 100, 'a'), makeCard(50, 50, 100, 100, 'b')]
+        const { spread } = computeStackActionsLayout(stack)!
 
-        drawCompactButton(stack, compactButton, true, darkPalette)
+        drawStackActions(stack, g, 'spread', darkPalette)
 
-        expect(calls(compactButton, 'circle')).toHaveLength(1)
-        expect((calls(compactButton, 'fill').pop()!.args[0] as { color: number }).color).toBe(darkPalette.accent)
+        expect(calls(g, 'circle')[0].args.slice(0, 2)).toEqual([spread.x + spread.width / 2, spread.y + spread.height / 2])
+        const fills = calls(g, 'fill').map((call: Call): number => (call.args[0] as { color: number }).color)
+        expect(fills[fills.length - 1]).toBe(darkPalette.accent)
+        expect(fills[fills.length - 2]).toBe(darkPalette.controlIcon)
+    })
+
+    it('drawSpreadIcon draws four tiles filled at once, scaled to the icon rect', () => {
+        const g = makeGraphics()
+
+        drawSpreadIcon({ x: 0, y: 0, width: 48, height: 48 }, g, 0x123456)
+
+        expect(calls(g, 'roundRect').map((call: Call): unknown[] => call.args.slice(0, 4))).toEqual([
+            [6, 6, 16, 16],
+            [26, 6, 16, 16],
+            [6, 26, 16, 16],
+            [26, 26, 16, 16],
+        ])
+        expect(calls(g, 'fill')).toHaveLength(1)
+        expect((calls(g, 'fill')[0].args[0] as { color: number }).color).toBe(0x123456)
+    })
+
+    it('drawCloseIcon strokes a cross centered on its slot', () => {
+        const g = makeGraphics()
+
+        drawCloseIcon({ x: 0, y: 0, width: 30, height: 32 }, g, 0x123456)
+
+        expect(calls(g, 'moveTo').map((call: Call): unknown[] => call.args)).toEqual([[9.5, 10.5], [20.5, 10.5]])
+        expect(calls(g, 'lineTo').map((call: Call): unknown[] => call.args)).toEqual([[20.5, 21.5], [9.5, 21.5]])
+        expect((calls(g, 'stroke')[0].args[0] as { color: number }).color).toBe(0x123456)
     })
 
     it('drawCompactIcon draws two arrows scaled to the icon rect', () => {
