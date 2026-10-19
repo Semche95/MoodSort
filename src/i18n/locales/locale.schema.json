@@ -411,11 +411,15 @@
     "screenSize": {
       "type": "object",
       "properties": {
+        "title": {
+          "type": "string"
+        },
         "message": {
           "type": "string"
         }
       },
       "required": [
+        "title",
         "message"
       ],
       "additionalProperties": false

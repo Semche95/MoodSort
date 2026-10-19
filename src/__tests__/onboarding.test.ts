@@ -83,6 +83,13 @@ describe('createOnboarding', () => {
     it('has no close cross', () => {
         expect(createOnboarding(vi.fn()).querySelector('.onboarding-close')).toBeNull()
     })
+
+    it('titles the welcome with the app name, its first half accented', () => {
+        const title = createOnboarding(vi.fn()).querySelector('h1')!
+
+        expect(title.textContent).toBe('Welcome to MoodSort')
+        expect(title.querySelector('.brand-accent')!.textContent).toBe('Mood')
+    })
 })
 
 describe('createHelpModal', () => {

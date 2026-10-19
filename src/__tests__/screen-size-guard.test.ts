@@ -30,11 +30,12 @@ describe('isScreenTooSmall', () => {
 })
 
 describe('createScreenSizeBlockOverlay', () => {
-    it('builds an overlay with the expected class and translated message', () => {
+    it('builds a modal overlay with the translated title and message', () => {
         const overlay = createScreenSizeBlockOverlay()
 
-        expect(overlay.className).toBe('screen-size-overlay')
-        expect(overlay.textContent).toContain(I18n.t('screenSize.message'))
+        expect(overlay.classList.contains('modal-overlay')).toBe(true)
+        expect(overlay.querySelector('h1')!.textContent).toBe(I18n.t('screenSize.title'))
+        expect(overlay.querySelector('p')!.textContent).toBe(I18n.t('screenSize.message'))
     })
 })
 

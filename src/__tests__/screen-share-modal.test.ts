@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createScreenShareModal } from '../features/screen-share/screen-share-modal'
+import { SCREEN_SHARE_GRACE_TIMEOUT_MS } from '../features/screen-share/room-config'
 
 const { joinRoom, rooms } = vi.hoisted(() => {
     const rooms: Array<{ leave: ReturnType<typeof vi.fn>; addStream: ReturnType<typeof vi.fn>; makeAction: ReturnType<typeof vi.fn>; onPeerJoin: unknown; onPeerLeave: unknown }> = []
@@ -82,6 +83,7 @@ describe('createScreenShareModal', () => {
         expect(overlay.querySelector<HTMLButtonElement>('.screen-share-activate')!.disabled).toBe(true)
         const error = overlay.querySelector('.screen-share-error')!
         expect(error.textContent).toBe('Your browser does not support layout sharing.')
+        expect(error.closest<HTMLElement>('.callout')!.hidden).toBe(false)
         expect(error.closest('.screen-share-live')).toBeNull()
     })
 
@@ -91,7 +93,9 @@ describe('createScreenShareModal', () => {
         const overlay = createScreenShareModal(createFakeCanvas())
 
         await vi.waitFor(() => expect(overlay.querySelector<HTMLButtonElement>('.screen-share-activate')!.disabled).toBe(true))
-        expect(overlay.querySelector('.screen-share-error')!.textContent).toBe('Your browser is blocking WebRTC connections (privacy extension, VPN or browser setting), so sharing cannot work. Allow WebRTC or use another browser.')
+        const error = overlay.querySelector('.screen-share-error')!
+        expect(error.textContent).toBe('Your browser is blocking WebRTC connections (privacy extension, VPN or browser setting), so sharing cannot work. Allow WebRTC or use another browser.')
+        expect(error.closest<HTMLElement>('.callout')!.hidden).toBe(false)
     })
 
     it('keeps activation available and shows no error when WebRTC is usable', async () => {
@@ -101,14 +105,16 @@ describe('createScreenShareModal', () => {
         await Promise.resolve()
 
         expect(overlay.querySelector<HTMLButtonElement>('.screen-share-activate')!.disabled).toBe(false)
-        expect(overlay.querySelector('.screen-share-error')!.textContent).toBe('')
+        expect(overlay.querySelector('.screen-share-error')!.closest<HTMLElement>('.callout')!.hidden).toBe(true)
     })
 
     it('shows the "Activer le partage" button and no link before sharing is activated', () => {
         const overlay = createScreenShareModal(createFakeCanvas())
 
         expect(overlay.querySelector<HTMLButtonElement>('.screen-share-activate')!.hidden).toBe(false)
+        expect(overlay.querySelector<HTMLElement>('.screen-share-intro')!.hidden).toBe(false)
         expect(overlay.querySelector('.screen-share-live')!.classList.contains('screen-share-live--visible')).toBe(false)
+        expect(overlay.querySelector<HTMLElement>('.screen-share-stopped')!.hidden).toBe(true)
         expect(joinRoom).not.toHaveBeenCalled()
     })
 
@@ -122,6 +128,37 @@ describe('createScreenShareModal', () => {
         const code = extractRoomCode(urlInput.value)
         expect(joinRoom).toHaveBeenCalledWith(expect.objectContaining({ appId: expect.any(String) }), code)
         expect(overlay.querySelector<HTMLButtonElement>('.screen-share-activate')!.hidden).toBe(true)
+        expect(overlay.querySelector<HTMLElement>('.screen-share-intro')!.hidden).toBe(true)
+        expect(overlay.querySelector('.screen-share-live')!.classList.contains('screen-share-live--visible')).toBe(true)
+        expect(overlay.querySelector<HTMLElement>('.screen-share-status')!.dataset.status).toBe('waiting')
+    })
+
+    it('explains that sharing stopped, next to the "Activer le partage" button, once nobody joined before the grace timeout', () => {
+        vi.useFakeTimers()
+        const overlay = createScreenShareModal(createFakeCanvas())
+        activate(overlay)
+
+        vi.advanceTimersByTime(SCREEN_SHARE_GRACE_TIMEOUT_MS)
+        vi.useRealTimers()
+
+        const notice = overlay.querySelector<HTMLElement>('.screen-share-stopped')!
+        expect(notice.hidden).toBe(false)
+        expect(notice.textContent).toBe('Sharing stopped: no one connected in time. Click "Turn on sharing" to try again.')
+        expect(notice.closest('.screen-share-live')).toBeNull()
+        expect(overlay.querySelector<HTMLButtonElement>('.screen-share-activate')!.hidden).toBe(false)
+        expect(overlay.querySelector('.screen-share-live')!.classList.contains('screen-share-live--visible')).toBe(false)
+    })
+
+    it('hides the stopped notice once sharing is activated again', () => {
+        vi.useFakeTimers()
+        const overlay = createScreenShareModal(createFakeCanvas())
+        activate(overlay)
+        vi.advanceTimersByTime(SCREEN_SHARE_GRACE_TIMEOUT_MS)
+        vi.useRealTimers()
+
+        activate(overlay)
+
+        expect(overlay.querySelector<HTMLElement>('.screen-share-stopped')!.hidden).toBe(true)
         expect(overlay.querySelector('.screen-share-live')!.classList.contains('screen-share-live--visible')).toBe(true)
     })
 
@@ -241,5 +278,6 @@ describe('createScreenShareModal', () => {
         await Promise.resolve()
 
         expect(writeText).toHaveBeenCalledWith(urlInput.value)
+        expect(overlay.querySelector('.screen-share-copy-feedback')!.textContent).toBe('Link copied to clipboard.')
     })
 })

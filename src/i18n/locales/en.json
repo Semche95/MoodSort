@@ -24,17 +24,17 @@
     "nameTooltipUnnamed": "Name the stack"
   },
   "onboarding": {
-    "title": "Welcome to MoodSort",
+    "title": "Welcome to {brand}",
     "intro": "MoodSort is a visual tool to help you explore your emotions.",
     "howItWorksTitle": "How does it work?",
     "step1": "Each card represents an emotion.",
     "step2": "Move the cards around to represent what matches how you feel today.",
-    "step3": "Stack cards on top of each other to form a pile, name it, and move the cards together by its handle, or by any of its cards while holding Ctrl (Cmd on Mac).",
+    "step3": "Stack cards on top of each other to form a pile, name it, and move the cards together by its handle, or by any of its cards while holding <kbd>Ctrl</kbd> (<kbd>Cmd</kbd> on Mac).",
     "step4": "Undo or redo your latest actions, or reset the positions.",
     "step5": "Your layout is saved automatically.",
     "step6": "Share the layout of your cards with someone.",
     "outro": "There is no right or wrong way to place the cards. Group them however helps you explore your emotions.",
-    "privacy": "🔒 <strong>Your data stays private:</strong> everything you do in MoodSort stays on your device and nothing is ever sent or stored elsewhere, unless you turn on layout sharing: the person who joins you can then see the layout of your cards.",
+    "privacy": "<strong>Your data stays private:</strong> everything you do in MoodSort stays on your device and nothing is ever sent or stored elsewhere, unless you turn on layout sharing: the person who joins you can then see the layout of your cards.",
     "dismissButton": "Get started",
     "closeAriaLabel": "Close help"
   },
@@ -47,7 +47,7 @@
     "themeAuto": "Auto",
     "cardsSection": "Cards",
     "resetPositionsDescription": "Reset the layout of all cards to the center of the screen.",
-    "resetPositionsButton": "Reset positions",
+    "resetPositionsButton": "Reset",
     "confirmResetTitle": "Reset positions?",
     "confirmResetMessage": "All cards will return to the center.",
     "confirmCancel": "Cancel",
@@ -62,7 +62,7 @@
     "editionText2": "In accordance with Article 6-III of French law n° 2004-575 of June 21, 2004 for Confidence in the Digital Economy (LCEN), the publisher, a private individual acting in a non-professional capacity, has chosen not to make their personal contact details public. These details have been communicated to the site's host, in accordance with the law.",
     "hostingTitle": "Hosting",
     "contactTitle": "Contact",
-    "contactText": "For any question, comment, or report concerning the site, you can contact the publisher at the following address:<br><strong>contact@moodsort.fr</strong>",
+    "contactText": "For any question, comment, or report concerning the site, you can contact the publisher at the following address:",
     "privacyTitle": "Data protection and privacy",
     "privacyText1": "MoodSort does not collect, transmit, or store any data on a remote server. All the information you create in the application (card positions, action history) stays saved directly on your device, in your browser. Nothing is sent to the publisher, the host, or any third party.",
     "privacyText2": "The site uses no tracking cookies, no audience analytics tool, and no advertising tracker.",
@@ -101,6 +101,7 @@
     "roomBusy": "This shared session is already being followed by someone else. Please try again later."
   },
   "screenSize": {
+    "title": "Screen too narrow",
     "message": "This application requires a wider screen (tablet in landscape or desktop)."
   },
   "cards": {

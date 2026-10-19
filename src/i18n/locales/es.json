@@ -24,17 +24,17 @@
     "nameTooltipUnnamed": "Nombrar el montón"
   },
   "onboarding": {
-    "title": "Bienvenido a MoodSort",
+    "title": "Bienvenido a {brand}",
     "intro": "MoodSort es un apoyo visual para ayudarte a explorar tus emociones.",
     "howItWorksTitle": "¿Cómo funciona?",
     "step1": "Cada carta representa una emoción.",
     "step2": "Mueve las cartas para representar lo que sientes hoy.",
-    "step3": "Superpón cartas para formar un montón, ponle nombre y mueve las cartas juntas con su asa, o con cualquiera de sus cartas manteniendo pulsado Ctrl (Cmd en Mac).",
+    "step3": "Superpón cartas para formar un montón, ponle nombre y mueve las cartas juntas con su asa, o con cualquiera de sus cartas manteniendo pulsado <kbd>Ctrl</kbd> (<kbd>Cmd</kbd> en Mac).",
     "step4": "Deshaz o rehaz tus últimas acciones, o reinicia las posiciones.",
     "step5": "Tu disposición se guarda automáticamente.",
     "step6": "Comparte la disposición de tus cartas con alguien.",
     "outro": "No hay una forma correcta o incorrecta de colocar las cartas. Agrúpalas de la manera que te ayude a explorar tus emociones.",
-    "privacy": "🔒 <strong>Tus datos siguen siendo privados:</strong> todo lo que haces en MoodSort permanece en tu dispositivo y nada se envía ni se almacena en otro lugar, salvo que actives el compartir la disposición: la persona que se une entonces ve la disposición de tus cartas.",
+    "privacy": "<strong>Tus datos siguen siendo privados:</strong> todo lo que haces en MoodSort permanece en tu dispositivo y nada se envía ni se almacena en otro lugar, salvo que actives el compartir la disposición: la persona que se une entonces ve la disposición de tus cartas.",
     "dismissButton": "Empezar",
     "closeAriaLabel": "Cerrar la ayuda"
   },
@@ -47,7 +47,7 @@
     "themeAuto": "Automático",
     "cardsSection": "Cartas",
     "resetPositionsDescription": "Reiniciar la disposición de todas las cartas en el centro de la pantalla.",
-    "resetPositionsButton": "Reiniciar posiciones",
+    "resetPositionsButton": "Reiniciar",
     "confirmResetTitle": "¿Reiniciar las posiciones?",
     "confirmResetMessage": "Todas las cartas volverán al centro.",
     "confirmCancel": "Cancelar",
@@ -62,7 +62,7 @@
     "editionText2": "De conformidad con el artículo 6-III de la ley francesa n.º 2004-575 del 21 de junio de 2004 para la Confianza en la Economía Digital (LCEN), el editor, persona física que actúa a título no profesional, ha optado por no hacer públicos sus datos de contacto personales. Estos han sido comunicados al proveedor de alojamiento del sitio, conforme a la ley.",
     "hostingTitle": "Alojamiento",
     "contactTitle": "Contacto",
-    "contactText": "Para cualquier pregunta, comentario o incidencia relacionada con el sitio, puedes contactar al editor en la siguiente dirección:<br><strong>contact@moodsort.fr</strong>",
+    "contactText": "Para cualquier pregunta, comentario o incidencia relacionada con el sitio, puedes contactar al editor en la siguiente dirección:",
     "privacyTitle": "Protección de datos y confidencialidad",
     "privacyText1": "MoodSort no recoge, no transmite ni almacena ningún dato en un servidor remoto. Toda la información que creas en la aplicación (posiciones de las cartas, historial de acciones) permanece guardada directamente en tu dispositivo, en tu navegador. No se envía nada al editor, al proveedor de alojamiento ni a terceros.",
     "privacyText2": "El sitio no utiliza cookies de seguimiento, ninguna herramienta de análisis de audiencia ni ningún rastreador publicitario.",
@@ -101,6 +101,7 @@
     "roomBusy": "Este compartir ya está siendo seguido por otra persona. Vuelve a intentarlo más tarde."
   },
   "screenSize": {
+    "title": "Pantalla demasiado estrecha",
     "message": "Esta aplicación requiere una pantalla más ancha (tableta en horizontal u ordenador)."
   },
   "cards": {

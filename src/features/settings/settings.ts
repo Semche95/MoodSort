@@ -1,35 +1,39 @@
 import { I18n } from '../../i18n/I18n'
 import { ThemeService } from '../theme/theme-service'
 import { Theme } from '../../types/theme.types'
+import { domIcon } from '../../shared/ui/dom-icons'
+import { modalCloseButton } from '../../shared/ui/modal'
 
 export function createSettingsModal(options: {
     onResetPositions: () => void
     themeService: ThemeService
 }): HTMLDivElement {
     const overlay = document.createElement('div')
-    overlay.className = 'settings-overlay'
+    overlay.className = 'modal-overlay settings-overlay'
 
     const modal = document.createElement('div')
-    modal.className = 'settings-modal'
+    modal.className = 'modal settings-modal'
 
     modal.innerHTML = `
-        <div class="settings-header">
+        <div class="modal-header">
             <h1>${I18n.t('settings.title')}</h1>
-            <button class="settings-close" aria-label="${I18n.t('settings.closeAriaLabel')}">&times;</button>
+            ${modalCloseButton('settings-close', I18n.t('settings.closeAriaLabel'))}
         </div>
-        <div class="settings-body">
+        <div class="modal-body">
             <section class="settings-section">
                 <h2>${I18n.t('settings.themeSection')}</h2>
                 <div class="settings-theme-toggle" role="group">
-                    <button class="settings-theme-option" data-theme="light">${I18n.t('settings.themeLight')}</button>
-                    <button class="settings-theme-option" data-theme="dark">${I18n.t('settings.themeDark')}</button>
-                    <button class="settings-theme-option" data-theme="auto">${I18n.t('settings.themeAuto')}</button>
+                    <button class="settings-theme-option" data-theme="light">${domIcon('sun')}${I18n.t('settings.themeLight')}</button>
+                    <button class="settings-theme-option" data-theme="dark">${domIcon('moon')}${I18n.t('settings.themeDark')}</button>
+                    <button class="settings-theme-option" data-theme="auto">${domIcon('monitor')}${I18n.t('settings.themeAuto')}</button>
                 </div>
             </section>
             <section class="settings-section">
                 <h2>${I18n.t('settings.cardsSection')}</h2>
-                <p>${I18n.t('settings.resetPositionsDescription')}</p>
-                <button class="settings-reset-positions">${I18n.t('settings.resetPositionsButton')}</button>
+                <div class="settings-row">
+                    <p>${I18n.t('settings.resetPositionsDescription')}</p>
+                    <button class="button button-secondary settings-reset-positions">${domIcon('rotate-ccw')}${I18n.t('settings.resetPositionsButton')}</button>
+                </div>
             </section>
         </div>
     `
@@ -57,7 +61,7 @@ export function createSettingsModal(options: {
 
     const resetBtn = modal.querySelector<HTMLButtonElement>('.settings-reset-positions')!
     resetBtn.addEventListener('click', (): void => {
-        showConfirmation(modal.querySelector<HTMLDivElement>('.settings-body')!, I18n.t('settings.confirmResetTitle'), I18n.t('settings.confirmResetMessage'), (): void => {
+        showConfirmation(modal.querySelector<HTMLElement>('.settings-row')!, I18n.t('settings.confirmResetTitle'), I18n.t('settings.confirmResetMessage'), (): void => {
             options.onResetPositions()
             overlay.remove()
         })
@@ -75,8 +79,9 @@ function setActiveThemeButton(buttons: NodeListOf<HTMLButtonElement>, activeThem
     }
 }
 
+/** Swaps `row` for the confirmation box until the user answers, so only one confirmation can be open at a time. */
 function showConfirmation(
-    parent: HTMLDivElement,
+    row: HTMLElement,
     title: string,
     message: string,
     onConfirm: () => void,
@@ -85,24 +90,31 @@ function showConfirmation(
     confirm.className = 'settings-confirm'
 
     confirm.innerHTML = `
-        <p><strong>${title}</strong></p>
-        <p>${message}</p>
-        <div class="settings-confirm-actions">
-            <button class="settings-confirm-cancel">${I18n.t('settings.confirmCancel')}</button>
-            <button class="settings-confirm-ok">${I18n.t('settings.confirmOk')}</button>
+        ${domIcon('rotate-ccw')}
+        <div class="settings-confirm-content">
+            <strong>${title}</strong>
+            <p>${message}</p>
+            <div class="settings-confirm-actions">
+                <button class="button button-secondary settings-confirm-cancel">${I18n.t('settings.confirmCancel')}</button>
+                <button class="button button-danger settings-confirm-ok">${I18n.t('settings.confirmOk')}</button>
+            </div>
         </div>
     `
 
-    const cancelBtn = confirm.querySelector<HTMLButtonElement>('.settings-confirm-cancel')!
-    cancelBtn.addEventListener('click', (): void => {
+    const close = (): void => {
         confirm.remove()
-    })
+        row.hidden = false
+    }
+
+    const cancelBtn = confirm.querySelector<HTMLButtonElement>('.settings-confirm-cancel')!
+    cancelBtn.addEventListener('click', close)
 
     const okBtn = confirm.querySelector<HTMLButtonElement>('.settings-confirm-ok')!
     okBtn.addEventListener('click', (): void => {
-        confirm.remove()
+        close()
         onConfirm()
     })
 
-    parent.appendChild(confirm)
+    row.hidden = true
+    row.after(confirm)
 }

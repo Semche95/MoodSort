@@ -1,4 +1,5 @@
 import { I18n } from '../../i18n/I18n'
+import { iconBadge } from '../../shared/ui/modal'
 
 export const MIN_SCREEN_WIDTH_PX = 1024
 
@@ -8,11 +9,15 @@ export function isScreenTooSmall(): boolean {
 
 export function createScreenSizeBlockOverlay(): HTMLDivElement {
     const overlay = document.createElement('div')
-    overlay.className = 'screen-size-overlay'
+    overlay.className = 'modal-overlay screen-size-overlay'
 
     const content = document.createElement('div')
-    content.className = 'screen-size-content'
-    content.textContent = I18n.t('screenSize.message')
+    content.className = 'modal screen-size-content'
+    content.innerHTML = `
+        ${iconBadge('monitor')}
+        <h1>${I18n.t('screenSize.title')}</h1>
+        <p>${I18n.t('screenSize.message')}</p>
+    `
 
     overlay.appendChild(content)
 

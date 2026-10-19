@@ -8,36 +8,35 @@
   --loading-spinner-track: rgba(255, 255, 255, 0.2);
 
   /* Overlay backdrops (behind modals) */
-  --overlay-backdrop: rgba(0, 0, 0, 0.5);
-  --overlay-backdrop-strong: rgba(0, 0, 0, 0.75);
+  --overlay-backdrop: rgba(60, 38, 30, 0.42);
+  --overlay-backdrop-strong: rgba(60, 38, 30, 0.75);
 
-  /* Shared modal chrome (onboarding, settings, screen share, legal) */
-  --modal-bg: #fff;
-  --modal-text: #222;
-  --modal-shadow: rgba(0, 0, 0, 0.3);
-  --modal-border: #ddd;
-  --modal-close-color: #666;
-  --modal-close-hover-color: #000;
-  --panel-bg: #f9f9f9;
-
-  /* Shared buttons */
-  --button-primary-bg: #333;
-  --button-primary-hover-bg: #555;
+  /* Shared modal chrome, matching the Pixi toolbar palette */
+  --modal-bg: #fffaf5;
+  --modal-text: #4f342a;
+  --modal-muted-text: #6f5347;
+  --modal-border: #ead8c8;
+  --modal-shadow: 0 24px 64px rgba(79, 52, 42, 0.28), 0 2px 8px rgba(79, 52, 42, 0.12);
+  --panel-bg: #f5ebe1;
+  --accent: #b4462c;
+  --accent-hover: #bf5236;
+  --accent-text: #b4462c;
+  --accent-soft-bg: rgba(180, 70, 44, 0.1);
+  --accent-shadow: rgba(180, 70, 44, 0.32);
   --on-accent-text: #fff;
-  --button-secondary-bg: #f5f5f5;
-  --button-secondary-hover-bg: #eaeaea;
-  --button-neutral-bg: #e0e0e0;
-  --button-neutral-text: #333;
-  --button-neutral-hover-bg: #d0d0d0;
-  --button-danger-bg: #c0392b;
-  --button-danger-hover-bg: #a93226;
-
-  /* Screen share host modal */
-  --button-info-bg: #b4462c;
-  --button-info-hover-bg: #bf5236;
-  --button-info-disabled-bg: #f3bba9;
-  --button-stop-bg: #dc2626;
-  --button-stop-hover-bg: #b91c1c;
+  --button-bg: #fff;
+  --button-hover-bg: #fff3ea;
+  --button-shadow: rgba(120, 80, 64, 0.18);
+  --button-icon: #6b4a3d;
+  --danger: #c0392b;
+  --danger-text: #c0392b;
+  --danger-hover: #a93226;
+  --danger-soft-bg: rgba(192, 57, 43, 0.09);
+  --info-soft-bg: rgba(110, 170, 150, 0.16);
+  --info-icon: #2f6b57;
+  --success-text: #15803f;
+  --status-waiting: #f59e0b;
+  --status-connected: #22c55e;
 
   /* Screen share viewer (full-page, over video) */
   --viewer-bg: #111;
@@ -57,36 +56,35 @@ html[data-theme='dark'] {
   --loading-spinner-track: rgba(255, 255, 255, 0.25);
 
   /* Overlay backdrops (behind modals) */
-  --overlay-backdrop: rgba(0, 0, 0, 0.65);
-  --overlay-backdrop-strong: rgba(0, 0, 0, 0.85);
+  --overlay-backdrop: rgba(0, 0, 0, 0.55);
+  --overlay-backdrop-strong: rgba(0, 0, 0, 0.8);
 
-  /* Shared modal chrome (onboarding, settings, screen share, legal) */
-  --modal-bg: #1e1e24;
-  --modal-text: #f0f0f2;
-  --modal-shadow: rgba(0, 0, 0, 0.6);
-  --modal-border: #3a3a42;
-  --modal-close-color: #a0a0aa;
-  --modal-close-hover-color: #fff;
-  --panel-bg: #26262e;
-
-  /* Shared buttons */
-  --button-primary-bg: #4a4a54;
-  --button-primary-hover-bg: #5c5c68;
+  /* Shared modal chrome, matching the Pixi toolbar palette */
+  --modal-bg: #2d2833;
+  --modal-text: #f3dccb;
+  --modal-muted-text: #cbb8aa;
+  --modal-border: #463f4d;
+  --modal-shadow: 0 24px 64px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.3);
+  --panel-bg: #37313e;
+  --accent: #b4462c;
+  --accent-hover: #bf5236;
+  --accent-text: #f08a6e;
+  --accent-soft-bg: rgba(233, 119, 90, 0.14);
+  --accent-shadow: rgba(0, 0, 0, 0.35);
   --on-accent-text: #fff;
-  --button-secondary-bg: #33333c;
-  --button-secondary-hover-bg: #3f3f4a;
-  --button-neutral-bg: #3a3a44;
-  --button-neutral-text: #e8e8ec;
-  --button-neutral-hover-bg: #46464f;
-  --button-danger-bg: #e05545;
-  --button-danger-hover-bg: #c8432f;
-
-  /* Screen share host modal */
-  --button-info-bg: #b4462c;
-  --button-info-hover-bg: #bf5236;
-  --button-info-disabled-bg: #7a4436;
-  --button-stop-bg: #ef4444;
-  --button-stop-hover-bg: #c53030;
+  --button-bg: #4a4350;
+  --button-hover-bg: #564e5d;
+  --button-shadow: rgba(0, 0, 0, 0.4);
+  --button-icon: #f3dccb;
+  --danger: #b8402d;
+  --danger-text: #f27a6b;
+  --danger-hover: #a3372a;
+  --danger-soft-bg: rgba(224, 85, 69, 0.14);
+  --info-soft-bg: rgba(110, 170, 150, 0.14);
+  --info-icon: #9fd6c2;
+  --success-text: #4ade80;
+  --status-waiting: #f59e0b;
+  --status-connected: #22c55e;
 
   /* Screen share viewer (full-page, over video) */
   --viewer-bg: #0d0d10;
@@ -111,6 +109,20 @@ html, body {
 
 body {
   overflow: hidden;
+}
+
+/* Author `display` rules would otherwise override the browser's own `[hidden]` rule. */
+[hidden] {
+  display: none !important;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 /* Pixi writes the cursor of whatever lies under the pointer inline; these win over it. */
@@ -157,463 +169,6 @@ canvas[data-forced-cursor='grabbing'] {
 @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
-}
-
-/* Onboarding overlay */
-.onboarding-overlay {
-    position: fixed;
-    left: 0;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--overlay-backdrop-strong);
-    z-index: 10000;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
-}
-
-.onboarding-card {
-    background: var(--modal-bg);
-    color: var(--modal-text);
-    border-radius: 16px;
-    padding: 40px 48px;
-    max-width: 480px;
-    width: 90%;
-    box-shadow: 0 8px 32px var(--modal-shadow);
-}
-
-.onboarding-card h1 {
-    font-size: 1.5rem;
-    margin-bottom: 16px;
-}
-
-.onboarding-card h2 {
-    font-size: 1.1rem;
-    margin-top: 20px;
-    margin-bottom: 8px;
-}
-
-.onboarding-card p {
-    line-height: 1.6;
-    margin-bottom: 8px;
-}
-
-.onboarding-card ul {
-    padding-left: 20px;
-    margin-bottom: 8px;
-}
-
-.onboarding-card li {
-    line-height: 1.6;
-    margin-bottom: 4px;
-}
-
-.onboarding-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-}
-
-.onboarding-close {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    line-height: 1;
-    cursor: pointer;
-    color: var(--modal-close-color);
-    padding: 0 4px;
-}
-
-.onboarding-close:hover {
-    color: var(--modal-close-hover-color);
-}
-
-.onboarding-dismiss {
-    display: block;
-    margin-top: 24px;
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 8px;
-    background: var(--button-primary-bg);
-    color: var(--on-accent-text);
-    font-size: 1rem;
-    cursor: pointer;
-}
-
-.onboarding-dismiss:hover {
-    background: var(--button-primary-hover-bg);
-}
-
-/* Settings modal */
-.settings-overlay {
-    position: fixed;
-    left: 0;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--overlay-backdrop);
-    z-index: 10000;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
-}
-
-.settings-modal {
-    background: var(--modal-bg);
-    color: var(--modal-text);
-    border-radius: 16px;
-    padding: 0;
-    max-width: 420px;
-    width: 90%;
-    box-shadow: 0 8px 32px var(--modal-shadow);
-    overflow: hidden;
-}
-
-.settings-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px 24px 0;
-}
-
-.settings-header h1 {
-    font-size: 1.3rem;
-}
-
-.settings-close {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: var(--modal-close-color);
-    padding: 0 4px;
-}
-
-.settings-close:hover {
-    color: var(--modal-close-hover-color);
-}
-
-.settings-body {
-    padding: 16px 24px 24px;
-}
-
-.settings-section {
-    margin-bottom: 20px;
-}
-
-.settings-section:last-child {
-    margin-bottom: 0;
-}
-
-.settings-section h2 {
-    font-size: 1rem;
-    margin-bottom: 4px;
-}
-
-.settings-section p {
-    font-size: 0.9rem;
-    color: var(--modal-text);
-    margin-bottom: 10px;
-    line-height: 1.4;
-}
-
-.settings-theme-toggle {
-    display: flex;
-    border: 1px solid var(--modal-border);
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.settings-theme-option {
-    flex: 1;
-    padding: 8px;
-    border: none;
-    background: var(--button-secondary-bg);
-    color: var(--modal-text);
-    font-size: 0.85rem;
-    cursor: pointer;
-}
-
-.settings-theme-option + .settings-theme-option {
-    border-left: 1px solid var(--modal-border);
-}
-
-.settings-theme-option:hover {
-    background: var(--button-secondary-hover-bg);
-}
-
-.settings-theme-option.active {
-    background: var(--button-primary-bg);
-    color: var(--on-accent-text);
-}
-
-.settings-reset-positions,
-.settings-show-onboarding {
-    display: block;
-    width: 100%;
-    padding: 10px;
-    border: 1px solid var(--modal-border);
-    border-radius: 8px;
-    background: var(--button-secondary-bg);
-    color: var(--modal-text);
-    font-size: 0.9rem;
-    cursor: pointer;
-}
-
-.settings-reset-positions:hover,
-.settings-show-onboarding:hover {
-    background: var(--button-secondary-hover-bg);
-}
-
-/* Confirmation dialog inside modal */
-.settings-confirm {
-    background: var(--panel-bg);
-    border: 1px solid var(--modal-border);
-    border-radius: 8px;
-    padding: 16px;
-    margin-top: 12px;
-}
-
-.settings-confirm p {
-    margin-bottom: 8px;
-    font-size: 0.9rem;
-    color: var(--modal-text);
-}
-
-.settings-confirm-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
-}
-
-.settings-confirm-cancel,
-.settings-confirm-ok {
-    flex: 1;
-    padding: 8px;
-    border: none;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    cursor: pointer;
-}
-
-.settings-confirm-cancel {
-    background: var(--button-neutral-bg);
-    color: var(--button-neutral-text);
-}
-
-.settings-confirm-cancel:hover {
-    background: var(--button-neutral-hover-bg);
-}
-
-.settings-confirm-ok {
-    background: var(--button-danger-bg);
-    color: var(--on-accent-text);
-}
-
-.settings-confirm-ok:hover {
-    background: var(--button-danger-hover-bg);
-}
-
-/* Screen share modal (host) */
-.screen-share-overlay {
-    position: fixed;
-    left: 0;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--overlay-backdrop);
-    z-index: 10000;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
-}
-
-.screen-share-modal {
-    background: var(--modal-bg);
-    color: var(--modal-text);
-    border-radius: 16px;
-    padding: 0;
-    max-width: 420px;
-    width: 90%;
-    box-shadow: 0 8px 32px var(--modal-shadow);
-    overflow: hidden;
-}
-
-.screen-share-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px 24px 0;
-}
-
-.screen-share-header h1 {
-    font-size: 1.3rem;
-}
-
-.screen-share-close {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: var(--modal-close-color);
-    padding: 0 4px;
-}
-
-.screen-share-close:hover {
-    color: var(--modal-close-hover-color);
-}
-
-.screen-share-body {
-    padding: 16px 24px 24px;
-}
-
-.screen-share-body p {
-    font-size: 0.9rem;
-    color: var(--modal-text);
-    margin-bottom: 10px;
-    line-height: 1.4;
-}
-
-.screen-share-activate {
-    display: block;
-    width: 100%;
-    padding: 10px 14px;
-    margin-bottom: 8px;
-    border: none;
-    border-radius: 8px;
-    background: var(--button-info-bg);
-    color: var(--on-accent-text);
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.screen-share-activate:hover {
-    background: var(--button-info-hover-bg);
-}
-
-.screen-share-activate:disabled {
-    background: var(--button-info-disabled-bg);
-    cursor: default;
-}
-
-/* The class rule above sets `display: block` with the same specificity as the
- * browser's built-in `[hidden] { display: none }` rule, and author styles
- * always win over user-agent styles regardless of specificity - so without
- * this override, setting the `hidden` attribute in JS has no visible effect
- * and the button never actually disappears once sharing starts. */
-.screen-share-activate[hidden] {
-    display: none;
-}
-
-.screen-share-live {
-    display: none;
-}
-
-.screen-share-live--visible {
-    display: block;
-}
-
-.screen-share-stop {
-    display: block;
-    width: 100%;
-    padding: 10px 14px;
-    margin-bottom: 8px;
-    border: none;
-    border-radius: 8px;
-    background: var(--button-stop-bg);
-    color: var(--on-accent-text);
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.screen-share-stop:hover {
-    background: var(--button-stop-hover-bg);
-}
-
-.screen-share-stop[hidden] {
-    display: none;
-}
-
-.screen-share-url-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 4px;
-}
-
-.screen-share-url {
-    flex: 1;
-    padding: 8px 10px;
-    border: 1px solid var(--modal-border);
-    border-radius: 8px;
-    font-size: 0.85rem;
-    color: var(--modal-text);
-    background: var(--panel-bg);
-}
-
-.screen-share-copy {
-    padding: 8px 14px;
-    border: none;
-    border-radius: 8px;
-    background: var(--button-primary-bg);
-    color: var(--on-accent-text);
-    font-size: 0.85rem;
-    cursor: pointer;
-}
-
-.screen-share-copy:hover {
-    background: var(--button-primary-hover-bg);
-}
-
-.screen-share-regenerate {
-    display: block;
-    width: 100%;
-    padding: 8px 14px;
-    margin-bottom: 8px;
-    border: 1px solid var(--modal-border);
-    border-radius: 8px;
-    background: var(--modal-bg);
-    color: var(--modal-text);
-    font-size: 0.85rem;
-    cursor: pointer;
-}
-
-.screen-share-regenerate:hover {
-    background: var(--button-secondary-bg);
-}
-
-.screen-share-copy-feedback {
-    font-size: 0.85rem;
-    color: var(--modal-text);
-    min-height: 1.2em;
-    margin-bottom: 8px;
-}
-
-.screen-share-copy-feedback--error {
-    color: var(--button-danger-bg);
-}
-
-.screen-share-body .screen-share-error {
-    color: var(--button-danger-bg);
-    font-weight: 600;
-}
-
-.screen-share-body .screen-share-error:empty {
-    display: none;
-}
-
-.screen-share-status {
-    font-size: 0.85rem;
-    color: var(--modal-text);
-    font-weight: 600;
-    min-height: 1.2em;
 }
 
 /* Screen share viewer (spectator, full page, read-only) */
@@ -699,106 +254,653 @@ canvas[data-forced-cursor='grabbing'] {
     color: var(--footer-link-hover-color);
 }
 
-/* Screen size guard overlay */
-.screen-size-overlay {
+/* Shared modal chrome: every modal overlay carries .modal-overlay and its panel .modal */
+.modal-overlay {
     position: fixed;
     inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--overlay-backdrop-strong);
-    color: var(--modal-text);
-    z-index: 10001;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
-}
-
-.screen-size-content {
-    background: var(--modal-bg);
-    color: var(--modal-text);
-    border-radius: 16px;
-    padding: 24px 32px;
-    max-width: 400px;
-    width: 90%;
-    text-align: center;
-    box-shadow: 0 8px 32px var(--modal-shadow);
-}
-
-/* Legal modal */
-.legal-overlay {
-    position: fixed;
-    left: 0;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    padding: 32px;
     background: var(--overlay-backdrop);
+    backdrop-filter: blur(3px);
     z-index: 10000;
     font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
 }
 
-.legal-modal {
+.modal {
+    position: relative;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-height: 100%;
+    overflow: hidden;
     background: var(--modal-bg);
     color: var(--modal-text);
-    border-radius: 16px;
-    padding: 0;
-    max-width: 600px;
-    width: 90%;
-    box-shadow: 0 8px 32px var(--modal-shadow);
-    overflow: hidden;
+    border-radius: 22px;
+    box-shadow: var(--modal-shadow);
 }
 
-.legal-header {
+.modal svg {
+    width: 18px;
+    height: 18px;
+    flex: none;
+}
+
+.modal h1 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+}
+
+.modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 24px 24px 0 28px;
+}
+
+.modal-header h1 {
+    padding-top: 4px;
+}
+
+.modal-subtitle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+    font-size: 0.82rem;
+    color: var(--modal-muted-text);
+}
+
+.modal-subtitle svg {
+    width: 14px;
+    height: 14px;
+}
+
+.modal-body {
+    padding: 18px 28px 28px;
+}
+
+.modal-close {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 38px;
+    height: 38px;
+    border: none;
+    border-radius: 50%;
+    background: var(--button-bg);
+    color: var(--button-icon);
+    box-shadow: 0 2px 6px var(--button-shadow);
+    cursor: pointer;
+}
+
+.modal-close:hover {
+    background: var(--button-hover-bg);
+}
+
+.icon-badge {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    background: var(--accent-soft-bg);
+    color: var(--accent-text);
+}
+
+.callout {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+
+.callout-info {
+    background: var(--info-soft-bg);
+}
+
+.callout-info svg {
+    color: var(--info-icon);
+}
+
+.callout-danger {
+    background: var(--danger-soft-bg);
+}
+
+.callout-danger svg {
+    color: var(--danger-text);
+}
+
+/* Buttons */
+.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px 16px;
+    border: none;
+    border-radius: 999px;
+    font: 600 0.86rem system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.button svg {
+    width: 16px;
+    height: 16px;
+}
+
+.button-block {
+    width: 100%;
+    padding: 14px 20px;
+    font-size: 1rem;
+}
+
+.button-block svg {
+    width: 18px;
+    height: 18px;
+}
+
+.button-primary {
+    background: var(--accent);
+    color: var(--on-accent-text);
+    box-shadow: 0 3px 10px var(--accent-shadow);
+}
+
+.button-primary:hover {
+    background: var(--accent-hover);
+}
+
+.button-primary:disabled {
+    background: var(--accent);
+    opacity: 0.45;
+    box-shadow: none;
+    cursor: default;
+}
+
+.button-secondary {
+    background: var(--button-bg);
+    color: var(--modal-text);
+    box-shadow: 0 2px 6px var(--button-shadow);
+}
+
+.button-secondary:hover {
+    background: var(--button-hover-bg);
+}
+
+.button-ghost {
+    background: transparent;
+    color: var(--modal-muted-text);
+    padding: 9px 12px;
+}
+
+.button-ghost:hover {
+    background: var(--panel-bg);
+    color: var(--modal-text);
+}
+
+.button-danger {
+    background: var(--danger);
+    color: var(--on-accent-text);
+}
+
+.button-danger:hover {
+    background: var(--danger-hover);
+}
+
+.button-danger-outline {
+    background: transparent;
+    color: var(--danger-text);
+    box-shadow: inset 0 0 0 1.5px var(--danger-text);
+}
+
+.button-danger-outline:hover {
+    background: var(--danger-soft-bg);
+}
+
+/* Onboarding and help */
+.onboarding-card {
+    max-width: 540px;
+    padding: 32px 28px 28px;
+    overflow-y: auto;
+}
+
+.onboarding-close {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+}
+
+.onboarding-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 0 8px;
+}
+
+.onboarding-logo {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 14px;
+}
+
+.onboarding-hero h1 {
+    font-size: 1.55rem;
+    letter-spacing: -0.015em;
+}
+
+.brand-accent {
+    color: var(--accent-text);
+}
+
+.onboarding-hero p {
+    margin-top: 6px;
+    line-height: 1.5;
+    color: var(--modal-muted-text);
+}
+
+.onboarding-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 20px 0 16px;
+    list-style: none;
+}
+
+.onboarding-steps li {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+
+.onboarding-steps kbd {
+    padding: 1px 6px;
+    border-radius: 6px;
+    background: var(--panel-bg);
+    box-shadow: inset 0 -1px 0 var(--modal-border);
+    font: 600 0.78rem system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+.onboarding-outro {
+    margin-bottom: 14px;
+    font-size: 0.88rem;
+    font-style: italic;
+    line-height: 1.5;
+    color: var(--modal-muted-text);
+}
+
+.onboarding-dismiss {
+    margin-top: 20px;
+}
+
+/* Settings modal */
+.settings-modal {
+    max-width: 460px;
+}
+
+.settings-section {
+    padding: 18px 0;
+    border-top: 1px solid var(--modal-border);
+}
+
+.settings-section:first-child {
+    padding-top: 4px;
+    border-top: none;
+}
+
+.settings-section:last-child {
+    padding-bottom: 0;
+}
+
+.settings-section h2 {
+    margin-bottom: 12px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--modal-muted-text);
+}
+
+.settings-theme-toggle {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 999px;
+    background: var(--panel-bg);
+}
+
+.settings-theme-option {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 9px 8px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--modal-muted-text);
+    font: 600 0.86rem system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    cursor: pointer;
+}
+
+.settings-theme-option svg {
+    width: 16px;
+    height: 16px;
+}
+
+.settings-theme-option:hover {
+    color: var(--modal-text);
+}
+
+.settings-theme-option.active {
+    background: var(--button-bg);
+    color: var(--modal-text);
+    box-shadow: 0 2px 6px var(--button-shadow);
+}
+
+.settings-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px 24px 0;
+    gap: 16px;
 }
 
-.legal-header h1 {
-    font-size: 1.2rem;
+.settings-row p {
+    font-size: 0.88rem;
+    line-height: 1.45;
 }
 
-.legal-close {
-    background: none;
+.settings-confirm {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 14px;
+    background: var(--danger-soft-bg);
+}
+
+.settings-confirm > svg {
+    margin-top: 2px;
+    color: var(--danger-text);
+}
+
+.settings-confirm-content {
+    flex: 1;
+}
+
+.settings-confirm strong {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 0.95rem;
+}
+
+.settings-confirm p {
+    font-size: 0.86rem;
+    color: var(--modal-muted-text);
+}
+
+.settings-confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+/* Screen share modal (host) */
+.screen-share-modal {
+    max-width: 520px;
+}
+
+.screen-share-intro {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.screen-share-intro .icon-badge {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+}
+
+.screen-share-intro .icon-badge svg {
+    width: 24px;
+    height: 24px;
+}
+
+.screen-share-intro p {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--modal-muted-text);
+}
+
+.screen-share-modal .callout-danger,
+.screen-share-stopped {
+    margin-bottom: 16px;
+}
+
+.screen-share-live {
+    display: none;
+}
+
+.screen-share-live--visible {
+    display: block;
+}
+
+.screen-share-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 6px 12px 6px 10px;
+    border-radius: 999px;
+    background: var(--panel-bg);
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.screen-share-status::before {
+    content: '';
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--status-waiting);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--status-waiting) 22%, transparent);
+}
+
+.screen-share-status[data-status='connected']::before {
+    background: var(--status-connected);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--status-connected) 22%, transparent);
+}
+
+.screen-share-link-prompt {
+    margin-bottom: 8px;
+    font-size: 0.86rem;
+    font-weight: 600;
+}
+
+.screen-share-url-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 5px 5px 16px;
+    border-radius: 999px;
+    background: var(--panel-bg);
+    box-shadow: inset 0 0 0 1px var(--modal-border);
+}
+
+.screen-share-url-row > svg {
+    width: 16px;
+    height: 16px;
+    color: var(--modal-muted-text);
+}
+
+.screen-share-url {
+    flex: 1;
+    min-width: 0;
     border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: var(--modal-close-color);
-    padding: 0 4px;
+    outline: none;
+    background: transparent;
+    color: var(--modal-text);
+    font: 0.86rem ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-.legal-close:hover {
-    color: var(--modal-close-hover-color);
+.screen-share-copy-feedback {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 1.2em;
+    margin: 8px 0 0 16px;
+    font-size: 0.82rem;
+    color: var(--success-text);
+}
+
+.screen-share-copy-feedback svg {
+    width: 15px;
+    height: 15px;
+}
+
+.screen-share-copy-feedback--error {
+    color: var(--danger-text);
+}
+
+.screen-share-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--modal-border);
+}
+
+/* Legal modal */
+.legal-modal {
+    max-width: 680px;
+}
+
+.legal-header {
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--modal-border);
 }
 
 .legal-body {
-    padding: 16px 24px 24px;
+    overflow-y: auto;
+    padding: 8px 28px 32px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--modal-border) transparent;
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 32px), transparent);
 }
 
-.legal-body h2 {
-    font-size: 0.9rem;
+.legal-section {
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    gap: 0 16px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--modal-border);
+}
+
+.legal-section:last-child {
+    border-bottom: none;
+}
+
+.legal-section h2 {
+    margin: 6px 0 8px;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.legal-section p {
+    margin-bottom: 8px;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--modal-muted-text);
+}
+
+.legal-section p:last-child {
+    margin-bottom: 0;
+}
+
+.legal-section .legal-card {
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: var(--panel-bg);
+    font-size: 0.86rem;
+}
+
+.legal-card strong {
+    display: block;
+    font-size: 0.92rem;
     color: var(--modal-text);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-top: 16px;
-    margin-bottom: 6px;
 }
 
-.legal-body h2:first-child {
-    margin-top: 0;
+.legal-mail {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: var(--accent-soft-bg);
+    color: var(--accent-text);
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none;
 }
 
-.legal-body p {
-    font-size: 0.85rem;
-    color: var(--modal-text);
-    line-height: 1.5;
-    margin-bottom: 6px;
+.legal-mail svg {
+    width: 16px;
+    height: 16px;
 }
 
-.legal-date {
-    font-size: 0.8rem;
-    color: var(--modal-text);
+.legal-mail:hover {
+    text-decoration: underline;
+}
+
+/* Screen size guard overlay */
+.screen-size-overlay {
+    background: var(--overlay-backdrop-strong);
+    z-index: 10001;
+}
+
+.screen-size-content {
+    align-items: center;
+    max-width: 400px;
+    padding: 36px 32px 32px;
+    text-align: center;
+}
+
+.screen-size-content .icon-badge {
+    width: 56px;
+    height: 56px;
     margin-bottom: 16px;
+    border-radius: 18px;
+}
+
+.screen-size-content .icon-badge svg {
+    width: 28px;
+    height: 28px;
+}
+
+.screen-size-content h1 {
+    margin-bottom: 8px;
+    font-size: 1.2rem;
+}
+
+.screen-size-content p {
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--modal-muted-text);
 }

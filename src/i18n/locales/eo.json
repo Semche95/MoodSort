@@ -24,17 +24,17 @@
     "nameTooltipUnnamed": "Nomi la stakon"
   },
   "onboarding": {
-    "title": "Bonvenon al MoodSort",
+    "title": "Bonvenon al {brand}",
     "intro": "MoodSort estas vizuala ilo, kiu helpas vin esplori viajn emociojn.",
     "howItWorksTitle": "Kiel tio funkcias?",
     "step1": "Ĉiu karto reprezentas emocion.",
     "step2": "Movu la kartojn por reprezenti tion, kio respondas al vi hodiaŭ.",
-    "step3": "Amasigu kartojn por fari stakon, nomu ĝin kaj movu la kartojn kune per ĝia tenilo, aŭ per iu ajn el ĝiaj kartoj tenante Ctrl (Cmd ĉe Mac).",
+    "step3": "Amasigu kartojn por fari stakon, nomu ĝin kaj movu la kartojn kune per ĝia tenilo, aŭ per iu ajn el ĝiaj kartoj tenante <kbd>Ctrl</kbd> (<kbd>Cmd</kbd> ĉe Mac).",
     "step4": "Malfaru aŭ refaru viajn lastajn agojn, aŭ restartigu la poziciojn.",
     "step5": "Via aranĝo estas aŭtomate konservata.",
     "step6": "Kunhavigu la aranĝon de viaj kartoj kun iu.",
     "outro": "Ne ekzistas ĝusta aŭ malĝusta maniero por meti la kartojn. Grupigu ilin laŭ la maniero, kiu helpas vin esplori viajn emociojn.",
-    "privacy": "🔒 <strong>Viaj datumoj restas privataj:</strong> ĉio, kion vi faras en MoodSort, restas sur via aparato kaj nenio estas sendata aŭ konservata aliloke, krom se vi aktivigas la kunhavigon de la aranĝo: la persono, kiu tiam aliĝas al vi, vidas la aranĝon de viaj kartoj.",
+    "privacy": "<strong>Viaj datumoj restas privataj:</strong> ĉio, kion vi faras en MoodSort, restas sur via aparato kaj nenio estas sendata aŭ konservata aliloke, krom se vi aktivigas la kunhavigon de la aranĝo: la persono, kiu tiam aliĝas al vi, vidas la aranĝon de viaj kartoj.",
     "dismissButton": "Komenci",
     "closeAriaLabel": "Fermi la helpon"
   },
@@ -47,7 +47,7 @@
     "themeAuto": "Aŭtomata",
     "cardsSection": "Kartoj",
     "resetPositionsDescription": "Restartigi la aranĝon de ĉiuj kartoj al la centro de la ekrano.",
-    "resetPositionsButton": "Restartigi la poziciojn",
+    "resetPositionsButton": "Restartigi",
     "confirmResetTitle": "Ĉu restartigi la poziciojn?",
     "confirmResetMessage": "Ĉiuj kartoj revenos al la centro.",
     "confirmCancel": "Nuligi",
@@ -62,7 +62,7 @@
     "editionText2": "Konforme al artikolo 6-III de la franca leĝo n-ro 2004-575 de la 21-a de junio 2004 pri Fido en la Cifereca Ekonomio (LCEN), la eldonanto, fizika persono agante ne-profesie, elektis ne publikigi siajn personajn kontaktdatumojn. Tiuj estis komunikitaj al la gastiginto de la retejo, konforme al la leĝo.",
     "hostingTitle": "Gastigado",
     "contactTitle": "Kontakto",
-    "contactText": "Por ajna demando, rimarko aŭ signalo pri la retejo, vi povas kontakti la eldonanton ĉe la jena adreso:<br><strong>contact@moodsort.fr</strong>",
+    "contactText": "Por ajna demando, rimarko aŭ signalo pri la retejo, vi povas kontakti la eldonanton ĉe la jena adreso:",
     "privacyTitle": "Protekto de datumoj kaj konfidenco",
     "privacyText1": "MoodSort ne kolektas, ne transdonas kaj ne konservas iujn ajn datumojn sur fora servilo. Ĉiuj informoj, kiujn vi kreas en la aplikaĵo (pozicioj de la kartoj, historio de la agoj), restas konservitaj rekte sur via aparato, en via retumilo. Nenio estas sendata al la eldonanto, al la gastiginto aŭ al triaj partioj.",
     "privacyText2": "La retejo ne uzas spurajn kuketojn, nek ilon por spektantar-analizo, nek reklaman spuriston.",
@@ -101,6 +101,7 @@
     "roomBusy": "Ĉi tiu kunhavigo jam estas sekvata de iu alia. Reprovu poste."
   },
   "screenSize": {
+    "title": "Ekrano tro mallarĝa",
     "message": "Ĉi tiu aplikaĵo bezonas pli larĝan ekranon (tabulkomputilo horizontale aŭ komputilo)."
   },
   "cards": {

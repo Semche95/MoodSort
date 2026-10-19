@@ -78,7 +78,7 @@ How the app behaves and the business rules it must keep. The README covers setup
 ## Screen sharing
 
 - Only the app's canvas is streamed, never the rest of the host's screen. Peer-to-peer over WebRTC, no account, no server-side storage or relay of app state.
-- One host and one viewer per room; a second viewer is rejected. A room with no connected peer for 10 minutes is torn down.
+- One host and one viewer per room; a second viewer is rejected. A room with no connected peer for 10 minutes is torn down, and the host's share modal says so until sharing is turned on again.
 - Resetting the canvas doesn't end an active share, and a page refresh silently resumes it.
 - If WebRTC can't gather any connection candidate (privacy extension, VPN, browser policy), the viewer shows an explanation instead of waiting forever, and the host can't turn sharing on.
 - An active share keeps streaming at the new canvas size after a resize or fullscreen change.

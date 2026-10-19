@@ -106,7 +106,8 @@ src/
                 # toolbar, onboarding, settings, footer, screen-share, theme,
                 # screen-size, fullscreen, background
   shared/       # Cross-feature UI widgets and utilities: icons (used app-wide),
-                # tooltip, loading overlay, geometry, localStorage wrapper,
+                # inline Lucide SVGs and shared chrome for DOM modals, tooltip,
+                # loading overlay, geometry, localStorage wrapper,
                 # reduced-motion and Ctrl/Cmd key checks
   types/        # One file per domain type (card, drag, stack, history, etc.)
   __tests__/

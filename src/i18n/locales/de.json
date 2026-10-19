@@ -24,17 +24,17 @@
     "nameTooltipUnnamed": "Stapel benennen"
   },
   "onboarding": {
-    "title": "Willkommen bei MoodSort",
+    "title": "Willkommen bei {brand}",
     "intro": "MoodSort ist ein visuelles Hilfsmittel, das dir hilft, deine Gefühle zu erkunden.",
     "howItWorksTitle": "Wie funktioniert es?",
     "step1": "Jede Karte steht für ein Gefühl.",
     "step2": "Verschiebe die Karten so, dass sie widerspiegeln, wie du dich heute fühlst.",
-    "step3": "Lege Karten übereinander, um einen Stapel zu bilden, benenne ihn und verschiebe die Karten gemeinsam am Griff oder an einer beliebigen Karte, während du Strg (Cmd auf dem Mac) gedrückt hältst.",
+    "step3": "Lege Karten übereinander, um einen Stapel zu bilden, benenne ihn und verschiebe die Karten gemeinsam am Griff oder an einer beliebigen Karte, während du <kbd>Strg</kbd> (<kbd>Cmd</kbd> auf dem Mac) gedrückt hältst.",
     "step4": "Mache deine letzten Aktionen rückgängig oder wiederhole sie, oder setze die Positionen zurück.",
     "step5": "Deine Anordnung wird automatisch gespeichert.",
     "step6": "Teile die Anordnung deiner Karten mit jemandem.",
     "outro": "Es gibt keine richtige oder falsche Art, die Karten anzuordnen. Gruppiere sie so, wie es dir hilft, deine Gefühle zu erkunden.",
-    "privacy": "🔒 <strong>Deine Daten bleiben privat:</strong> Alles, was du in MoodSort tust, bleibt auf deinem Gerät und wird niemals gesendet oder anderswo gespeichert, es sei denn, du aktivierst das Teilen der Anordnung: Die Person, die sich verbindet, sieht dann die Anordnung deiner Karten.",
+    "privacy": "<strong>Deine Daten bleiben privat:</strong> Alles, was du in MoodSort tust, bleibt auf deinem Gerät und wird niemals gesendet oder anderswo gespeichert, es sei denn, du aktivierst das Teilen der Anordnung: Die Person, die sich verbindet, sieht dann die Anordnung deiner Karten.",
     "dismissButton": "Loslegen",
     "closeAriaLabel": "Hilfe schließen"
   },
@@ -47,7 +47,7 @@
     "themeAuto": "Automatisch",
     "cardsSection": "Karten",
     "resetPositionsDescription": "Die Anordnung aller Karten auf die Bildschirmmitte zurücksetzen.",
-    "resetPositionsButton": "Positionen zurücksetzen",
+    "resetPositionsButton": "Zurücksetzen",
     "confirmResetTitle": "Positionen zurücksetzen?",
     "confirmResetMessage": "Alle Karten kehren in die Mitte zurück.",
     "confirmCancel": "Abbrechen",
@@ -62,7 +62,7 @@
     "editionText2": "Gemäß Artikel 6-III des französischen Gesetzes Nr. 2004-575 vom 21. Juni 2004 zum Vertrauen in die digitale Wirtschaft (LCEN) hat der Herausgeber, eine Privatperson, die nicht beruflich handelt, entschieden, seine persönlichen Kontaktdaten nicht öffentlich zu machen. Diese Daten wurden dem Hosting-Anbieter der Website gemäß dem Gesetz mitgeteilt.",
     "hostingTitle": "Hosting",
     "contactTitle": "Kontakt",
-    "contactText": "Bei Fragen, Anmerkungen oder Meldungen zur Website kannst du den Herausgeber unter folgender Adresse kontaktieren:<br><strong>contact@moodsort.fr</strong>",
+    "contactText": "Bei Fragen, Anmerkungen oder Meldungen zur Website kannst du den Herausgeber unter folgender Adresse kontaktieren:",
     "privacyTitle": "Datenschutz und Vertraulichkeit",
     "privacyText1": "MoodSort erfasst, überträgt und speichert keine Daten auf einem entfernten Server. Alle Informationen, die du in der Anwendung erstellst (Kartenpositionen, Aktionsverlauf), werden direkt auf deinem Gerät, in deinem Browser, gespeichert. Es wird nichts an den Herausgeber, den Hosting-Anbieter oder Dritte gesendet.",
     "privacyText2": "Die Website verwendet keine Tracking-Cookies, keine Analysetools und keine Werbe-Tracker.",
@@ -101,6 +101,7 @@
     "roomBusy": "Diese Freigabe wird bereits von jemand anderem verfolgt. Bitte versuche es später erneut."
   },
   "screenSize": {
+    "title": "Bildschirm zu schmal",
     "message": "Diese Anwendung erfordert einen breiteren Bildschirm (Tablet im Querformat oder Computer)."
   },
   "cards": {
