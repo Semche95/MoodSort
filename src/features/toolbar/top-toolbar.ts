@@ -16,13 +16,12 @@ import { createHelpIcon, createIcon } from '../../shared/ui/icons'
 import { I18n, switchLocale } from '../../i18n/I18n'
 import type { Locale } from '../../i18n/i18n.types'
 import { createLocaleMenu } from './locale-menu'
-import { BUTTON_SIZE, LOGO_SIZE, applyButtonTheme, applyLogoTheme, applyShareButtonTheme, createButton, createLogo, createShareButton, setButtonEnabled, setShareIndicators } from './toolbar-view'
+import { BUTTON_SIZE, LOGO_SIZE, TOP_MARGIN, applyButtonTheme, applyLogoTheme, applyShareButtonTheme, createButton, createLogo, createShareButton, setButtonEnabled, setShareIndicators } from './toolbar-view'
 import type { ThemeService } from '../theme/theme-service'
 import type { ResolvedTheme } from '../../types/theme.types'
 import type { BrandingTextures } from '../../types/branding-textures.types'
 
 const GAP = 8
-const TOP_MARGIN = 16
 const SIDE_MARGIN = 16
 
 function createToolbarState(host: ToolbarHost, iconTextures: Record<string, Texture>, brandingTextures: BrandingTextures, themeService: ThemeService): ToolbarState {

@@ -6,13 +6,15 @@ import { StackSpreadScrollbar } from '../../../types/stack-spread-scrollbar.type
 import { StackSpreadPillLayout } from '../../../types/stack-spread-pill-layout.types'
 import { isPointInBox } from '../stack-hit-testing'
 import { STACK_PILL_HEIGHT, STACK_PILL_ICON_WIDTH, STACK_PILL_NAME_PADDING, STACK_PILL_PADDING } from '../stack'
+import { TOOLBAR_BOTTOM } from '../../toolbar/toolbar-view'
 
 /** Narrowest a spread card gets: below it, the label baked at the bottom of the card turns unreadable. */
 export const SPREAD_MIN_CARD_WIDTH: number = 141
 export const SPREAD_GAP: number = 12
 export const SPREAD_MARGIN: number = 16
-/** Highest the pill goes: just under the toolbar row (16px margin, 48px buttons), which stays drawn above the spread */
-export const SPREAD_PILL_TOP: number = 72
+const TOOLBAR_CLEARANCE = 8
+/** Highest the pill goes: just under the toolbar row, which stays drawn above the spread */
+export const SPREAD_PILL_TOP: number = TOOLBAR_BOTTOM + TOOLBAR_CLEARANCE
 export const SPREAD_PILL_GAP: number = 8
 /** Top of the card area, leaving room for the pill above the first row */
 export const SPREAD_TOP: number = SPREAD_PILL_TOP + STACK_PILL_HEIGHT + SPREAD_PILL_GAP

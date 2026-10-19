@@ -15,6 +15,7 @@ import {
     SPREAD_TOP,
 } from '../features/stack/stack-spread/stack-spread-layout'
 import { STACK_PILL_HEIGHT, STACK_PILL_ICON_WIDTH, STACK_PILL_PADDING } from '../features/stack/stack'
+import { TOOLBAR_BOTTOM } from '../features/toolbar/toolbar-view'
 
 const CARD_RATIO = 382 / 256
 const FULL_HD = { width: 1920, height: 1080 }
@@ -156,5 +157,6 @@ describe('computeSpreadPillLayout', () => {
         const spread = computeStackSpreadLayout(85, MIN_SCREEN, 192, CARD_RATIO)
 
         expect(computeSpreadPillLayout(100, spread, MIN_SCREEN).pill.y).toBeGreaterThanOrEqual(SPREAD_PILL_TOP)
+        expect(SPREAD_PILL_TOP).toBeGreaterThan(TOOLBAR_BOTTOM)
     })
 })

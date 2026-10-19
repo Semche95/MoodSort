@@ -9,6 +9,9 @@ import type { RoundButtonViews } from '../../types/round-button-views.types'
 import type { BrandingTextures } from '../../types/branding-textures.types'
 
 export const BUTTON_SIZE = 48
+export const TOP_MARGIN = 16
+/** Lowest point of the toolbar row, which UI drawn under it must clear */
+export const TOOLBAR_BOTTOM: number = TOP_MARGIN + BUTTON_SIZE
 export const LOGO_SIZE = 32
 export const FONT_FAMILY = 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif'
 const ICON_SOURCE_SIZE = 64
