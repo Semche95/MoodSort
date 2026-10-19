@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { clampCardPosition, computeGroupClampOffset, boxesOverlap, computeBoundingBox } from '../features/stack/stack-geometry'
+import { clampCardPosition, computeGroupClampOffset, boxesOverlap, computeBoundingBox, computeCardLayoutKey } from '../features/stack/stack-geometry'
+import { createCardLift } from '../features/card/card-lift'
 import { STACK_FRAME_CLEARANCE } from '../features/stack/stack'
 import { Card } from '../types/card.types'
 
@@ -103,5 +104,39 @@ describe('computeBoundingBox', () => {
         const b = makeCard(100, 100, 50, 50, 'b')
 
         expect(computeBoundingBox([a, b])).toEqual({ x: 0, y: 0, width: 150, height: 150 })
+    })
+})
+
+describe('computeCardLayoutKey', () => {
+    function makeLaidOutCard(imageUrl: string, x: number, y: number): Card {
+        return { imageUrl, x, y, scale: { x: 1, y: 1 }, lift: createCardLift() } as unknown as Card
+    }
+
+    it('stays the same while no card changed', () => {
+        const cards = [makeLaidOutCard('a', 0, 0), makeLaidOutCard('b', 10, 20)]
+
+        expect(computeCardLayoutKey(cards)).toBe(computeCardLayoutKey(cards))
+    })
+
+    it('changes when a card moves, is rescaled or starts being dragged', () => {
+        const card = makeLaidOutCard('a', 0, 0)
+        const keys = [computeCardLayoutKey([card])]
+
+        card.y = 5
+        keys.push(computeCardLayoutKey([card]))
+        card.scale.x = 0.5
+        card.scale.y = 0.5
+        keys.push(computeCardLayoutKey([card]))
+        card.lift.reasons.add('drag')
+        keys.push(computeCardLayoutKey([card]))
+
+        expect(new Set(keys).size).toBe(4)
+    })
+
+    it('changes when the cards swap order', () => {
+        const a = makeLaidOutCard('a', 0, 0)
+        const b = makeLaidOutCard('b', 0, 0)
+
+        expect(computeCardLayoutKey([a, b])).not.toBe(computeCardLayoutKey([b, a]))
     })
 })

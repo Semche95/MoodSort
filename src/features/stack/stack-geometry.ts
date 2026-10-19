@@ -3,6 +3,7 @@ import { Position } from '../../types/position.types'
 import { Box } from '../../types/box.types'
 import { constrainPosition } from '../../shared/utils/geometry'
 import { STACK_FRAME_CLEARANCE } from './stack'
+import { isCardDragged } from '../card/card-lift'
 
 /**
  * Clamps a candidate (x, y) to the canvas for a card-sized object, reserving
@@ -73,4 +74,12 @@ export function computeGroupClampOffset(cards: Card[], appWidth: number, appHeig
         y = appHeight - STACK_FRAME_CLEARANCE - (box.y + box.height)
     }
     return { x, y }
+}
+
+/**
+ * Every card input stacks and their drawings depend on, in the given order: a card's size follows its scale
+ * since its bounds are pinned to the resting card, so an unchanged key means nothing needs recomputing.
+ */
+export function computeCardLayoutKey(cards: Card[]): string {
+    return cards.map((card: Card): string => `${card.imageUrl}:${card.x},${card.y},${card.scale.x},${card.scale.y},${isCardDragged(card) ? 1 : 0}`).join('|')
 }

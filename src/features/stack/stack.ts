@@ -1,5 +1,6 @@
 import { Card } from '../../types/card.types'
 import { Position } from '../../types/position.types'
+import { Box } from '../../types/box.types'
 import { boxesOverlap, computeBoundingBox } from './stack-geometry'
 
 /** Padding (in px) between a stack's cards and its dashed frame */
@@ -35,11 +36,12 @@ export const STACK_NAME_FONT_SIZE: number = 14
  */
 export const STACK_FRAME_CLEARANCE: number = STACK_HIGHLIGHT_PADDING + STACK_PILL_HEIGHT / 2
 
-function cardsOverlap(a: Card, b: Card): boolean {
-    return boxesOverlap(a, b)
+/** Reading a card's size makes Pixi recompute its bounds, far too costly for a pairwise flood fill run every frame. */
+function snapshotBoxes(cards: Card[]): Map<Card, Box> {
+    return new Map(cards.map((card: Card): [Card, Box] => [card, { x: card.x, y: card.y, width: card.width, height: card.height }]))
 }
 
-export function findStack(card: Card, allCards: Card[]): Card[] {
+function floodFillStack(card: Card, allCards: Card[], boxes: Map<Card, Box>): Card[] {
     const stack: Card[] = []
     const visited = new Set<Card>()
     const queue = [card]
@@ -49,7 +51,7 @@ export function findStack(card: Card, allCards: Card[]): Card[] {
         visited.add(current)
         stack.push(current)
         for (const other of allCards) {
-            if (!visited.has(other) && cardsOverlap(current, other)) {
+            if (!visited.has(other) && boxesOverlap(boxes.get(current)!, boxes.get(other)!)) {
                 queue.push(other)
             }
         }
@@ -57,14 +59,19 @@ export function findStack(card: Card, allCards: Card[]): Card[] {
     return stack
 }
 
+export function findStack(card: Card, allCards: Card[]): Card[] {
+    return floodFillStack(card, allCards, snapshotBoxes([card, ...allCards]))
+}
+
 export function computeStacks(cards: Card[]): Card[][] {
+    const boxes = snapshotBoxes(cards)
     const stacks: Card[][] = []
     const assigned = new Set<Card>()
     for (const card of cards) {
         if (assigned.has(card)) {
             continue
         }
-        const stack = findStack(card, cards)
+        const stack = floodFillStack(card, cards, boxes)
         stacks.push(stack)
         for (const c of stack) {
             assigned.add(c)

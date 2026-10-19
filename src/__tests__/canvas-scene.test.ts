@@ -96,6 +96,9 @@ vi.mock('pixi.js', () => {
         }
         on(): this { return this }
         off(): this { return this }
+        cacheAsTexture(): void {}
+        updateCacheTexture(): void {}
+        getLocalBounds(): { x: number; y: number; width: number; height: number } { return { x: 0, y: 0, width: this.width, height: this.height } }
         addChild(child: unknown): unknown {
             const existing = this.children.indexOf(child)
             if (existing !== -1) this.children.splice(existing, 1)
@@ -532,14 +535,16 @@ describe('CanvasScene', () => {
         const { testable } = await setup()
 
         const children = testable.app.stage.children
-        expect(children.indexOf(testable.stackShadow.graphics)).toBe(children.indexOf(testable.cardLayer) - 1)
-        expect(children.indexOf(testable.stackShadow.graphics)).toBeGreaterThan(0)
+        expect(children.indexOf(testable.stackShadow.view)).toBe(children.indexOf(testable.cardLayer) - 1)
+        expect(children.indexOf(testable.stackShadow.view)).toBeGreaterThan(0)
     })
 
-    it('redraws the pile shadow from the cards on every frame', async () => {
+    it('redraws the pile shadow on the frame after a card moved', async () => {
         const { testable, tick } = await setup()
+        tick()
         const roundRect = vi.spyOn(testable.stackShadow.graphics, 'roundRect')
 
+        testable.cards[0].x += 10
         tick()
 
         expect(roundRect).toHaveBeenCalledTimes(testable.cards.length)

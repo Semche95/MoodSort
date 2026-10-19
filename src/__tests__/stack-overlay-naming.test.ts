@@ -90,7 +90,7 @@ const { pixi } = vi.hoisted(() => {
 vi.mock('pixi.js', () => ({ ...pixi }))
 
 function makeCard(x: number, y: number, width: number, height: number, imageUrl: string): Card {
-    return { imageUrl, x, y, width, height, lift: createCardLift() } as unknown as Card
+    return { imageUrl, x, y, width, height, scale: { x: 1, y: 1 }, lift: createCardLift() } as unknown as Card
 }
 
 function createApp(): { tick: () => void; app: Application } {
@@ -628,5 +628,21 @@ describe('StackOverlay name label and button', () => {
         const labelContainer = overlay['labelPool'].container as unknown as { children: Array<{ text: string; visible: boolean }> }
         const label = labelContainer.children.find((t: { text: string }): boolean => t.text === 'Joie')
         expect(label?.visible).toBe(true)
+    })
+
+    it('shows a new name given through the same names object, without any card moving', () => {
+        const cardLayer = new pixi.Container()
+        cardLayer.addChild(makeCard(100, 100, 200, 300, 'a'))
+        const { app, tick } = createApp()
+        const names: Record<string, string> = {}
+        const overlay = new StackOverlay(app, cardLayer as unknown as Container, () => names)
+        overlay.addToStage()
+        tick()
+
+        names.a = 'Joie'
+        tick()
+
+        const labelContainer = overlay['labelPool'].container as unknown as { children: Array<{ text: string; visible: boolean }> }
+        expect(labelContainer.children.find((t: { text: string }): boolean => t.text === 'Joie')?.visible).toBe(true)
     })
 })

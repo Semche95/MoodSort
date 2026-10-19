@@ -89,6 +89,11 @@ vi.mock('pixi.js', () => {
         off(): this {
             return this
         }
+        cacheAsTexture(): void {}
+        updateCacheTexture(): void {}
+        getLocalBounds(): { x: number; y: number; width: number; height: number } {
+            return { x: 0, y: 0, width: this.width, height: this.height }
+        }
         addChild(child: unknown): unknown {
             const existing = this.children.indexOf(child)
             if (existing !== -1) {

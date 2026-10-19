@@ -174,7 +174,7 @@ export class CanvasScene {
         this.app.renderer.resize(window.innerWidth, window.innerHeight)
         this.background = createCanvasBackground(this.app.renderer, this.app.screen.width, this.app.screen.height, this.resolvedTheme)
         this.app.stage.addChild(this.background.sprite)
-        this.app.stage.addChild(this.stackShadow.graphics)
+        this.app.stage.addChild(this.stackShadow.view)
         this.app.stage.addChild(this.cardLayer)
 
         const saved = this.positionPersistence.load()

@@ -2,7 +2,7 @@ import { Application, Container, FederatedPointerEvent, Graphics } from 'pixi.js
 import { Card } from '../../../types/card.types'
 import { Position } from '../../../types/position.types'
 import { computeStacks } from '../stack'
-import { computeBoundingBox } from '../stack-geometry'
+import { computeBoundingBox, computeCardLayoutKey } from '../stack-geometry'
 import { findMergeTargets } from '../stack-merge'
 import {
     computeCompactButtonBox,
@@ -29,6 +29,29 @@ import type { StackDrawTarget } from '../../../types/stack-draw-target.types'
 const COMPACT_TOOLTIP_GAP = 6
 const NAME_TOOLTIP_GAP = 6
 
+function listLayerCards(cardLayer: Container): Card[] {
+    return cardLayer.children.filter((child: Container): child is Card => 'imageUrl' in child)
+}
+
+function computeCardsKey(cards: Iterable<Card> | null): string {
+    return cards ? [...cards].map((card: Card): string => card.imageUrl).join(',') : ''
+}
+
+function computePointKey(point: Position | null): string {
+    return point ? `${point.x},${point.y}` : ''
+}
+
+/** Re-adding a child already in place still makes Pixi rebuild the layer's render structure, so it only happens when the order is off. */
+function raiseToTop(layer: Container, children: Container[]): void {
+    const tail = layer.children.slice(-children.length)
+    if (tail.length === children.length && children.every((child: Container, index: number): boolean => tail[index] === child)) {
+        return
+    }
+    for (const child of children) {
+        layer.addChild(child)
+    }
+}
+
 function isSameStack(stack: Card[], cards: Set<Card> | null): boolean {
     if (!cards || stack.length !== cards.size) {
         return false
@@ -37,8 +60,8 @@ function isSameStack(stack: Card[], cards: Set<Card> | null): boolean {
 }
 
 /**
- * Every stack's frame and top pill (grip, name, rename button) are redrawn every frame from the
- * cards on the stage, so they stay visible on every stack regardless of hover; the compact pill
+ * Every stack's frame and top pill (grip, name, rename button) are redrawn from the cards on the
+ * stage whenever anything they show changes, so they stay visible on every stack regardless of hover; the compact pill
  * on the frame's bottom edge only shows on the hovered stack.
  */
 export class StackOverlay {
@@ -70,6 +93,7 @@ export class StackOverlay {
     private editingCards: Set<Card> | null
     private entries: StackOverlayEntry[]
     private mergeTargets: Card[][]
+    private renderKey: string
 
     constructor(
         app: Application,
@@ -119,6 +143,7 @@ export class StackOverlay {
         this.editingCards = null
         this.entries = []
         this.mergeTargets = []
+        this.renderKey = ''
     }
 
     private get draggedLabelContainer(): Container {
@@ -284,13 +309,39 @@ export class StackOverlay {
     }
 
     private collectCards(): void {
-        this.cards = this.cardLayer.children.filter(
-            (child: Container): child is Card => 'imageUrl' in child,
-        )
+        this.cards = listLayerCards(this.cardLayer)
     }
 
     private render: () => void = (): void => {
-        // Read fresh every frame so a theme flip recolors borders/handles/labels on the next tick.
+        const draggingCard = this.cards.find(isCardDragged)
+        const renderKey = this.computeRenderKey()
+        if (renderKey !== this.renderKey) {
+            this.renderKey = renderKey
+            this.draw(draggingCard)
+        }
+        this.raiseAboveCards(draggingCard)
+    }
+
+    /**
+     * Everything draw() reads: an unchanged key means the last drawing still holds, sparing a rebuild of every
+     * frame and pill on each tick. A theme flip is part of it, so borders, handles and labels recolor on the next tick.
+     */
+    private computeRenderKey(): string {
+        return [
+            this.getResolvedTheme(),
+            JSON.stringify(this.getStackNames()),
+            computeCardLayoutKey(listLayerCards(this.cardLayer)),
+            computeCardsKey(this.draggedCards),
+            this.mergeTargets.map(computeCardsKey).join('/'),
+            computeCardsKey(this.hoveredCards),
+            computeCardsKey(this.armedCards),
+            computeCardsKey(this.editingCards),
+            computePointKey(this.namePointer),
+            computePointKey(this.compactPointer),
+        ].join('#')
+    }
+
+    private draw(draggingCard: Card | undefined): void {
         const palette = getPixiThemeColors(this.getResolvedTheme()).stackOverlay
         this.stackBorder.clear()
         this.stackDragHandle.clear()
@@ -299,7 +350,6 @@ export class StackOverlay {
         this.draggedBorder.clear()
         this.draggedHandle.clear()
 
-        const draggingCard = this.cards.find(isCardDragged)
         if (draggingCard || this.draggedCards.length > 0) {
             this.compactTooltip.hide()
             this.nameTooltip.hide()
@@ -352,34 +402,27 @@ export class StackOverlay {
         this.entries = entries
         this.labelPool.end()
         this.draggedLabelPool.end()
+    }
 
-        // Cards can be brought to the front (drag start, stack drag, reordering)
-        // after these were first appended in addToStage, so they must be
-        // re-raised every frame to stay above them. draggedLabelContainer is
-        // re-raised unconditionally so its resting z-order stays stable frame
-        // to frame even while nothing is being dragged (it is empty then).
-        this.cardLayer.addChild(this.draggedLabelContainer)
-        if (draggingCard) {
-            this.cardLayer.addChild(draggingCard)
-        }
-        if (this.draggedCards.length > 0) {
-            for (const card of this.draggedCards) {
-                this.cardLayer.addChild(card)
-            }
-            this.cardLayer.addChild(this.draggedBorder)
-            this.cardLayer.addChild(this.draggedHandle)
-            // Re-raised a second time here, now above the dragged cards/border/handle
-            // just re-raised above: the dragged stack's own name must stay readable
-            // above its own cards.
-            this.cardLayer.addChild(this.draggedLabelContainer)
-        }
-        // Above everything dragged: the `+` must stay visible over the cards about to land on it.
-        if (this.mergeTargets.length > 0) {
-            this.cardLayer.addChild(this.mergePlus)
-        }
-        this.cardLayer.addChild(this.compactTooltip.view)
-        this.cardLayer.addChild(this.nameTooltip.view)
-        this.cardLayer.addChild(this.nameEditor.view)
+    /**
+     * Cards can be brought to the front (drag start, stack drag, reordering) after these were first
+     * appended in addToStage, so they must be re-raised every frame to stay above them.
+     */
+    private raiseAboveCards(draggingCard: Card | undefined): void {
+        const held = draggingCard ? [draggingCard] : []
+        // draggedLabelContainer stays raised even while empty so its resting z-order is stable frame to frame;
+        // with a stack carried it goes above the stack's own cards, border and handle so its name stays readable.
+        const dragged = this.draggedCards.length > 0
+            ? [...held, ...this.draggedCards, this.draggedBorder, this.draggedHandle, this.draggedLabelContainer]
+            : [this.draggedLabelContainer, ...held]
+        raiseToTop(this.cardLayer, [
+            ...dragged,
+            // Above everything dragged: the `+` must stay visible over the cards about to land on it.
+            ...(this.mergeTargets.length > 0 ? [this.mergePlus] : []),
+            this.compactTooltip.view,
+            this.nameTooltip.view,
+            this.nameEditor.view,
+        ])
     }
 
     private drawStack(stack: Card[], label: string, hovered: boolean, target: StackDrawTarget, palette: PixiThemePalette['stackOverlay']): StackOverlayEntry {

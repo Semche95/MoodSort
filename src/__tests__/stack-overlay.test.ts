@@ -95,7 +95,7 @@ const { pixi } = vi.hoisted(() => {
 vi.mock('pixi.js', () => ({ ...pixi }))
 
 function makeCard(x: number, y: number, width: number, height: number, imageUrl: string): Card {
-    return { imageUrl, x, y, width, height, lift: createCardLift() } as unknown as Card
+    return { imageUrl, x, y, width, height, scale: { x: 1, y: 1 }, lift: createCardLift() } as unknown as Card
 }
 
 function createApp(): { tick: () => void; app: Application } {
@@ -307,5 +307,111 @@ describe('StackOverlay', () => {
         tick()
 
         expect(compactButton.calls.some((c: { method: string }): boolean => c.method === 'roundRect')).toBe(false)
+    })
+
+    describe('redraw skipping', () => {
+        type Drawn = { calls: Array<{ method: string }> }
+        const countClears = (graphics: unknown): number =>
+            (graphics as Drawn).calls.filter((c: { method: string }): boolean => c.method === 'clear').length
+
+        function setupSettled(names: Record<string, string> = {}, theme: { value: 'light' | 'dark' } = { value: 'light' }): {
+            overlay: StackOverlay
+            cardLayer: InstanceType<typeof pixi.Container>
+            a: Card
+            tick: () => void
+        } {
+            const cardLayer = new pixi.Container()
+            const a = makeCard(0, 0, 200, 300, 'a')
+            cardLayer.addChild(a)
+            cardLayer.addChild(makeCard(50, 50, 200, 300, 'b'))
+            const { app, tick } = createApp()
+            const overlay = new StackOverlay(app, cardLayer as unknown as Container, () => names, () => theme.value)
+            overlay.addToStage()
+            tick()
+            return { overlay, cardLayer, a, tick }
+        }
+
+        it('keeps the last drawing while nothing it shows changed', () => {
+            const { overlay, tick } = setupSettled()
+            const clears = countClears(overlay.stackBorder)
+
+            tick()
+
+            expect(countClears(overlay.stackBorder)).toBe(clears)
+        })
+
+        it('redraws once a card moved', () => {
+            const { overlay, a, tick } = setupSettled()
+            const clears = countClears(overlay.stackBorder)
+
+            a.x = 10
+            tick()
+
+            expect(countClears(overlay.stackBorder)).toBe(clears + 1)
+        })
+
+        it('redraws once a card is brought to the front, since names follow the top card', () => {
+            const { overlay, cardLayer, a, tick } = setupSettled()
+            const clears = countClears(overlay.stackBorder)
+
+            cardLayer.addChild(a)
+            tick()
+
+            expect(countClears(overlay.stackBorder)).toBe(clears + 1)
+        })
+
+        it('redraws once the theme flips', () => {
+            const theme: { value: 'light' | 'dark' } = { value: 'light' }
+            const { overlay, tick } = setupSettled({}, theme)
+            const clears = countClears(overlay.stackBorder)
+
+            theme.value = 'dark'
+            tick()
+
+            expect(countClears(overlay.stackBorder)).toBe(clears + 1)
+        })
+
+        it('redraws once another stack is hovered or armed, but not when the same one is set again', () => {
+            const { overlay, cardLayer, tick } = setupSettled()
+            const stack = cardLayer.children as Card[]
+            const clears = countClears(overlay.stackBorder)
+
+            overlay.setHoveredStack([...stack])
+            tick()
+            overlay.setHoveredStack([...stack])
+            tick()
+            overlay.setArmedStack([...stack])
+            tick()
+
+            expect(countClears(overlay.stackBorder)).toBe(clears + 2)
+        })
+
+        it('leaves the layer order alone when everything is already raised', () => {
+            const { cardLayer, tick } = setupSettled()
+            const addChild = vi.spyOn(cardLayer, 'addChild')
+
+            tick()
+
+            expect(addChild).not.toHaveBeenCalled()
+        })
+
+        it('keeps a held card above the dragged stack label layer, empty without a carried stack', () => {
+            const { overlay, cardLayer, a, tick } = setupSettled()
+
+            a.lift.reasons.add('drag')
+            tick()
+
+            expect(cardLayer.children.indexOf(a)).toBeGreaterThan(cardLayer.children.indexOf(overlay['draggedLabelContainer']))
+        })
+
+        it('re-raises the overlays above a card brought to the front', () => {
+            const { overlay, cardLayer, a, tick } = setupSettled()
+
+            cardLayer.addChild(a)
+            tick()
+
+            expect(cardLayer.children.indexOf(overlay['nameEditor'].view)).toBe(cardLayer.children.length - 1)
+            expect(cardLayer.children.indexOf(a)).toBeLessThan(cardLayer.children.indexOf(overlay['draggedLabelContainer']))
+        })
     })
 })

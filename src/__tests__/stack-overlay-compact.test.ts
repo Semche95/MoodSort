@@ -115,7 +115,7 @@ const { pixi } = vi.hoisted(() => {
 vi.mock('pixi.js', () => ({ ...pixi }))
 
 function makeCard(x: number, y: number, width: number, height: number, imageUrl: string): Card {
-    return { imageUrl, x, y, width, height, lift: createCardLift() } as unknown as Card
+    return { imageUrl, x, y, width, height, scale: { x: 1, y: 1 }, lift: createCardLift() } as unknown as Card
 }
 
 function createApp(): { tick: () => void; app: Application } {
