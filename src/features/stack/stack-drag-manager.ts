@@ -7,6 +7,17 @@ import { findMergeTargets } from './stack-merge'
 import { ActionHistory } from '../history/action-history'
 import { snapshotCards } from '../history/history'
 
+/** Pixi only hit-tests on pointer events, so a still pointer keeps the target it had before the drop. */
+function replayPointerMove(canvas: HTMLCanvasElement, client: Position): void {
+    canvas.dispatchEvent(new PointerEvent('pointermove', {
+        clientX: client.x,
+        clientY: client.y,
+        pointerType: 'mouse',
+        isPrimary: true,
+        bubbles: true,
+    }))
+}
+
 export class StackDragManager {
     private app: Application
     private cardLayer: Container
@@ -19,6 +30,7 @@ export class StackDragManager {
     private _mergeTargets: Card[][]
     private startPos: Map<Card, Position>
     private startMouse: Position
+    private lastClient: Position | null
     private boundDragMove: (e: FederatedPointerEvent) => void
 
     constructor(
@@ -39,6 +51,7 @@ export class StackDragManager {
         this._mergeTargets = []
         this.startPos = new Map()
         this.startMouse = { x: 0, y: 0 }
+        this.lastClient = null
         this.boundDragMove = (e: FederatedPointerEvent): void => this.handleMove(e)
     }
 
@@ -67,6 +80,7 @@ export class StackDragManager {
         )
         this.actionHistory.captureBefore(snapshotCards(this._dragTarget, this.cardLayer))
         this.startMouse = { x: mousePos.x, y: mousePos.y }
+        this.lastClient = null
         this.startPos = new Map()
         for (const card of this._dragTarget) {
             this.startPos.set(card, { x: card.x, y: card.y })
@@ -87,12 +101,18 @@ export class StackDragManager {
         this.startPos.clear()
         this.app.stage.off('pointermove', this.boundDragMove)
         this.overlay.restoreZOrder()
+        // The resting grip is only redrawn under the pointer on the next frame, after the stacks are recomputed.
+        const client = this.lastClient
+        if (client) {
+            this.app.ticker.addOnce((): void => replayPointerMove(this.app.canvas, client))
+        }
     }
 
     private handleMove(e: FederatedPointerEvent): void {
         if (!this._isDragging) {
             return
         }
+        this.lastClient = { x: e.client.x, y: e.client.y }
         const dx = e.global.x - this.startMouse.x
         const dy = e.global.y - this.startMouse.y
         for (const card of this._dragTarget) {

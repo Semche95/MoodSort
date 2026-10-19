@@ -42,7 +42,12 @@ describe('StackDragManager', () => {
     beforeEach(async () => {
         const { Container: MockContainer } = await import('pixi.js')
         cardLayer = new MockContainer() as unknown as Container
-        app = { stage: new MockContainer(), screen: { width: 800, height: 600 } } as unknown as Application
+        app = {
+            stage: new MockContainer(),
+            screen: { width: 800, height: 600 },
+            ticker: { addOnce: vi.fn() },
+            canvas: document.createElement('canvas'),
+        } as unknown as Application
         overlay = { restoreZOrder: vi.fn(), showDragHighlights: vi.fn() } as unknown as StackOverlay
         actionHistory = new ActionHistory(new InMemoryStore(), vi.fn(), () => ({ width: 800, height: 600 }))
         manager = new StackDragManager(app, cardLayer, overlay, () => [], actionHistory)
@@ -81,7 +86,7 @@ describe('StackDragManager', () => {
         manager.startDrag([a, b], [a, b], { x: 100, y: 100 })
         const moveHandler = onSpy.mock.calls.find((call: unknown[]): boolean => call[0] === 'pointermove')?.[1] as (e: unknown) => void
 
-        moveHandler({ global: { x: 130, y: 90 } })
+        moveHandler({ global: { x: 130, y: 90 }, client: { x: 130, y: 90 } })
 
         expect(a.x).toBe(130)
         expect(a.y).toBe(90)
@@ -102,7 +107,7 @@ describe('StackDragManager', () => {
         manager.startDrag([a, b], [a, b], { x: 100, y: 100 })
         const moveHandler = onSpy.mock.calls.find((call: unknown[]): boolean => call[0] === 'pointermove')?.[1] as (e: unknown) => void
 
-        moveHandler({ global: { x: 100, y: -1000 } })
+        moveHandler({ global: { x: 100, y: -1000 }, client: { x: 100, y: -1000 } })
 
         expect(a.y).toBe(STACK_FRAME_CLEARANCE)
         expect(b.y).toBe(STACK_FRAME_CLEARANCE + 10)
@@ -131,5 +136,36 @@ describe('StackDragManager', () => {
 
         expect(recordSpy).not.toHaveBeenCalled()
         expect(overlay.restoreZOrder).not.toHaveBeenCalled()
+    })
+
+    it('end replays the last pointer move on the next frame, so the grip back under a still pointer reacts to it', () => {
+        const a = makeCard('a', 100, 100)
+        cardLayer.addChild(a)
+        const onSpy = vi.spyOn(app.stage, 'on')
+        manager.startDrag([a], [a], { x: 100, y: 100 })
+        const moveHandler = onSpy.mock.calls.find((call: unknown[]): boolean => call[0] === 'pointermove')?.[1] as (e: unknown) => void
+        moveHandler({ global: { x: 130, y: 90 }, client: { x: 140, y: 95 } })
+        const moves: PointerEvent[] = []
+        app.canvas.addEventListener('pointermove', (e: PointerEvent): void => { moves.push(e) })
+
+        manager.end()
+
+        expect(moves).toEqual([])
+        const nextFrame = vi.mocked(app.ticker.addOnce).mock.calls[0][0] as () => void
+        nextFrame()
+        expect(moves).toHaveLength(1)
+        expect(moves[0].clientX).toBe(140)
+        expect(moves[0].clientY).toBe(95)
+        expect(moves[0].bubbles).toBe(true)
+    })
+
+    it('end replays nothing when the stack never moved, since the grip never left the pointer', () => {
+        const a = makeCard('a', 10, 10)
+        cardLayer.addChild(a)
+        manager.startDrag([a], [a], { x: 0, y: 0 })
+
+        manager.end()
+
+        expect(app.ticker.addOnce).not.toHaveBeenCalled()
     })
 })

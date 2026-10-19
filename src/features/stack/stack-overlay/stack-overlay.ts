@@ -65,6 +65,7 @@ export class StackOverlay {
     private draggedCards: Card[]
     private hoveredCards: Set<Card> | null
     private namePointer: Position | null
+    private armedCards: Set<Card> | null
     private compactPointer: Position | null
     private editingCards: Set<Card> | null
     private entries: StackOverlayEntry[]
@@ -113,6 +114,7 @@ export class StackOverlay {
         this.draggedCards = []
         this.hoveredCards = null
         this.namePointer = null
+        this.armedCards = null
         this.compactPointer = null
         this.editingCards = null
         this.entries = []
@@ -219,6 +221,11 @@ export class StackOverlay {
      */
     setHoveredStack(stack: Card[] | null): void {
         this.hoveredCards = stack ? new Set(stack) : null
+    }
+
+    /** The stack a press would carry whole (Ctrl/Cmd held over it): its grip lights up. */
+    setArmedStack(stack: Card[] | null): void {
+        this.armedCards = stack ? new Set(stack) : null
     }
 
     showDragHighlights(
@@ -380,7 +387,8 @@ export class StackOverlay {
         const name = label ? target.labels.take(label, computeStackNameMaxWidth(box), palette) : null
         const layout = computeStackPillLayout(box, name ? name.text.width : null)
         drawStackFrame(target.frame, layout.frame, hovered, palette)
-        drawStackPill(target.pill, layout, palette)
+        const gripLit = target.pill === this.stackDragHandle && isSameStack(stack, this.armedCards)
+        drawStackPill(target.pill, layout, gripLit, palette)
         const pencilHovered = target.pencil === this.stackNameButton && this.namePointer !== null && isPointInBox(this.namePointer, layout.pencil)
         drawNameButton(layout, target.pencil, hovered, pencilHovered, palette)
         if (name && layout.name) {

@@ -113,6 +113,15 @@ body {
   overflow: hidden;
 }
 
+/* Pixi writes the cursor of whatever lies under the pointer inline; these win over it. */
+canvas[data-forced-cursor='grab'] {
+  cursor: grab !important;
+}
+
+canvas[data-forced-cursor='grabbing'] {
+  cursor: grabbing !important;
+}
+
 /* Loading overlay styles */
 .loading-overlay {
     position: fixed;

@@ -105,6 +105,22 @@ function createApp(): { tick: () => void; app: Application } {
     return { app, tick: (): void => tickFn?.() }
 }
 
+/** Center x of every hover chip drawn on the resting pills during the last frame. */
+function litGrips(overlay: StackOverlay): number[] {
+    const { calls } = overlay.stackDragHandle as unknown as { calls: Array<{ method: string; args: unknown[] }> }
+    const frame = calls.slice(calls.map((c: { method: string }): string => c.method).lastIndexOf('clear') + 1)
+    const controlHover = getPixiThemeColors('light').stackOverlay.controlHover
+    return frame.flatMap((c: { method: string; args: unknown[] }, i: number): number[] => {
+        const next = frame[i + 1]
+        return c.method === 'circle' && (next?.args[0] as { color?: number } | undefined)?.color === controlHover ? [c.args[0] as number] : []
+    })
+}
+
+function gripCenterX(overlay: StackOverlay, card: Card): number {
+    const { grip } = (overlay['entries'] as StackOverlayEntry[]).find((entry: StackOverlayEntry): boolean => entry.stack.includes(card))!.layout
+    return grip.x + grip.width / 2
+}
+
 describe('StackOverlay name label and button', () => {
     it('draws the name label permanently for a named single-card stack, without needing hover', () => {
         const cardLayer = new pixi.Container()
@@ -419,6 +435,43 @@ describe('StackOverlay name label and button', () => {
 
         handle.emit('pointerout', {})
         expect(tooltip.visible).toBe(false)
+    })
+
+    it('lights the grip of the armed stack only, until it is disarmed', () => {
+        const cardLayer = new pixi.Container()
+        const cardA = makeCard(100, 100, 200, 300, 'a')
+        const cardB = makeCard(600, 100, 200, 300, 'b')
+        cardLayer.addChild(cardA)
+        cardLayer.addChild(cardB)
+        const { app, tick } = createApp()
+        const overlay = new StackOverlay(app, cardLayer as unknown as Container, () => ({}), () => 'light')
+        overlay.addToStage()
+
+        overlay.setArmedStack([cardB])
+        tick()
+        expect(litGrips(overlay)).toEqual([gripCenterX(overlay, cardB)])
+
+        overlay.setArmedStack(null)
+        tick()
+        expect(litGrips(overlay)).toEqual([])
+    })
+
+    it('leaves the grip unlit while the pointer is on it', () => {
+        const cardLayer = new pixi.Container()
+        const cardA = makeCard(100, 100, 200, 300, 'a')
+        cardLayer.addChild(cardA)
+        const { app, tick } = createApp()
+        const overlay = new StackOverlay(app, cardLayer as unknown as Container, () => ({ a: 'Joie' }), () => 'light')
+        overlay.addToStage()
+        overlay.initHandle(vi.fn())
+        tick()
+        const handle = overlay.stackDragHandle as unknown as { emit(event: string, payload: unknown): void }
+        const { grip } = (overlay['entries'] as StackOverlayEntry[])[0].layout
+
+        handle.emit('pointermove', { global: { x: grip.x + 1, y: grip.y + 1 } })
+        tick()
+
+        expect(litGrips(overlay)).toEqual([])
     })
 
     it('shows no tooltip when hovering the pill of a name that fits', () => {

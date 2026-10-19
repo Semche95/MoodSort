@@ -2,19 +2,50 @@ import { Container, FederatedPointerEvent } from 'pixi.js'
 import { Position } from '../../types/position.types'
 import { PointerInteractions, PointerInteractionsDeps } from '../../types/pointer-interactions.types'
 import { Card } from '../../types/card.types'
+import { ForcedCursor } from '../../types/forced-cursor.types'
 import { findStackAtPoint } from '../stack/stack'
 import { findStackByCompactButtonAtPoint, isPointInBox } from '../stack/stack-hit-testing'
 import { findNameAnchor } from '../stack/stack-naming'
+import { isModKeyPressed } from '../../shared/utils/mod-key'
+
+function findCardStack(deps: PointerInteractionsDeps, card: Card): Card[] {
+    return deps.getStacks().find((stack: Card[]): boolean => stack.includes(card)) ?? [card]
+}
+
+function findTopCardAt(cardLayer: Container, point: Position): Card | null {
+    const cards = cardLayer.children.filter((child: Container): child is Card => 'imageUrl' in child)
+    return cards.reverse().find((card: Card): boolean => isPointInBox(point, card)) ?? null
+}
+
+/** Pill buttons sit under every card, so they only take a press no card covers. */
+function isOnPillButton(deps: PointerInteractionsDeps, point: Position): boolean {
+    return findStackByCompactButtonAtPoint(deps.getStacks(), point) !== null || deps.overlay.findStackByNameButtonAtPoint(point) !== null
+}
+
+function startStackDrag(deps: PointerInteractionsDeps, stack: Card[], point: Position): void {
+    deps.overlay.commitNameEditorIfOpen()
+    deps.stackDragManager.startDrag(stack, stack, point)
+}
 
 export function createPointerInteractions(deps: PointerInteractionsDeps): PointerInteractions {
     let pointer: Position | null = null
+    let modKeyHeld = false
 
-    const handleStagePointerDown = (): void => {
+    /** Runs after any card, grip or button under the press: a press none of them took carries the armed stack, if any. */
+    const handleStagePointerDown = (e: FederatedPointerEvent): void => {
+        pointer = { x: e.global.x, y: e.global.y }
+        modKeyHeld = isModKeyPressed(e)
+        const stack = findArmedStack()
+        if (stack) {
+            startStackDrag(deps, stack, pointer)
+            return
+        }
         deps.overlay.commitNameEditorIfOpen()
     }
 
+    /** With Ctrl/Cmd held the press is left to the stage, which carries the whole stack; the choice is locked until release. */
     const handleCardPointerDown = (e: FederatedPointerEvent): void => {
-        if (deps.isCompacting()) {
+        if (deps.isCompacting() || isModKeyPressed(e)) {
             return
         }
         deps.overlay.commitNameEditorIfOpen()
@@ -23,6 +54,10 @@ export function createPointerInteractions(deps: PointerInteractionsDeps): Pointe
 
     const handlePointerMove = (e: FederatedPointerEvent): void => {
         pointer = { x: e.global.x, y: e.global.y }
+        // A replayed move carries no modifier state, so it must not disarm a key still held.
+        if (!('isTrusted' in e.nativeEvent) || e.nativeEvent.isTrusted) {
+            modKeyHeld = isModKeyPressed(e)
+        }
         if (deps.dragHandler.isDragging) {
             deps.overlay.hide()
             deps.overlay.setHoveredStack(null)
@@ -52,14 +87,56 @@ export function createPointerInteractions(deps: PointerInteractionsDeps): Pointe
         pointer = null
     }
 
-    /** Topmost card under the last known pointer, by z-order; none while a stack is carried, so the pile it passes over stays unmarked. */
-    const findHoveredCard = (): Card | null => {
-        if (!pointer || deps.stackDragManager.isDragging) {
+    /** macOS turns Ctrl+click into a context menu, which would swallow the release of the drag it started. */
+    const handleContextMenu = (e: MouseEvent): void => {
+        if (deps.dragHandler.isDragging || deps.stackDragManager.isDragging) {
+            e.preventDefault()
+        }
+    }
+
+    /** Firefox otherwise turns a press and move on the canvas into a text selection or a native drag, which swallows the pointer events. */
+    const handleMouseDown = (e: MouseEvent): void => {
+        e.preventDefault()
+    }
+
+    const handleModKey = (e: KeyboardEvent): void => {
+        modKeyHeld = isModKeyPressed(e)
+    }
+
+    /** A key released while the window is unfocused never reaches it. */
+    const handleWindowBlur = (): void => {
+        modKeyHeld = false
+    }
+
+    /**
+     * The stack a press would carry whole right now: Ctrl/Cmd held anywhere within its frame but on a pill button,
+     * the card on top deciding where frames overlap.
+     */
+    const findArmedStack = (): Card[] | null => {
+        if (!modKeyHeld || !pointer || deps.isBusy()) {
             return null
         }
-        const point = pointer
-        const cards = deps.cardLayer.children.filter((child: Container): child is Card => 'imageUrl' in child)
-        return cards.reverse().find((card: Card): boolean => isPointInBox(point, card)) ?? null
+        const card = findTopCardAt(deps.cardLayer, pointer)
+        if (card) {
+            return findCardStack(deps, card)
+        }
+        return isOnPillButton(deps, pointer) ? null : findStackAtPoint(deps.getStacks(), pointer)
+    }
+
+    /** Overrides whatever lies under the pointer, which a carried stack often leaves behind. */
+    const findForcedCursor = (): ForcedCursor | null => {
+        if (deps.stackDragManager.isDragging) {
+            return 'grabbing'
+        }
+        return findArmedStack() ? 'grab' : null
+    }
+
+    /** Topmost card under the last known pointer, by z-order; none while a stack is carried or armed, so only its pile is marked. */
+    const findHoveredCard = (): Card | null => {
+        if (!pointer || deps.stackDragManager.isDragging || findArmedStack()) {
+            return null
+        }
+        return findTopCardAt(deps.cardLayer, pointer)
     }
 
     const handleDragHandlePointerDown = (e: FederatedPointerEvent): void => {
@@ -71,12 +148,7 @@ export function createPointerInteractions(deps: PointerInteractionsDeps): Pointe
         if (!stack) {
             return
         }
-        deps.overlay.commitNameEditorIfOpen()
-        deps.stackDragManager.startDrag(
-            stack,
-            stack,
-            point,
-        )
+        startStackDrag(deps, stack, point)
     }
 
     const handleCompactButtonPointerDown = (e: FederatedPointerEvent): void => {
@@ -119,6 +191,12 @@ export function createPointerInteractions(deps: PointerInteractionsDeps): Pointe
         handlePointerMove,
         handlePointerOut,
         handlePointerLeave,
+        handleContextMenu,
+        handleMouseDown,
+        handleModKey,
+        handleWindowBlur,
+        findArmedStack,
+        findForcedCursor,
         findHoveredCard,
         handleDragHandlePointerDown,
         handleCompactButtonPointerDown,

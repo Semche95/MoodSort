@@ -200,6 +200,11 @@ export class CanvasScene {
         this.app.stage.on('pointerdown', this.handleStagePointerDown)
         this.app.ticker.add(this.handleTick)
         window.addEventListener('resize', this.handleResize)
+        this.app.canvas.addEventListener('contextmenu', this.pointerInteractions.handleContextMenu)
+        this.app.canvas.addEventListener('mousedown', this.pointerInteractions.handleMouseDown)
+        window.addEventListener('keydown', this.pointerInteractions.handleModKey)
+        window.addEventListener('keyup', this.pointerInteractions.handleModKey)
+        window.addEventListener('blur', this.pointerInteractions.handleWindowBlur)
         document.body.appendChild(this.app.canvas)
     }
 
@@ -287,10 +292,13 @@ export class CanvasScene {
     private handleTick: () => void = (): void => {
         this.cardManager.updateLifts(this.cards, this.app.ticker.deltaTime)
         this.cardManager.updateHover(this.cards, this.pointerInteractions.findHoveredCard())
+        this.overlay.setArmedStack(this.pointerInteractions.findArmedStack())
+        this.app.canvas.dataset.forcedCursor = this.pointerInteractions.findForcedCursor() ?? ''
         drawStackShadow(this.stackShadow, this.cards)
     }
 
-    private handleStagePointerDown: () => void = (): void => this.pointerInteractions.handleStagePointerDown()
+    private handleStagePointerDown: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void =>
+        this.pointerInteractions.handleStagePointerDown(e)
 
     private handleCardPointerDown: (e: FederatedPointerEvent) => void = (e: FederatedPointerEvent): void =>
         this.pointerInteractions.handleCardPointerDown(e)

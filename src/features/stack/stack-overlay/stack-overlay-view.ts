@@ -116,14 +116,20 @@ export function drawPillShape(g: Graphics, rect: Box, palette: PixiThemePalette[
     g.fill({ color: palette.pill })
 }
 
-/** Top pill background and its grip; the name text and rename button are drawn on top by their own owners. */
-export function drawStackPill(g: Graphics, layout: StackPillLayout, palette: PixiThemePalette['stackOverlay'] = DEFAULT_PALETTE): void {
+/**
+ * Top pill background and its grip, lit with a button's hover chip while a press would carry the stack;
+ * the name text and rename button are drawn on top by their own owners.
+ */
+export function drawStackPill(g: Graphics, layout: StackPillLayout, gripLit: boolean, palette: PixiThemePalette['stackOverlay'] = DEFAULT_PALETTE): void {
     drawPillShape(g, layout.pill, palette)
-    drawGripIcon(layout.grip, g, palette)
+    if (gripLit) {
+        drawControlHover(layout.grip, g, palette)
+    }
+    drawGripIcon(layout.grip, g, palette, gripLit ? palette.accent : palette.controlIcon)
 }
 
 /** Six dots (2 rows of 3), the usual "drag me" affordance. */
-export function drawGripIcon(slot: Box, g: Graphics, palette: PixiThemePalette['stackOverlay'] = DEFAULT_PALETTE): void {
+export function drawGripIcon(slot: Box, g: Graphics, palette: PixiThemePalette['stackOverlay'] = DEFAULT_PALETTE, color: number = palette.controlIcon): void {
     const cx = slot.x + slot.width / 2
     const cy = slot.y + slot.height / 2
     for (const row of [-0.5, 0.5]) {
@@ -131,7 +137,7 @@ export function drawGripIcon(slot: Box, g: Graphics, palette: PixiThemePalette['
             g.circle(cx + column * GRIP_DOT_SPACING, cy + row * GRIP_DOT_SPACING, GRIP_DOT_RADIUS)
         }
     }
-    g.fill({ color: palette.controlIcon, alpha: GRIP_ALPHA })
+    g.fill({ color, alpha: GRIP_ALPHA })
 }
 
 /** Round chip behind a pill button under the pointer, like the toolbar's pressed state. */

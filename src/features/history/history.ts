@@ -2,12 +2,11 @@ import { Container } from 'pixi.js'
 import { Card } from '../../types/card.types'
 import { CardActionEntry, HistorySnapshot } from '../../types/history.types'
 import { findStack } from '../stack/stack'
+import { isModKeyPressed } from '../../shared/utils/mod-key'
 
 export function initHistoryShortcuts(doUndo: () => void, doRedo: () => void): void {
-    const mod = (e: KeyboardEvent): boolean => e.ctrlKey || e.metaKey
-
     window.addEventListener('keydown', (e: KeyboardEvent): void => {
-        if (!mod(e)) return
+        if (!isModKeyPressed(e)) return
         if (e.key.toLowerCase() === 'z' && !e.shiftKey) {
             e.preventDefault()
             doUndo()

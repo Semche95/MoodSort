@@ -567,7 +567,7 @@ describe('CanvasScene', () => {
         const handlers = testable as unknown as { handlePointerMove(e: unknown): void; handlePointerLeave(): void }
         const [cardA, cardB] = testable.cards as unknown as Array<{ highlight: { visible: boolean } }>
 
-        handlers.handlePointerMove({ global: { x: 150, y: 150 } })
+        handlers.handlePointerMove({ global: { x: 150, y: 150 }, nativeEvent: { isTrusted: true } })
         tick()
         expect(cardA.highlight.visible).toBe(true)
         expect(cardB.highlight.visible).toBe(false)
@@ -575,6 +575,65 @@ describe('CanvasScene', () => {
         handlers.handlePointerLeave()
         tick()
         expect(cardA.highlight.visible).toBe(false)
+    })
+
+    it('blocks the canvas context menu during the stack drag a Ctrl+press on a stack starts, so macOS cannot swallow its release', async () => {
+        const { testable } = await setup()
+        const scene = testable as unknown as { handleStagePointerDown(e: unknown): void; app: { canvas: HTMLCanvasElement } }
+        const card = testable.cards[0]
+
+        scene.handleStagePointerDown({ global: { x: card.x + 1, y: card.y + 1 }, ctrlKey: true, metaKey: false })
+        const contextMenu = new MouseEvent('contextmenu', { cancelable: true })
+        scene.app.canvas.dispatchEvent(contextMenu)
+
+        expect(contextMenu.defaultPrevented).toBe(true)
+    })
+
+    it('cancels the native default of a press on the canvas, so Firefox starts no selection or native drag under a stack drag', async () => {
+        const { testable } = await setup()
+        const scene = testable as unknown as { app: { canvas: HTMLCanvasElement } }
+        const press = new MouseEvent('mousedown', { cancelable: true })
+
+        scene.app.canvas.dispatchEvent(press)
+
+        expect(press.defaultPrevented).toBe(true)
+    })
+
+    it('lights the grip of the stack under a still pointer and forces the grab cursor while Ctrl is held, until the window loses focus', async () => {
+        const { testable, tick } = await setup()
+        const scene = testable as unknown as {
+            handlePointerMove(e: unknown): void
+            overlay: { armedCards: Set<Card> | null }
+            app: { canvas: HTMLCanvasElement }
+        }
+        const card = testable.cards[0]
+        scene.handlePointerMove({ global: { x: card.x + 1, y: card.y + 1 }, ctrlKey: false, metaKey: false, nativeEvent: { isTrusted: true } })
+
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Control', ctrlKey: true }))
+        tick()
+        expect(scene.overlay.armedCards?.has(card)).toBe(true)
+        expect(scene.app.canvas.dataset.forcedCursor).toBe('grab')
+
+        window.dispatchEvent(new Event('blur'))
+        tick()
+        expect(scene.overlay.armedCards).toBeNull()
+        expect(scene.app.canvas.dataset.forcedCursor).toBe('')
+    })
+
+    it('forces the grabbing cursor for as long as a stack is carried', async () => {
+        const { testable, tick } = await setup()
+        const scene = testable as unknown as {
+            handleStagePointerDown(e: unknown): void
+            handlePointerMove(e: unknown): void
+            app: { canvas: HTMLCanvasElement }
+        }
+        const card = testable.cards[0]
+
+        scene.handleStagePointerDown({ global: { x: card.x + 1, y: card.y + 1 }, ctrlKey: true, metaKey: false })
+        scene.handlePointerMove({ global: { x: card.x + 400, y: card.y + 1 }, ctrlKey: false, metaKey: false, nativeEvent: { isTrusted: true } })
+        tick()
+
+        expect(scene.app.canvas.dataset.forcedCursor).toBe('grabbing')
     })
 
     it('offers the drag hint on the topmost card', async () => {

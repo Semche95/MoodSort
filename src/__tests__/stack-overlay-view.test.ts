@@ -144,10 +144,24 @@ describe('stack-overlay-view', () => {
     it('drawStackPill draws the pill and its grip', () => {
         const g = makeGraphics()
 
-        drawStackPill(g, computeStackPillLayout(frame, null), lightPalette)
+        drawStackPill(g, computeStackPillLayout(frame, null), false, lightPalette)
 
         expect(calls(g, 'roundRect')).toHaveLength(2)
         expect(calls(g, 'circle')).toHaveLength(6)
+        expect((calls(g, 'fill').pop()!.args[0] as { color: number }).color).toBe(lightPalette.controlIcon)
+    })
+
+    it('drawStackPill lights the grip with a hover chip behind accent dots', () => {
+        const g = makeGraphics()
+        const layout = computeStackPillLayout(frame, null)
+
+        drawStackPill(g, layout, true, lightPalette)
+
+        const [chip] = calls(g, 'circle')
+        expect(chip.args).toEqual([layout.grip.x + layout.grip.width / 2, layout.grip.y + layout.grip.height / 2, expect.any(Number)])
+        expect(calls(g, 'circle')).toHaveLength(7)
+        const fills = calls(g, 'fill').map((c: Call): number => (c.args[0] as { color: number }).color)
+        expect(fills.slice(-2)).toEqual([lightPalette.controlHover, lightPalette.accent])
     })
 
     it('drawGripIcon draws six dots centered on the grip slot', () => {
@@ -161,6 +175,17 @@ describe('stack-overlay-view', () => {
         const ys = dots.map((c: Call): number => c.args[1] as number)
         expect((Math.min(...xs) + Math.max(...xs)) / 2).toBe(13)
         expect((Math.min(...ys) + Math.max(...ys)) / 2).toBe(15)
+    })
+
+    it('drawGripIcon fills its dots with the given color, the control icon color by default', () => {
+        const plain = makeGraphics()
+        const tinted = makeGraphics()
+
+        drawGripIcon({ x: 0, y: 0, width: 26, height: 30 }, plain, darkPalette)
+        drawGripIcon({ x: 0, y: 0, width: 26, height: 30 }, tinted, darkPalette, darkPalette.accent)
+
+        expect((calls(plain, 'fill')[0].args[0] as { color: number }).color).toBe(darkPalette.controlIcon)
+        expect((calls(tinted, 'fill')[0].args[0] as { color: number }).color).toBe(darkPalette.accent)
     })
 
     it('drawNameButton fades the pencil at rest and shows it fully while hovered', () => {
