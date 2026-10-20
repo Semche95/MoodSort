@@ -1,184 +1,70 @@
+<div align="center">
+
+<img src="src/logo/logo.svg" alt="MoodSort logo" width="96">
+
 # MoodSort
 
 [![CI](https://github.com/Semche95/MoodSort/actions/workflows/ci.yml/badge.svg)](https://github.com/Semche95/MoodSort/actions/workflows/ci.yml)
 [![Docker](https://github.com/Semche95/MoodSort/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/Semche95/MoodSort/actions/workflows/docker-publish.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.txt)
 
-A visual emotion exploration tool. Arrange emotion cards on a canvas to identify and express what you're feeling.
+**Put your feelings on the table.**
 
-The interface is available in Dutch, English, Esperanto, French, German, and Spanish, auto-detected from the browser on first launch and switchable from the toolbar's globe button (more languages may be added later).
+A visual emotion exploration tool: spread emotion cards on a canvas, gather them into named stacks, and see what you're feeling take shape.
 
-The app's detailed behavior and business rules live in [BEHAVIOR.md](BEHAVIOR.md).
+<img src="docs/images/moodsort-landscape-1200x627-dark.png" alt="MoodSort in the dark theme: emotion cards gathered into named stacks" width="100%">
+
+</div>
 
 ## Features
 
-- Drag and drop cards freely across the canvas; the topmost card under the pointer gets an accent outline (none while a stack is carried, or while Ctrl/Cmd is held over it), a held card lifts off the table (slight zoom, deeper shadow) and settles back on release
-- Overlapping cards form stacks, each always shown in a dashed rounded frame with a pill on its top edge holding the drag grip, the stack's name and a rename button (a lone card included), plus a hover-only pill on its bottom edge to re-gather a stack of two or more cards around its top card
-- Move a whole stack by its grip, or from anywhere within its frame with Ctrl (Cmd on macOS) held; the grip lights up and the cursor turns to a grab hand while the key is held over the stack, and stays a closed hand while the stack is carried
-- Undo/redo (toolbar buttons, Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, Ctrl/Cmd+Y), persisted across sessions
-- Positions and history are saved to `localStorage` and restored on the next visit
-- Cards reposition proportionally when the window is resized or the app reopens in a differently sized window, each stack moving as one block so piles never split or merge on their own
-- Reset animates cards back to the center
-- Named stacks: click the pencil in a stack's pill to open an inline editor (native paste/IME support, a clear button, horizontal scrolling); a name too long for its frame is shortened with an ellipsis and shown in full in a tooltip on hover; names merge when stacks merge and follow the right group when a stack splits
-- Canvas sharing over peer-to-peer WebRTC: toggle it from the toolbar to get a shareable room link, no signup or account needed. This streams the app's canvas only, not the viewer's whole screen
-- Fullscreen toggle (toolbar button, hidden when the browser lacks the Fullscreen API); the whole page goes fullscreen so modals stay usable, and leaving with Escape is reflected on the button
-- Settings modal (toolbar button) with a confirmation-gated "reset positions" action
-- First-time onboarding overlay; right after it is first closed, the top card slides out of the pile and back once to show cards can be moved (skipped with `prefers-reduced-motion`)
-- Footer link to a legal notices modal (LCEN)
-- Everything except an active screen share stays in the browser: nothing else is sent or stored externally
-- Multi-language UI with browser auto-detection and a toolbar language picker; the choice is persisted across sessions
-- Light/Dark/Auto theme toggle in the settings modal; the choice is persisted across sessions and swaps the card atlas immediately, with no page reload
-- Minimum screen width guard: below 1024px (smartphones and portrait tablets), a full-screen block overlay prevents any use of the app, since it's tuned for landscape-tablet and desktop use; it re-checks live on window resize and tablet rotation, so the app unlocks or locks automatically without a reload
+- 🃏 **85 illustrated emotion cards** to drag, pile up and sort freely
+- 🗂️ **Named stacks**: overlapping cards form a pile you can name, move as a block, re-gather or spread into a grid to look through it
+- 🖥️ **Peer-to-peer canvas sharing**: send a link and someone sees your board live, with no signup and no account
+- 🔒 **Private by design**: no backend, no tracking; your board stays in your browser
+- 🌍 **Six languages**: Dutch, English, Esperanto, French, German and Spanish, auto-detected from the browser
+- 🌗 **Light and dark themes**, undo/redo, fullscreen, and a board that keeps its layout across visits and window sizes
 
-## Tech stack
+MoodSort is built for desktop and landscape tablets: below 1024px wide, the app is blocked.
 
-TypeScript (strict), PixiJS 8 for rendering, `@pixi/ui` for the toolbar buttons, Vite for dev/build, Vitest for tests, Trystero for peer-to-peer WebRTC screen sharing. `sharp` generates the card atlas and toolbar icons at build time.
+## Quick start
 
-## Getting started
+Run the published image:
+
+```bash
+docker run -p 8080:8080 ghcr.io/semche95/moodsort:latest
+```
+
+Then open `http://localhost:8080`. `latest` tracks the most recent release; pin a version with e.g. `ghcr.io/semche95/moodsort:1.5.0`.
+
+Or run it from source (Node.js and pnpm required):
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-Runs at `http://localhost:5170`.
+The dev server runs at `http://localhost:5170`.
 
-## Docker
+## Privacy
 
-Pull and run the published image:
+Card positions, stack names and undo history are saved to `localStorage` only. The one exception is screen sharing: it streams the app's canvas (never the rest of the screen) directly between two browsers over WebRTC via [Trystero](https://github.com/dmotz/trystero), with no server storing or relaying the board.
 
-```bash
-docker run -p 8080:8080 ghcr.io/semche95/moodsort:latest
-```
+Signaling relays and STUN servers can be replaced at build time with `VITE_SIGNALING_RELAYS` and `VITE_STUN_URLS` (see `.env.example` and [Signaling and STUN](docs/ARCHITECTURE.md#signaling-and-stun)).
 
-`latest` tracks the most recent release. A specific version also works, e.g. `ghcr.io/semche95/moodsort:1.0.0`.
+## Built with
 
-`.github/workflows/docker-publish.yml` builds and pushes this image automatically whenever a GitHub release is published (tagging `latest`, the release's semver, and the short SHA), or on demand via manual `workflow_dispatch`.
+TypeScript, [PixiJS](https://pixijs.com) 8, Vite, Vitest, Trystero and `sharp` (card atlas and icon generation). Everything is drawn on a single canvas so a share streams exactly what the host sees.
 
-Or build it from source:
+## Documentation
 
-```bash
-docker build -t moodsort .
-docker run -p 8080:8080 moodsort
-```
-
-Either way it runs at `http://localhost:8080`.
-
-## CI
-
-`.github/workflows/ci.yml` runs on every push to `main` and every pull request. The `verify` job installs dependencies, then caches the card atlas between runs (the key hashes the contents of `scripts/generate-atlas.mjs`, `src/cards/`, `src/i18n/locales/`, and `scripts/fonts/`, so it's only regenerated when that content changes), regenerates the icons, typechecks, lints, and runs the test suite. A `dependabot` job, which depends on `verify` (`needs: [verify]`), then auto-approves and auto-merges non-major Dependabot PRs.
-
-## Releases
-
-Pushing a `v*` tag triggers `.github/workflows/release.yml`, which fails if the tag doesn't match the `package.json` version, then creates a draft GitHub release whose notes list the Conventional Commits since the previous tag, grouped by `cliff.toml` (features, fixes, performance, then build and refactor; dependency bumps and other types are left out). Rewrite the notes if needed, then publish the draft.
-
-## Deployment
-
-Publishing a GitHub release triggers `.github/workflows/deploy.yml`, which builds the app and uploads `dist/` to an OVH mutualized hosting account over SFTP. It can also be run manually from the Actions tab.
-
-Required repo secrets (`Settings -> Secrets and variables -> Actions`): `OVH_SFTP_HOST`, `OVH_SFTP_USERNAME`, `OVH_SFTP_PASSWORD`.
-
-See the comments at the top of `deploy.yml` for the one-time bootstrap step needed before the first release.
-
-## Scripts
-
-`pnpm dev` and `pnpm build` regenerate two things before starting: the card spritesheet atlas (one `atlas.<locale>.<theme>.webp` per language in `LANGUAGES` and per theme, `light` and `dark`, plus a single shared `atlas.json` manifest, since the frame layout never depends on locale or theme, all in `scripts/generate-atlas.mjs`, built from `src/cards/`) and the app icons (`src/assets/icons/`, rasterized from `lucide-static`). Both outputs are git-ignored. Atlas generation is cached per locale/theme combination for the images and once for the shared manifest (keyed on the source card images and labels), so a rebuild only regenerates what actually changed.
-
-| Command | Description |
-|---|---|
-| `pnpm atlas` | Regenerate the card atlas |
-| `pnpm icons` | Regenerate the app icons |
-| `pnpm dev` | Start the dev server |
-| `pnpm build` | Type-check and build for production |
-| `pnpm preview` | Preview the production build |
-| `pnpm test` | Run tests |
-| `pnpm test:watch` | Run tests in watch mode |
-| `pnpm test:quiet` | Run tests with compact output |
-| `pnpm typecheck` | Type-check without emitting |
-| `pnpm lint` / `pnpm lint:fix` | Lint |
-
-## Project structure
-
-```
-scripts/       # Atlas and icon generation
-src/
-  cards/        # 85 source card images
-  logo/         # Logo and wordmark SVGs, loaded as is (the logo is also the favicon)
-  assets/       # Generated atlas + icons (git-ignored)
-  app/          # Composition root: entry point, canvas scene
-  features/     # One folder per feature: card, drag, stack, history,
-                # toolbar, onboarding, settings, footer, screen-share, theme,
-                # screen-size, fullscreen, background
-  shared/       # Cross-feature UI widgets and utilities: icons (used app-wide),
-                # inline Lucide SVGs and shared chrome for DOM modals, tooltip,
-                # loading overlay, geometry, localStorage wrapper,
-                # reduced-motion and Ctrl/Cmd key checks
-  types/        # One file per domain type (card, drag, stack, history, etc.)
-  __tests__/
-```
-
-## Architecture
-
-### Cards
-
-A `Card` is a Pixi `Container` whose `body` holds an image sprite, a hover outline and its own shadow, a soft halo at rest built from stacked translucent rings (no per-card blur filter). Raising a card (drag, drag hint) eases `body` into a slightly larger scale and the shadow into a deeper, blurred drop shadow (`card-lift.ts`, instant under `prefers-reduced-motion`); the card's bounds and hit area are pinned to the resting card, so lifting never changes stacking, clamping or persisted positions. The hover outline is not driven by per-card pointer events: every frame, `CardManager.updateHover` outlines the topmost card under the last known pointer (`findHoveredCard` in `pointer-interactions.ts`), so it follows cards that move under a still pointer and can never stay stuck on a card the pointer already left. Underneath every card, `stack-shadow.ts` draws one blurred shadow per pile: the union of all resting cards, filled opaque and faded as a whole so overlaps never darken it. The blur is rendered into a cached texture, widened by the blur's padding so it is never clipped, and redrawn only when the card layout key changes or the theme switches. Each card frame is baked from three layers: an opaque light/dark gradient background, the character illustration, and the label text in a theme-matching color, then cut to rounded corners (`CARD_CORNER_RADIUS` in `src/features/card/card-corner-radius.ts`, kept dependency-free so the atlas script can import it; the shadows and hover outline reuse it). Cards are cut from a single pre-built atlas for the resolved locale and theme (`atlas.<locale>.<theme>.webp` paired with the single shared `atlas.json` manifest, since the frame layout is the same for every locale and theme, see `loadCardAtlas`/`loadCardAtlasSpritesheet` in `src/i18n/card-atlas.ts`), loaded once in `bootstrap.ts` and handed to `CardManager` as frame names + textures. No per-card loading at runtime. Scaling is proportional to a 2560px reference width. Switching locale still reloads the page, but switching theme reloads the matching atlas and swaps every card's texture in place (`CanvasScene.swapCardAtlas`), with no reload.
-
-### Stacks
-
-Stacks aren't a real entity, just cards whose bounding boxes overlap. `computeStacks` finds them on the fly with a BFS over `cardsOverlap`.
-
-`StackOverlay` redraws every stack's frame and pills only on a frame where something they show changed (card positions, scale, z-order or drag state through `computeCardLayoutKey` in `stack-geometry.ts`, names, theme, hovered/armed stack, pointer over a button), and only re-raises its layers when cards were brought above them, since re-adding a child makes Pixi rebuild the layer. Their layout is pure geometry in `stack-hit-testing.ts`, with `STACK_FRAME_CLEARANCE` reserving room for both pills; since the pencil's position depends on the measured name, `StackOverlay` keeps the last frame's layouts for hit testing it. The Ctrl/Cmd state is tracked from pointer moves and window `keydown`/`keyup`/`blur` in `pointer-interactions.ts`; every frame, `CanvasScene` hands `findArmedStack` to the overlay, which lights that stack's grip, and sets `findForcedCursor` as a `data-forced-cursor` attribute on the canvas, which `style.css` turns into a cursor overriding the one Pixi writes for whatever lies under the pointer; both follow the key under a still pointer. A Ctrl/Cmd press is left by the cards to the stage's `pointerdown`, which carries that same armed stack, so the cue and the gesture can never disagree. Compacting re-gathers a stack's cards around its top card.
-
-Carrying a whole stack reparents its cards to the top of the stage in their current order. While dragging, `findMergeTargets` checks AABB overlap against every other stack, and `StackOverlay` re-raises the dragged cards, their overlays and the merge `+` on every frame to keep the z-order described in [BEHAVIOR.md](BEHAVIOR.md). On release, stacks are recomputed and positions saved.
-
-`StackSpread` (`src/features/stack/stack-spread/`) lays a stack's cards out as a grid on a layer added to the stage above the card layer (and below the toolbar), so share viewers see it too. It only draws copies of the cards (`stack-spread-view.ts`), at a size worked out by `computeStackSpreadLayout` (`stack-spread-layout.ts`). Pressing a copy and moving hands the real card to `DragHandler.startDrag` with a grab offset, so the drop goes through the regular drag path (clamping, merge, history). While that drag runs, the veil, grid and scrollbar are hidden and stop taking the pointer, since Pixi still hit-tests hidden objects. Once nothing is dragged, the spread follows the stack that now holds most of its cards (`findFollowedStack`), which covers drops, undo, redo and resizes with no extra wiring.
-
-`StackNameEditor` is drawn entirely in Pixi (text, caret, selection, clear button) but backed by a hidden native `<input>` so typing, native copy/paste and IME composition work as expected. Names are keyed to the stack's lowest z-order card and persisted alongside positions; `resolveNameMerges` and `resolveNameSplits` (`stack-naming.ts`) apply the fusion and split rules.
-
-### Drag and drop
-
-`CardDrag` handles the single-card lifecycle: reparent to stage, follow the cursor, clamp to the viewport, snap back if nothing moved, lift the card while it is held (the stack overlay also reads this lift to know which card is being dragged). `DragHandler` wires it to the stage and captures undo history around each drag.
-
-### Persistence and history
-
-`Store` is a plain `localStorage` wrapper with no app knowledge. `CardStateService` uses it to persist positions, z-order, stack names, onboarding status and the canvas size the positions were taken at under one key. `PositionPersistence` reads positions off the stage and writes them back, and on first load transparently migrates the old Vite-hashed URL keys (e.g. `/assets/abandon-kDvhRWIr.webp`) to atlas frame names (e.g. `abandon`). Undo history is cleared if a migration happened, since old snapshots would reference stale keys. On resize, and on load when the saved canvas size differs, `CardManager.rescaleStacks` moves each stack rigidly: its corner follows the canvas on both axes, the gaps between its cards follow the card scale (width only), and it is clamped as a whole. The scene then recomputes stacks, so names of piles clamped together are fused like a merge.
-
-`ActionHistory` snapshots positions and z-index before/after each drag (one mousedown→mouseup = one action), keeping up to 50 undo entries plus a redo stack, both persisted. Any new action clears redo. Each entry records the canvas size, and each moved card that sat on a pile with untouched cards records one of them as an anchor, with the offset in card-scale units. On undo/redo, an anchored card goes back next to its anchor, so it lands on the same pile whatever resize happened since; the other cards are rescaled from the entry's canvas size like a restore on load, then every stack is clamped. Both `DragHandler` and `StackDragManager` feed it; `CanvasScene` exposes `undo()`, `redo()`, `canUndo`/`canRedo`, and a history-change callback for the toolbar.
-
-### Toolbar
-
-The canvas backdrop (`src/features/background/`) is a full-screen Pixi sprite below the card layer. Its texture is baked by a fragment shader from the theme palette: a warm base color, a central halo, two soft colored glows in opposite corners and a grain. The shader computes every physical pixel in float and dithers it right before the 8-bit output, since faint dark-theme glows only span a dozen color levels and visibly band if rounded earlier (canvas gradients, resampled textures). It only runs at startup, on resize (window resize or browser zoom, each one baking into a fresh texture at the new size), on theme change and after a WebGL context restore; every other frame just draws the baked texture, so low-end GPUs pay no more than for a plain image. Being part of the canvas, it's included in a screen share.
-
-`TopToolbar` renders directly on the Pixi canvas rather than as HTML: a logo on the left (the Noto Color Emoji performing arts masks, loaded from SVG so they look the same whatever emoji font the system has, also used as the favicon, with a soft theme-colored shadow so it stands out on the light background; then the wordmark, drawn once from Zen Maru Gothic Black into two white SVGs of glyph outlines, `src/logo/title-mood.svg` and `src/logo/title-sort.svg`, so it looks the same on every system without shipping the font; both share the whole word's frame so they stack with the original spacing, each is tinted from the palette, and all three SVGs are rasterized at their display size times the renderer resolution so they are never downscaled, "Mood" in the accent color, the share button's terracotta in the light theme, coral in the dark theme), and undo/redo/help/language/fullscreen/settings buttons on the right that stay pinned on resize. The fullscreen button (`src/features/fullscreen/`) only appears when the Fullscreen API (standard or `webkit`-prefixed) is available; it targets `document.documentElement` rather than the canvas so DOM modals remain visible, its icon and label follow `fullscreenchange` only (so an exit via Escape is picked up), and fullscreen is never restored on load since browsers require a user gesture. Entering or leaving fullscreen goes through the same `window` resize handling as any other viewport change, and an active canvas share keeps streaming at the new canvas size. Hovering a button shows a `CanvasTooltip`, a small reusable rounded label. Keyboard shortcuts (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, Ctrl/Cmd+Y) are wired independently in `initHistoryShortcuts`. The settings button opens a modal (`createSettingsModal`) with an appearance section (a Light/Dark/Auto theme toggle backed by `ThemeService`) and a cards section whose only action is resetting all card positions, gated behind a confirmation step.
-
-### Localization
-
-`src/i18n/locales.ts` is the single source of truth for the app's supported locales; adding one means adding its dictionary (indented with 2 spaces and ending with a newline, which `src/__tests__/locale-formatting.test.ts` enforces), its atlas assets, and an entry there. On startup, `resolveLocale` (`src/i18n/locale-resolution.ts`) picks a locale from `localStorage` if one was saved, otherwise from the browser's language list, falling back to English if none of the browser's languages match a supported locale. The `I18n` singleton (`src/i18n/I18n.ts`) holds the active locale and resolves translation keys against the matching JSON dictionary in `src/i18n/locales/`. The toolbar's globe button (`locale-menu.ts`) lets the user switch locale directly; since the app renders text onto the canvas rather than into the DOM, switching persists the new locale and reloads the page.
-
-### Reset animation
-
-Reset shuffles the card order, computes new target positions, then `CanvasScene.animateTargets` (also used by stack compacting) eases them there over 20 frames before saving and recomputing stacks.
-
-### Screen sharing
-
-A toolbar toggle opens a modal to start or stop sharing. The stream comes from `canvas.captureStream()` on the app's own Pixi canvas, not the browser's `getDisplayMedia` screen picker, so only the card canvas is sent, never the rest of the host's screen. Starting a share generates a random room code, embeds it in a shareable URL hash, and connects host and viewer peer-to-peer over WebRTC via Trystero (no custom signaling server, no account). Only one host and one viewer are allowed per room; a second viewer is rejected. A room with no connected peer for 10 minutes is torn down automatically. The host's room code and sharing state are kept in their own `localStorage` entries, separate from card positions, so resetting the canvas doesn't end an active share, and a page refresh can silently resume it.
-
-Some privacy extensions, VPNs or browser policies stop WebRTC from gathering any ICE candidate, so no connection can ever be established. Before joining a room, the viewer runs a quick probe connection with the configured STUN servers; if it yields no candidate at all, it shows an explanatory message instead of waiting forever. The host modal runs the same probe and disables "Turn on sharing" with the same kind of message.
-
-#### Signaling and STUN
-
-By default Trystero signals over its public Nostr relays and WebRTC relies on its default STUN servers. There is no relay server for the media itself: the connection is always direct between the two peers, so it can fail on restrictive networks (strict NATs, corporate firewalls). Signaling relays and STUN servers can be overridden at build time through the environment variables below (see `.env.example`), read in `src/features/screen-share/room-config.ts`. An empty or absent variable keeps the default behavior. Custom relays must accept the ephemeral Nostr events Trystero publishes without authentication (no restricted writes, no pubkey whitelist).
-
-| Variable | Format | Effect |
-| --- | --- | --- |
-| `VITE_SIGNALING_RELAYS` | Comma-separated `ws://` or `wss://` URLs | Replaces Trystero's default Nostr relays, with a redundancy of 5 capped to the number of relays provided |
-| `VITE_STUN_URLS` | Comma-separated `stun:` or `stuns:` URLs | Replaces Trystero's default STUN servers |
-
-When `VITE_STUN_URLS` is set, its servers are passed as `rtcConfig.iceServers`, replacing Trystero's default STUN list. An entry with the wrong scheme never falls back to the defaults: the error is logged to the console and sharing can't start, on the host or the viewer side.
+- [docs/BEHAVIOR.md](docs/BEHAVIOR.md): how the app behaves and the rules it must keep
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): how it is built
+- [CONTRIBUTING.md](CONTRIBUTING.md): development setup, commands, project structure, CI and releases
 
 ## License
 
-MIT, Robin Rateau, 2026
+[MIT](LICENSE.txt), Robin Rateau, 2026
 
 The logo is the performing arts emoji from [Noto Emoji](https://github.com/googlefonts/noto-emoji), © Google, licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 

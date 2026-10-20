@@ -36,8 +36,8 @@
 
 # Checks on every code change
 - Touched/added tests are pertinent: no redundancy, no misleading titles, each targets what it claims.
-- BEHAVIOR.md matches the app's behavior and business rules; update it when a change adds or alters one (rules go there, not in README.md or AGENTS.md).
-- README.md matches setup, structure and architecture; update it if it drifted.
+- docs/BEHAVIOR.md matches the app's behavior and business rules; update it when a change adds or alters one (rules go there, not in README.md or AGENTS.md).
+- README.md (overview, quick start), CONTRIBUTING.md (dev setup, commands, structure, CI, releases) and docs/ARCHITECTURE.md (architecture) match the project; update whichever drifted.
 
 # Test coverage
 - Every new exported class/function file, and every new function/method, ships with its own dedicated tests in the same change. Indirect exercise doesn't count; missing tests are never an acceptable follow-up.

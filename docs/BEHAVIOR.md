@@ -1,6 +1,6 @@
 # MoodSort behavior
 
-How the app behaves and the business rules it must keep. The README covers setup and architecture; this file is the reference for what the user sees and which invariants every change must preserve.
+How the app behaves and the business rules it must keep. The README covers setup, [ARCHITECTURE.md](ARCHITECTURE.md) the architecture; this file is the reference for what the user sees and which invariants every change must preserve.
 
 ## Canvas and screen
 
