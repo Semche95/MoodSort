@@ -68,6 +68,10 @@ Either way it runs at `http://localhost:8080`.
 
 `.github/workflows/ci.yml` runs on every push to `main` and every pull request. The `verify` job installs dependencies, then caches the card atlas between runs (the key hashes the contents of `scripts/generate-atlas.mjs`, `src/cards/`, `src/i18n/locales/`, and `scripts/fonts/`, so it's only regenerated when that content changes), regenerates the icons, typechecks, lints, and runs the test suite. A `dependabot` job, which depends on `verify` (`needs: [verify]`), then auto-approves and auto-merges non-major Dependabot PRs.
 
+## Releases
+
+Pushing a `v*` tag triggers `.github/workflows/release.yml`, which fails if the tag doesn't match the `package.json` version, then creates a draft GitHub release whose notes list the Conventional Commits since the previous tag, grouped by `cliff.toml` (features, fixes, performance, then build and refactor; dependency bumps and other types are left out). Rewrite the notes if needed, then publish the draft.
+
 ## Deployment
 
 Publishing a GitHub release triggers `.github/workflows/deploy.yml`, which builds the app and uploads `dist/` to an OVH mutualized hosting account over SFTP. It can also be run manually from the Actions tab.

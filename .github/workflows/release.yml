@@ -1,0 +1,39 @@
+name: Release
+
+# On a v* tag: draft GitHub release with the notes from the Conventional Commits since the previous tag, grouped by
+# cliff.toml. Publishing the draft is what triggers deploy.yml and docker-publish.yml.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check the tag matches the version
+        run: |
+          version=$(jq -r .version package.json)
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME, package.json $version: bump the version before tagging"
+            exit 1
+          fi
+
+      - id: cliff
+        uses: orhun/git-cliff-action@v4
+        with:
+          args: --current
+        env:
+          OUTPUT: release-notes.md
+
+      - name: Create the draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release create "$GITHUB_REF_NAME" --draft --verify-tag --title "$GITHUB_REF_NAME" --notes-file release-notes.md
