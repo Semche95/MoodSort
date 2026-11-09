@@ -51,8 +51,9 @@ src/
                 # inline Lucide SVGs and shared chrome for DOM modals, tooltip,
                 # loading overlay, geometry, localStorage wrapper,
                 # reduced-motion and Ctrl/Cmd key checks
-  i18n/         # Locale list and resolution, translations, per-locale card atlas
-                # loading; locales/ holds one JSON per locale and their schema
+  i18n/         # Locale list and resolution, translations, localized document
+                # title and meta tags, per-locale card atlas loading; locales/
+                # holds one JSON per locale and their schema
   types/        # One file per domain type (card, drag, stack, history, etc.)
   __tests__/
 ```
