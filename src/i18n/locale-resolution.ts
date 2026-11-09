@@ -1,4 +1,4 @@
-import { I18n, LOCALE_STORAGE_KEY } from './I18n'
+import { I18n, LOCALE_STORAGE_KEY } from './i18n'
 import type { Locale } from './i18n.types'
 import { AVAILABLE_LOCALES } from './locales'
 

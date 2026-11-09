@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { resolveLocale } from '../i18n/locale-resolution'
-import { I18n } from '../i18n/I18n'
+import { I18n } from '../i18n/i18n'
 
 const localStorageMock: Record<string, string> = {}
 

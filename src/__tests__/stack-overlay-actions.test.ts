@@ -3,7 +3,7 @@ import type { Application, Container } from 'pixi.js'
 import { StackOverlay } from '../features/stack/stack-overlay/stack-overlay'
 import { computeStackActionsLayout } from '../features/stack/stack-hit-testing'
 import { Card } from '../types/card.types'
-import { I18n } from '../i18n/I18n'
+import { I18n } from '../i18n/i18n'
 import { createCardLift } from '../features/card/card-lift'
 
 type Handler = (payload: unknown) => void

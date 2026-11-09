@@ -6,7 +6,7 @@ import { getPixiThemeColors } from '../features/theme/pixi-theme-colors'
 import { createCardLift } from '../features/card/card-lift'
 import { Card } from '../types/card.types'
 import { StackOverlayEntry } from '../types/stack-overlay-entry.types'
-import { I18n } from '../i18n/I18n'
+import { I18n } from '../i18n/i18n'
 
 type Handler = (payload: unknown) => void
 

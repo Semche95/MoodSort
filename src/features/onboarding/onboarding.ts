@@ -1,6 +1,6 @@
 import { CardStateService } from '../card/card-state-service'
 import { POSITIONS_KEY, ORDER_KEY, ONBOARDING_KEY, STACK_NAMES_KEY, VIEWPORT_KEY } from '../../types/card-state.types'
-import { I18n } from '../../i18n/I18n'
+import { I18n } from '../../i18n/i18n'
 import { domIcon } from '../../shared/ui/dom-icons'
 import { iconBadge, modalCloseButton } from '../../shared/ui/modal'
 import logoUrl from '../../logo/logo.svg?url'

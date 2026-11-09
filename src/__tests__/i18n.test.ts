@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { I18n } from '../i18n/I18n'
+import { I18n } from '../i18n/i18n'
 import localeSchema from '../i18n/locales/locale.schema.json'
 
 const dictionaryModules = import.meta.glob<{ default: Record<string, unknown> }>('../i18n/locales/*.json', { eager: true })

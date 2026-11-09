@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { applyDocumentMeta } from '../i18n/document-meta'
-import { I18n } from '../i18n/I18n'
+import { I18n } from '../i18n/i18n'
 
 beforeEach(() => {
     document.head.innerHTML = `

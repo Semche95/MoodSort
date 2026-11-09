@@ -1,4 +1,4 @@
-import { I18n } from './I18n'
+import { I18n } from './i18n'
 
 function setMetaContent(selector: string, content: string): void {
     document.head.querySelector(selector)?.setAttribute('content', content)

@@ -11,7 +11,7 @@ import { computeCardLayoutKey } from '../stack-geometry'
 import { computeStackLabel, pickWinningGroup } from '../stack-naming'
 import { StackLabelPool } from '../stack-overlay/stack-label-pool'
 import { getPixiThemeColors } from '../../theme/pixi-theme-colors'
-import { I18n } from '../../../i18n/I18n'
+import { I18n } from '../../../i18n/i18n'
 import {
     clampSpreadRow,
     computeSpreadCellBox,

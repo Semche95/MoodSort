@@ -5,7 +5,7 @@ import {
     initScreenSizeGuard,
     isScreenTooSmall,
 } from '../features/screen-size/screen-size-guard'
-import { I18n } from '../i18n/I18n'
+import { I18n } from '../i18n/i18n'
 
 function setInnerWidth(width: number): void {
     Object.defineProperty(window, 'innerWidth', { value: width, writable: true, configurable: true })

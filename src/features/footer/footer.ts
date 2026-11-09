@@ -1,5 +1,5 @@
 import { createLegalModal } from './legal'
-import { I18n } from '../../i18n/I18n'
+import { I18n } from '../../i18n/i18n'
 
 export function createFooter(): HTMLElement {
     const footer = document.createElement('footer')

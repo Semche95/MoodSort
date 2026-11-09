@@ -1,4 +1,4 @@
-import { I18n } from '../../i18n/I18n'
+import { I18n } from '../../i18n/i18n'
 import { iconBadge } from '../../shared/ui/modal'
 
 export const MIN_SCREEN_WIDTH_PX = 1024

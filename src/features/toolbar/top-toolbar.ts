@@ -13,7 +13,7 @@ import { isFullscreenActive, isFullscreenSupported, onFullscreenChange, toggleFu
 import { resumeSharingIfWasActive, subscribeToSharing } from '../screen-share/screen-share-session'
 import type { SharingState } from '../../types/screen-share.types'
 import { createHelpIcon, createIcon } from '../../shared/ui/icons'
-import { I18n, switchLocale } from '../../i18n/I18n'
+import { I18n, switchLocale } from '../../i18n/i18n'
 import type { Locale } from '../../i18n/i18n.types'
 import { createLocaleMenu } from './locale-menu'
 import { BUTTON_SIZE, LOGO_SIZE, TOP_MARGIN, applyButtonTheme, applyLogoTheme, applyShareButtonTheme, createButton, createLogo, createShareButton, setButtonEnabled, setShareIndicators } from './toolbar-view'

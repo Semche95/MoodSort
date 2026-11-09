@@ -1,4 +1,4 @@
-import { I18n } from '../../i18n/I18n'
+import { I18n } from '../../i18n/i18n'
 import { domIcon } from '../../shared/ui/dom-icons'
 import { iconBadge, modalCloseButton } from '../../shared/ui/modal'
 
