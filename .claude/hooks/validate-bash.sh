@@ -37,13 +37,21 @@ runs_atlas() {
     || has "(^|[;&|(\`])[[:space:]]*[^[:space:];&|]*generate-atlas\\.mjs"
 }
 
-# Expands $VAR and ${VAR} from literal assignments made in the command itself; fails on anything else.
+# Expands $VAR and ${VAR} from literal or `mktemp -d /tmp/...` assignments made in the command itself; fails on anything else.
 expand_vars() {
   local s=$1 name value re='\$\{?([A-Za-z_][A-Za-z0-9_]*)\}?'
+  local literal="(\"[^\"\$]*\"|'[^']*'|[^[:space:]\"'\$;&|]+)"
+  # Template without a slash after /tmp/, so the directory cannot leave /tmp.
+  local tmp_dir='"?\$\(mktemp[[:space:]]+-d[[:space:]]+"?/tmp/([A-Za-z0-9._-]|\$\(basename[[:space:]]+"\$[A-Za-z_][A-Za-z0-9_]*"\))+"?\)"?'
   while [[ $s =~ $re ]]; do
     name=${BASH_REMATCH[1]}
-    value=$(grep -oE "(^|[;&|[:space:]])${name}=(\"[^\"\$]*\"|'[^']*'|[^[:space:]\"'\$;&|]+)" <<<"$cmd" \
-      | tail -n 1 | sed -E "s/^[;&|[:space:]]?${name}=//; s/^[\"']//; s/[\"']$//")
+    value=$(grep -E "(^|[;&|[:space:]])${name}=" <<<"$cmd" | tail -n 1 \
+      | sed -E "s/^(.*[;&|[:space:]])?${name}=/${name}=/" \
+      | grep -oE "^${name}=(${tmp_dir}|${literal})" | sed -E "s/^${name}=//")
+    case "$value" in
+      *'$(mktemp'*) value=/tmp/mktemp ;;
+      *) value=$(sed -E "s/^[\"']//; s/[\"']$//" <<<"$value") ;;
+    esac
     [ -n "$value" ] || return 1
     s=${s/"${BASH_REMATCH[0]}"/$value}
   done
@@ -91,17 +99,60 @@ has "${sep}(locate|plocate|mlocate)[[:space:]]" && block 'no global filesystem s
 has "${sep}\\.\\.(/|[[:space:]]|$|[;&|)])" && block 'stay inside the project directory (AGENTS.md, Filesystem scope)'
 has "${sep}(find|ls|du|tree|cd|rm|chmod|chown)[[:space:]]+([^;&|]*[[:space:]])?/([[:space:]]|$|[;&|)])" && block 'stay inside the project directory (AGENTS.md, Filesystem scope)'
 
+# Blanks quoted text, where ~ is never expanded, except the $( ) or `...` code inside it; unbalanced quotes keep the raw command.
+unquoted() {
+  local out='' stack='' c i end rest
+  for ((i = 0; i < ${#cmd}; i++)); do
+    c=${cmd:i:1}
+    if [ "${cmd:i:2}" = '$(' ]; then stack+=c; out+='$('; ((i++)); continue; fi
+    if [ "${stack: -1}" = d ]; then
+      case "$c" in
+        '\') ((i++)); out+=_ ;;
+        '"') stack=${stack%d}; out+=_ ;;
+        '`') stack+=b; out+=$c ;;
+        *) out+=_ ;;
+      esac
+      continue
+    fi
+    if [ "$c" = '\' ]; then out+=$c${cmd:i+1:1}; ((i++)); continue; fi
+    if [ "$c" = '`' ]; then
+      if [ "${stack: -1}" = b ]; then stack=${stack%b}; else stack+=b; fi
+    else
+      case "$c" in
+        "'")
+          rest=${cmd:i+1}
+          end=${rest%%"'"*}
+          [ "$end" = "$rest" ] && { printf '%s' "$cmd"; return; }
+          ((i += ${#end} + 1))
+          out+=_
+          continue
+          ;;
+        '"') stack+=d ;;
+        '(') stack+=p ;;
+        ')') case "${stack: -1}" in c | p) stack=${stack%?} ;; esac ;;
+      esac
+    fi
+    out+=$c
+  done
+  if [ -n "$stack" ]; then printf '%s' "$cmd"; else printf '%s' "$out"; fi
+}
+
+# `=~ ` is the [[ ]] regex operator, not a home directory.
+home=$(unquoted | sed -E 's/=~[[:space:]]/= /g' \
+  | grep -oE "(^|[;&|(\`[:space:]=<>:])~([^[:space:];|&)<>]*)" | head -n 1 | sed -E "s/^[;&|(\`[:space:]=<>:]//")
+[ -n "$home" ] && block "stay inside the project directory: $home (AGENTS.md, Filesystem scope)"
+
 while IFS= read -r path; do
   path=$(sed -E "s/^[][;&|(\`[:space:]\"'=<>]//" <<<"$path")
   case "$path" in
     "$root" | "$root"/* | /tmp | /tmp/* | /dev/null | /dev/std* | /dev/fd/*) ;;
-    '~'* | '$HOME'*) block "stay inside the project directory: $path (AGENTS.md, Filesystem scope)" ;;
+    '$HOME'*) block "stay inside the project directory: $path (AGENTS.md, Filesystem scope)" ;;
     /*)
       grep -qE '^/(usr|etc|home|root|var|opt|bin|sbin|lib|lib32|lib64|boot|srv|mnt|media|proc|sys|run|snap|nix|dev)(/|$)' <<<"$path" \
         && block "stay inside the project directory: $path (AGENTS.md, Filesystem scope)"
       ;;
   esac
-done < <(grep -oE "(^|[;&|(\`[:space:]\"'=<>])(~|\\\$HOME|/)[^[:space:]\"';|&)<>]*" <<<"$cmd")
+done < <(grep -oE "(^|[;&|(\`[:space:]\"'=<>])(\\\$HOME|/)[^[:space:]\"';|&)<>]*" <<<"$cmd")
 
 readers='(cat|head|tail|less|more|bat|sed|awk|grep|rg|xxd|od|strings|cut|sort|wc)'
 forbidden='(node_modules/|dist/|src/assets/|pnpm-lock\.yaml|\.playwright-mcp/)'
