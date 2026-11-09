@@ -20,7 +20,7 @@
 
 # Project structure
 - `src/app/`: composition root only (entry point, scene wiring features), no business logic.
-- `src/features/`: one folder per feature (card, drag, stack, history, toolbar, onboarding, settings, footer, screen-share), by domain, no service/controller/ui split. Feature-only constants live in the feature's main file, not a `constants.ts`. A file with several responsibilities (e.g. orchestration vs. Pixi drawing) splits into a subfolder named after it (`features/stack/stack-overlay/`).
+- `src/features/`: one folder per feature domain (e.g. card, stack, screen-share), no service/controller/ui split. Feature-only constants live in the feature's main file, not a `constants.ts`. A file with several responsibilities (e.g. orchestration vs. Pixi drawing) splits into a subfolder named after it (`features/stack/stack-overlay/`).
 - `src/shared/`: code used by 2+ features (`shared/ui/` widgets, `shared/utils/` stateless utils), never moved there preemptively.
 - `src/types/`: one type/interface per `<concept>.types.ts` file, grouped only when inseparable (e.g. `card-state.types.ts`: `CardState` + its storage keys). No inline interfaces in `app/`, `features/`, `shared/`.
 - `src/i18n/locales/`: one JSON per locale (`de`, `en`, `eo`, `es`, `fr`, `nl`), pretty-printed (2-space indent, one key per line, trailing newline), validated by `locale.schema.json`, formatting enforced by `locale-formatting.test.ts`.
