@@ -38,6 +38,8 @@ export function buildRoomConfig(env: SignalingEnv = import.meta.env): JoinRoomCo
     const stunUrls = parseUrlList(env.VITE_STUN_URLS, STUN_SCHEMES, 'VITE_STUN_URLS')
     return {
         appId: SCREEN_SHARE_APP_ID,
+        // MoodSort only uses peerId, so Trystero must not persist a stable userId keypair in IndexedDB.
+        identity: 'none',
         relayConfig: relayUrls.length > 0
             ? { redundancy: Math.min(RELAY_REDUNDANCY, relayUrls.length), urls: relayUrls }
             : { redundancy: RELAY_REDUNDANCY },

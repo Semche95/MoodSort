@@ -19,7 +19,7 @@ describe('parseUrlList', () => {
 
 describe('buildRoomConfig', () => {
     it('keeps Trystero default relays and STUN servers when no variable is set', () => {
-        expect(buildRoomConfig({})).toEqual({ appId: SCREEN_SHARE_APP_ID, relayConfig: { redundancy: 5 } })
+        expect(buildRoomConfig({})).toEqual({ appId: SCREEN_SHARE_APP_ID, identity: 'none', relayConfig: { redundancy: 5 } })
     })
 
     it('replaces the default relays when VITE_SIGNALING_RELAYS is set', () => {
@@ -44,6 +44,7 @@ describe('buildRoomConfig', () => {
 
         expect(config).toEqual({
             appId: SCREEN_SHARE_APP_ID,
+            identity: 'none',
             relayConfig: { redundancy: 5 },
             rtcConfig: { iceServers: [{ urls: ['stun:a.test:3478', 'stuns:b.test:5349'] }] },
         })
