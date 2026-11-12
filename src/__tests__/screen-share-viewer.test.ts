@@ -5,12 +5,12 @@ const { joinRoom, rooms } = vi.hoisted(() => {
     const rooms: Array<{
         leave: ReturnType<typeof vi.fn>
         makeAction: ReturnType<typeof vi.fn>
-        onPeerStream: ((stream: unknown, peerId: string) => void) | null
-        onPeerLeave: ((peerId: string) => void) | null
+        onPeerStream: ReturnType<typeof vi.fn>
+        onPeerLeave: ReturnType<typeof vi.fn>
     }> = []
 
     const joinRoom = vi.fn(() => {
-        const room = { leave: vi.fn(), makeAction: vi.fn(() => ({ send: vi.fn(), onMessage: null })), onPeerStream: null, onPeerLeave: null }
+        const room = { leave: vi.fn(), makeAction: vi.fn(() => ({ send: vi.fn(), onMessage: vi.fn() })), onPeerStream: vi.fn(), onPeerLeave: vi.fn() }
         rooms.push(room)
         return room
     })

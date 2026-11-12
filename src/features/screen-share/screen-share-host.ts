@@ -38,27 +38,30 @@ export class ScreenShareHost {
 
         const roomBusy = room.makeAction<null>(ROOM_BUSY_ACTION)
 
-        room.onPeerJoin = (peerId: string): void => {
+        room.onPeerJoin(({ peerId }: { peerId: string }): void => {
             if (this.connectedPeerId !== null) {
-                roomBusy.send(null, { target: peerId })
+                // The rejected viewer may already be gone, which is harmless.
+                roomBusy.send(null, { target: peerId }).catch((): void => {})
                 return
             }
             this.connectedPeerId = peerId
             this.graceTimeout.clear()
             if (this.stream) {
-                room.addStream(this.stream, { target: peerId })
+                room.addStream(this.stream, { target: peerId }).catch((): void => this.releasePeer(peerId))
             }
             this.onStatusChange('connected')
-        }
+        })
 
-        room.onPeerLeave = (peerId: string): void => {
-            if (peerId !== this.connectedPeerId) {
-                return
-            }
-            this.connectedPeerId = null
-            this.onStatusChange('waiting')
-            this.graceTimeout.arm(SCREEN_SHARE_GRACE_TIMEOUT_MS)
+        room.onPeerLeave(({ peerId }: { peerId: string }): void => this.releasePeer(peerId))
+    }
+
+    private releasePeer(peerId: string): void {
+        if (peerId !== this.connectedPeerId) {
+            return
         }
+        this.connectedPeerId = null
+        this.onStatusChange('waiting')
+        this.graceTimeout.arm(SCREEN_SHARE_GRACE_TIMEOUT_MS)
     }
 
     stop(): void {

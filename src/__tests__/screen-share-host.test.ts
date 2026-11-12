@@ -9,19 +9,27 @@ const { joinRoom, rooms } = vi.hoisted(() => {
         addStream: ReturnType<typeof vi.fn>
         leave: ReturnType<typeof vi.fn>
         makeAction: ReturnType<typeof vi.fn>
-        onPeerJoin: ((peerId: string) => void) | null
-        onPeerLeave: ((peerId: string) => void) | null
+        onPeerJoin: ReturnType<typeof vi.fn>
+        onPeerLeave: ReturnType<typeof vi.fn>
+        peerJoinHandler: ((context: { peerId: string }) => void) | null
+        peerLeaveHandler: ((context: { peerId: string }) => void) | null
     }> = []
 
     const joinRoom = vi.fn((config: { appId: string }, roomId: string) => {
         const room = {
             appId: config.appId,
             roomId,
-            addStream: vi.fn(),
+            addStream: vi.fn(() => Promise.resolve()),
             leave: vi.fn(),
-            makeAction: vi.fn(() => ({ send: vi.fn(), onMessage: null })),
-            onPeerJoin: null,
-            onPeerLeave: null,
+            makeAction: vi.fn(() => ({ send: vi.fn(() => Promise.resolve()), onMessage: vi.fn() })),
+            peerJoinHandler: null as ((context: { peerId: string }) => void) | null,
+            peerLeaveHandler: null as ((context: { peerId: string }) => void) | null,
+            onPeerJoin: vi.fn((handler: (context: { peerId: string }) => void) => {
+                room.peerJoinHandler = handler
+            }),
+            onPeerLeave: vi.fn((handler: (context: { peerId: string }) => void) => {
+                room.peerLeaveHandler = handler
+            }),
         }
         rooms.push(room)
         return room
@@ -68,7 +76,7 @@ describe('ScreenShareHost', () => {
         const host = new ScreenShareHost('AB12CD', canvas as unknown as HTMLCanvasElement, 18, onStatusChange, vi.fn())
 
         host.start()
-        rooms[0].onPeerJoin?.('peer-1')
+        rooms[0].peerJoinHandler?.({ peerId: 'peer-1' })
 
         expect(canvas.captureStream).toHaveBeenCalledWith(18)
         expect(rooms[0].addStream).toHaveBeenCalledWith(canvas.captureStream.mock.results[0].value, { target: 'peer-1' })
@@ -80,9 +88,9 @@ describe('ScreenShareHost', () => {
         const host = new ScreenShareHost('AB12CD', new FakeCanvas() as unknown as HTMLCanvasElement, 18, onStatusChange, vi.fn())
 
         host.start()
-        rooms[0].onPeerJoin?.('peer-1')
+        rooms[0].peerJoinHandler?.({ peerId: 'peer-1' })
         onStatusChange.mockClear()
-        rooms[0].onPeerJoin?.('peer-2')
+        rooms[0].peerJoinHandler?.({ peerId: 'peer-2' })
 
         expect(rooms[0].addStream).not.toHaveBeenCalledWith('fake-stream', { target: 'peer-2' })
         expect(onStatusChange).not.toHaveBeenCalled()
@@ -92,9 +100,9 @@ describe('ScreenShareHost', () => {
         const host = new ScreenShareHost('AB12CD', new FakeCanvas() as unknown as HTMLCanvasElement, 18, vi.fn(), vi.fn())
 
         host.start()
-        rooms[0].onPeerJoin?.('peer-1')
+        rooms[0].peerJoinHandler?.({ peerId: 'peer-1' })
         const roomBusy = rooms[0].makeAction.mock.results[0].value
-        rooms[0].onPeerJoin?.('peer-2')
+        rooms[0].peerJoinHandler?.({ peerId: 'peer-2' })
 
         expect(roomBusy.send).toHaveBeenCalledWith(null, { target: 'peer-2' })
     })
@@ -104,8 +112,8 @@ describe('ScreenShareHost', () => {
         const host = new ScreenShareHost('AB12CD', new FakeCanvas() as unknown as HTMLCanvasElement, 18, onStatusChange, vi.fn())
 
         host.start()
-        rooms[0].onPeerJoin?.('peer-1')
-        rooms[0].onPeerLeave?.('peer-1')
+        rooms[0].peerJoinHandler?.({ peerId: 'peer-1' })
+        rooms[0].peerLeaveHandler?.({ peerId: 'peer-1' })
 
         expect(onStatusChange).toHaveBeenLastCalledWith('waiting')
         expect(joinRoom).toHaveBeenCalledTimes(1)
@@ -117,9 +125,9 @@ describe('ScreenShareHost', () => {
         const host = new ScreenShareHost('AB12CD', new FakeCanvas() as unknown as HTMLCanvasElement, 18, onStatusChange, onTimedOut)
 
         host.start()
-        rooms[0].onPeerJoin?.('peer-1')
-        rooms[0].onPeerLeave?.('peer-1')
-        rooms[0].onPeerJoin?.('peer-2')
+        rooms[0].peerJoinHandler?.({ peerId: 'peer-1' })
+        rooms[0].peerLeaveHandler?.({ peerId: 'peer-1' })
+        rooms[0].peerJoinHandler?.({ peerId: 'peer-2' })
         vi.advanceTimersByTime(SCREEN_SHARE_GRACE_TIMEOUT_MS)
 
         expect(onStatusChange).not.toHaveBeenCalledWith('stopped')
@@ -139,14 +147,64 @@ describe('ScreenShareHost', () => {
         expect(onTimedOut).toHaveBeenCalledOnce()
     })
 
+    it('ignores a room-busy notice that fails because the rejected viewer already left', async () => {
+        const onStatusChange = vi.fn()
+        const host = new ScreenShareHost('AB12CD', new FakeCanvas() as unknown as HTMLCanvasElement, 18, onStatusChange, vi.fn())
+
+        host.start()
+        rooms[0].peerJoinHandler?.({ peerId: 'peer-1' })
+        const roomBusy = rooms[0].makeAction.mock.results[0].value
+        roomBusy.send.mockReturnValueOnce(Promise.reject(new Error('disconnected')))
+        onStatusChange.mockClear()
+        rooms[0].peerJoinHandler?.({ peerId: 'peer-2' })
+        await vi.runAllTimersAsync()
+
+        expect(onStatusChange).not.toHaveBeenCalled()
+    })
+
+    it('frees the viewer slot and waits again when sending the stream to the viewer fails', async () => {
+        const onStatusChange = vi.fn()
+        const host = new ScreenShareHost('AB12CD', new FakeCanvas() as unknown as HTMLCanvasElement, 18, onStatusChange, vi.fn())
+
+        host.start()
+        rooms[0].addStream.mockReturnValueOnce(Promise.reject(new Error('metadata send failed')))
+        rooms[0].peerJoinHandler?.({ peerId: 'peer-1' })
+        await Promise.resolve()
+
+        expect(onStatusChange).toHaveBeenLastCalledWith('waiting')
+        rooms[0].peerJoinHandler?.({ peerId: 'peer-2' })
+        expect(rooms[0].addStream).toHaveBeenLastCalledWith(expect.anything(), { target: 'peer-2' })
+        expect(onStatusChange).toHaveBeenLastCalledWith('connected')
+    })
+
+    it('keeps the current viewer when a stream send to a viewer that already left fails late', async () => {
+        const onStatusChange = vi.fn()
+        const host = new ScreenShareHost('AB12CD', new FakeCanvas() as unknown as HTMLCanvasElement, 18, onStatusChange, vi.fn())
+        let rejectFirstSend: (error: Error) => void = (): void => {}
+
+        host.start()
+        rooms[0].addStream.mockReturnValueOnce(new Promise((_: unknown, reject: (error: Error) => void): void => {
+            rejectFirstSend = reject
+        }))
+        rooms[0].peerJoinHandler?.({ peerId: 'peer-1' })
+        rooms[0].peerLeaveHandler?.({ peerId: 'peer-1' })
+        rooms[0].peerJoinHandler?.({ peerId: 'peer-2' })
+        rejectFirstSend(new Error('disconnected'))
+        await Promise.resolve()
+        rooms[0].peerJoinHandler?.({ peerId: 'peer-3' })
+
+        expect(onStatusChange).toHaveBeenLastCalledWith('connected')
+        expect(rooms[0].makeAction.mock.results[0].value.send).toHaveBeenCalledWith(null, { target: 'peer-3' })
+    })
+
     it('tears the session down when a viewer disconnects and does not return within the grace period', () => {
         const onStatusChange = vi.fn()
         const onTimedOut = vi.fn()
         const host = new ScreenShareHost('AB12CD', new FakeCanvas() as unknown as HTMLCanvasElement, 18, onStatusChange, onTimedOut)
 
         host.start()
-        rooms[0].onPeerJoin?.('peer-1')
-        rooms[0].onPeerLeave?.('peer-1')
+        rooms[0].peerJoinHandler?.({ peerId: 'peer-1' })
+        rooms[0].peerLeaveHandler?.({ peerId: 'peer-1' })
         vi.advanceTimersByTime(SCREEN_SHARE_GRACE_TIMEOUT_MS)
 
         expect(rooms[0].leave).toHaveBeenCalledOnce()

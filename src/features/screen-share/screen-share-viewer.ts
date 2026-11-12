@@ -34,21 +34,21 @@ export class ScreenShareViewer {
         this.onStatusChange('waiting')
         this.graceTimeout.arm(SCREEN_SHARE_GRACE_TIMEOUT_MS)
 
-        room.makeAction<null>(ROOM_BUSY_ACTION).onMessage = (): void => {
+        room.makeAction<null>(ROOM_BUSY_ACTION).onMessage((): void => {
             this.stop()
             this.onRoomBusy()
-        }
+        })
 
-        room.onPeerStream = (stream: MediaStream): void => {
+        room.onPeerStream((stream: MediaStream): void => {
             this.graceTimeout.clear()
             this.onStream(stream)
             this.onStatusChange('connected')
-        }
+        })
 
-        room.onPeerLeave = (): void => {
+        room.onPeerLeave((): void => {
             this.onStatusChange('waiting')
             this.graceTimeout.arm(SCREEN_SHARE_GRACE_TIMEOUT_MS)
-        }
+        })
     }
 
     stop(): void {

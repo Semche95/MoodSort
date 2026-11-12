@@ -3,9 +3,9 @@ import { createScreenShareModal } from '../features/screen-share/screen-share-mo
 import { SCREEN_SHARE_GRACE_TIMEOUT_MS } from '../features/screen-share/room-config'
 
 const { joinRoom, rooms } = vi.hoisted(() => {
-    const rooms: Array<{ leave: ReturnType<typeof vi.fn>; addStream: ReturnType<typeof vi.fn>; makeAction: ReturnType<typeof vi.fn>; onPeerJoin: unknown; onPeerLeave: unknown }> = []
+    const rooms: Array<{ leave: ReturnType<typeof vi.fn>; addStream: ReturnType<typeof vi.fn>; makeAction: ReturnType<typeof vi.fn>; onPeerJoin: ReturnType<typeof vi.fn>; onPeerLeave: ReturnType<typeof vi.fn> }> = []
     const joinRoom = vi.fn(() => {
-        const room = { leave: vi.fn(), addStream: vi.fn(), makeAction: vi.fn(() => ({ send: vi.fn(), onMessage: null })), onPeerJoin: null, onPeerLeave: null }
+        const room = { leave: vi.fn(), addStream: vi.fn(() => Promise.resolve()), makeAction: vi.fn(() => ({ send: vi.fn(() => Promise.resolve()), onMessage: vi.fn() })), onPeerJoin: vi.fn(), onPeerLeave: vi.fn() }
         rooms.push(room)
         return room
     })
