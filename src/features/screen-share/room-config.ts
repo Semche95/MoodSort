@@ -6,6 +6,9 @@ export const SCREEN_SHARE_APP_ID = 'moodsort-screen-share'
 // Trystero action namespace the host uses to reject a second viewer (only one spectator per session).
 export const ROOM_BUSY_ACTION = 'room-busy'
 
+// Trystero action namespace the host uses to drop a viewer it could not send the stream to, so it rejoins.
+export const STREAM_FAILED_ACTION = 'stream-failed'
+
 // How long either side waits with no active peer before tearing the session down.
 export const SCREEN_SHARE_GRACE_TIMEOUT_MS = 10 * 60 * 1000
 

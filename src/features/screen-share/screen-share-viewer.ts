@@ -1,9 +1,10 @@
 import { joinRoom } from 'trystero'
 import type { Room } from 'trystero'
 import type { ConnectionStatus } from '../../types/screen-share.types'
-import { buildRoomConfig, getIceServers, isRoomConfigValid, ROOM_BUSY_ACTION, SCREEN_SHARE_GRACE_TIMEOUT_MS } from './room-config'
+import { buildRoomConfig, getIceServers, isRoomConfigValid, ROOM_BUSY_ACTION, SCREEN_SHARE_GRACE_TIMEOUT_MS, STREAM_FAILED_ACTION } from './room-config'
 import { isWebRtcBlocked, isWebRtcSupported } from './compat'
 import { GraceTimeout } from './grace-timeout'
+import { isPeerAlive } from './peer-liveness'
 import { I18n } from '../../i18n/i18n'
 import { Store } from '../../shared/utils/store'
 import { ThemeService } from '../theme/theme-service'
@@ -14,6 +15,7 @@ import { VIEWER_THEME_STORAGE_KEY } from '../../types/theme.types'
 // bounded by the grace timeout, instead of leaving and rejoining.
 export class ScreenShareViewer {
     private room: Room | null = null
+    private hostPeerId: string | null = null
     private readonly graceTimeout: GraceTimeout = new GraceTimeout((): void => {
         this.stop()
         this.onStatusChange('stopped')
@@ -29,32 +31,80 @@ export class ScreenShareViewer {
     ) {}
 
     start(): void {
-        const room = joinRoom(buildRoomConfig(), this.roomCode)
-        this.room = room
         this.onStatusChange('waiting')
         this.graceTimeout.arm(SCREEN_SHARE_GRACE_TIMEOUT_MS)
+        this.join()
+    }
 
-        room.makeAction<null>(ROOM_BUSY_ACTION).onMessage((): void => {
-            this.stop()
-            this.onRoomBusy()
+    private join(): void {
+        const room = joinRoom(buildRoomConfig(), this.roomCode)
+        this.room = room
+
+        room.makeAction<null>(ROOM_BUSY_ACTION).onMessage((_: null, { peerId }: { peerId: string }): void => {
+            if (this.isFromHost(peerId)) {
+                this.stop()
+                this.onRoomBusy()
+            }
         })
 
-        room.onPeerStream((stream: MediaStream): void => {
-            this.graceTimeout.clear()
-            this.onStream(stream)
-            this.onStatusChange('connected')
+        room.makeAction<null>(STREAM_FAILED_ACTION).onMessage((_: null, { peerId }: { peerId: string }): void => {
+            if (this.isFromHost(peerId)) {
+                this.rejoin()
+            }
         })
 
-        room.onPeerLeave((): void => {
+        room.onPeerStream((stream: MediaStream, { peerId }: { peerId: string }): void => {
+            const hostPeerId = this.hostPeerId
+            if (hostPeerId === null || peerId === hostPeerId) {
+                this.acceptStream(stream, peerId)
+                return
+            }
+            // A host that reloaded sends from a new peerId before its old one is reported gone.
+            void isPeerAlive(room, hostPeerId).then((alive: boolean): void => {
+                if (!alive && room === this.room) {
+                    this.acceptStream(stream, peerId)
+                }
+            })
+        })
+
+        room.onPeerLeave(({ peerId }: { peerId: string }): void => {
+            if (peerId !== this.hostPeerId) {
+                return
+            }
+            this.hostPeerId = null
             this.onStatusChange('waiting')
             this.graceTimeout.arm(SCREEN_SHARE_GRACE_TIMEOUT_MS)
         })
+    }
+
+    // Before any stream the host is unknown, so its notices are accepted from any peer.
+    private isFromHost(peerId: string): boolean {
+        return this.hostPeerId === null || peerId === this.hostPeerId
+    }
+
+    private acceptStream(stream: MediaStream, peerId: string): void {
+        this.hostPeerId = peerId
+        this.graceTimeout.clear()
+        this.onStream(stream)
+        this.onStatusChange('connected')
+    }
+
+    // The host only sends a stream on join, so a fresh peerId is the only way to get another attempt.
+    private rejoin(): void {
+        if (this.hostPeerId !== null) {
+            this.hostPeerId = null
+            this.onStatusChange('waiting')
+            this.graceTimeout.arm(SCREEN_SHARE_GRACE_TIMEOUT_MS)
+        }
+        this.room?.leave()
+        this.join()
     }
 
     stop(): void {
         this.graceTimeout.clear()
         this.room?.leave()
         this.room = null
+        this.hostPeerId = null
     }
 }
 
