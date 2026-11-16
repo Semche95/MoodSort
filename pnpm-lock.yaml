@@ -10,10 +10,10 @@ importers:
     dependencies:
       '@pixi/ui':
         specifier: ^2.4.1
-        version: 2.4.1(pixi.js@8.22.0)
+        version: 2.4.1(pixi.js@8.23.0)
       pixi.js:
-        specifier: ^8.22.0
-        version: 8.22.0
+        specifier: ^8.23.0
+        version: 8.23.0
       trystero:
         specifier: ^0.27.0
         version: 0.27.0
@@ -318,9 +318,6 @@ packages:
   '@oxc-project/types@0.156.0':
     resolution: {integrity: sha512-1Duyg48TdJNdyhEB8Xn1L36bT9Pv6GUtlKjHxOys8xkaF/rQq3XJE+bAurSK/AgIz5mGFsb77cn9Pb20+WCScw==}
 
-  '@pixi/colord@2.9.6':
-    resolution: {integrity: sha512-nezytU2pw587fQstUu1AsJZDVEynjskwOL+kibwcdxsMBFqPsFFNA7xl0ii/gXuDi6M0xj3mfRJj8pBSc2jCfA==}
-
   '@pixi/ui@2.4.1':
     resolution: {integrity: sha512-xA7TbeJlvY/5gA5sAgecNjHhmrREM/wPMQukTuZvN3OxU4BP6PwBGZ28PbNrbfaISxqMgmE6jOW2EPPb5qYn2Q==}
     peerDependencies:
@@ -571,6 +568,9 @@ packages:
   chai@6.3.0:
     resolution: {integrity: sha512-XWAtwJ6OHO+tj0EKCs0Y2UamnyOxseZWltU4x2U2wh8g4AigdjwvtUjvLP2tqkA/avxHEtzxNaqGq/YGNwckKg==}
     engines: {node: '>=18'}
+
+  colord@2.12.0:
+    resolution: {integrity: sha512-SpiONmQPZDqe50ivOTgkVikYsnp6l1HTFYqPRLNBCJJdA2Qympw2yYUzX99XlSbbKZswjiG6r+xsUpPPOHqY+Q==}
 
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
@@ -932,8 +932,8 @@ packages:
     resolution: {integrity: sha512-qcJu88Q2IWqJsDD529JKMdwGm/dvInW4HvQnRwiH9JtihJvzGOscDtHE3x1pBKeUOTysQ8kVmLnJ2kJu7yhcGA==}
     engines: {node: '>=12'}
 
-  pixi.js@8.22.0:
-    resolution: {integrity: sha512-QbTANHMZ751MIjLiLSUSM8a7LNMWwMIf0KbRCqlW+SPS9hNLfSVS+cl1O2SEp9g1K/wyLzj/OJHv+1TUfiPr/w==}
+  pixi.js@8.23.0:
+    resolution: {integrity: sha512-RkWSwo+mAR0d7MKnJ20IjKkWGPdFh1C0adBRYYLa+SGdxTfbrr6RnQyZZRwjBaG/bDAIQqgBcTBbiNsN6iKFVQ==}
 
   postcss@8.5.32:
     resolution: {integrity: sha512-LJlKCCAUFKOuZxipUdYw1NzIITEsPcgyOG9LkvRJvuKj/bRzbuRY0ARXvL0pWGpsZvn8jku+LMep2eU0seHp8g==}
@@ -1385,11 +1385,9 @@ snapshots:
 
   '@oxc-project/types@0.156.0': {}
 
-  '@pixi/colord@2.9.6': {}
-
-  '@pixi/ui@2.4.1(pixi.js@8.22.0)':
+  '@pixi/ui@2.4.1(pixi.js@8.23.0)':
     dependencies:
-      pixi.js: 8.22.0
+      pixi.js: 8.23.0
       tweedle.js: 2.1.0
 
   '@rolldown/binding-android-arm-eabi@1.2.16':
@@ -1609,6 +1607,8 @@ snapshots:
       qified: 0.10.1
 
   chai@6.3.0: {}
+
+  colord@2.12.0: {}
 
   cross-spawn@7.0.6:
     dependencies:
@@ -1940,12 +1940,12 @@ snapshots:
 
   picomatch@4.0.7: {}
 
-  pixi.js@8.22.0:
+  pixi.js@8.23.0:
     dependencies:
-      '@pixi/colord': 2.9.6
       '@types/earcut': 3.0.0
       '@webgpu/types': 0.1.74
       '@xmldom/xmldom': 0.8.15
+      colord: 2.12.0
       earcut: 3.2.4
       eventemitter3: 5.0.4
       gifuct-js: 2.1.2
